@@ -61,24 +61,26 @@ const phases = [
 ];
 
 const phaseBeepFrequencies = {
-  [Phase.DOWN]: 620,
-  [Phase.HOLD]: 880,
-  [Phase.UP]: 520,
+  [Phase.DOWN]: 523.25,
+  [Phase.HOLD]: 659.25,
+  [Phase.UP]: 784,
 };
 
-const beep = (frequency = 880, duration = 150) => {
+const beep = (frequency = 659.25, duration = 150) => {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
+  const now = audioContext.currentTime;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
-  oscillator.frequency.value = frequency;
-  gain.gain.value = 0.2;
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(frequency, now);
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.18, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration / 1000);
   oscillator.connect(gain).connect(audioContext.destination);
-  oscillator.start();
-  setTimeout(() => {
-    oscillator.stop();
-  }, duration);
+  oscillator.start(now);
+  oscillator.stop(now + duration / 1000 + 0.05);
 };
 
 const updateDisplays = () => {
