@@ -60,6 +60,12 @@ const phases = [
   { key: Phase.UP, duration: () => parseInt(upDurationInput.value, 10) },
 ];
 
+const phaseBeepFrequencies = {
+  [Phase.DOWN]: 620,
+  [Phase.HOLD]: 880,
+  [Phase.UP]: 520,
+};
+
 const beep = (frequency = 880, duration = 150) => {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -100,7 +106,8 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
   phaseHint.textContent = hint;
   updateDisplays();
   updateTimerUI();
-  beep();
+  const phaseFrequency = phaseBeepFrequencies[phaseKey];
+  beep(phaseFrequency ?? 880);
 };
 
 const nextRepOrSet = () => {

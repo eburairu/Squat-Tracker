@@ -50,6 +50,12 @@ header h1 {
   gap: 12px;
 }
 
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .status .label {
   display: block;
   font-size: 0.9rem;
@@ -59,6 +65,20 @@ header h1 {
 .status .value {
   font-size: 1.4rem;
   font-weight: 600;
+}
+
+.phase-status {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
+.phase-status .label {
+  font-size: 1rem;
+}
+
+.phase-status .value {
+  font-size: 2.1rem;
+  letter-spacing: 0.08em;
 }
 
 .timer {
@@ -93,16 +113,16 @@ header h1 {
 
 .controls {
   background: white;
-  padding: 20px;
+  padding: 16px;
   border-radius: 20px;
   box-shadow: 0 8px 24px rgba(35, 24, 84, 0.08);
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .control-group {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
@@ -115,10 +135,10 @@ label {
 }
 
 input[type="number"] {
-  padding: 8px 10px;
+  padding: 6px 10px;
   border-radius: 10px;
   border: 1px solid #dad5f5;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .modes {
