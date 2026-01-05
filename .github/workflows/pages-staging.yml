@@ -1,0 +1,39 @@
+name: Deploy GitHub Pages (staging)
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare publish directory
+        run: |
+          mkdir -p publish
+          rsync -av --delete \
+            --exclude ".git" \
+            --exclude ".github" \
+            --exclude "README.md" \
+            --exclude "AGENTS.md" \
+            ./ publish/
+
+      - name: Deploy to gh-pages (staging)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./publish
+          destination_dir: staging

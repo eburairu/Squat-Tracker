@@ -27,4 +27,9 @@ python -m http.server 8000
 
 ## GitHub Pages でのデプロイ
 
-`.github/workflows/pages.yml` を利用して、`main` ブランチの変更を自動的に GitHub Pages にデプロイします。`Settings` → `Pages` の `Build and deployment` を `GitHub Actions` に設定してください。
+`main` への push は本番用、`develop` への push は検証用として GitHub Pages に自動デプロイします。公開先は `gh-pages` ブランチ配下のディレクトリを使い分けます。
+
+- 本番: `https://<user>.github.io/Squat-Tracker/prod/`
+- 検証: `https://<user>.github.io/Squat-Tracker/staging/`
+
+`Settings` → `Pages` で `Source` を `Deploy from a branch` にし、`gh-pages` ブランチの `/ (root)` を選択してください（`/prod` と `/staging` はその配下でホストされます）。
