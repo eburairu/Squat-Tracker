@@ -20,9 +20,24 @@ const resetButton = document.getElementById('reset-button');
 const sensorToggle = document.getElementById('sensor-toggle');
 const sensorCalibrateButton = document.getElementById('sensor-calibrate');
 const sensorStatus = document.getElementById('sensor-status');
+const themeToggle = document.getElementById('theme-toggle');
 
 const confettiCanvas = document.getElementById('confetti');
 const confettiCtx = confettiCanvas.getContext('2d');
+
+const getPreferredTheme = () => {
+  const storedTheme = localStorage.getItem('theme');
+  if (storedTheme === 'light' || storedTheme === 'dark') {
+    return storedTheme;
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+const applyTheme = (theme) => {
+  document.documentElement.setAttribute('data-theme', theme);
+  themeToggle.setAttribute('aria-pressed', theme === 'dark');
+  themeToggle.textContent = theme === 'dark' ? 'ライトモード' : 'ダークモード';
+};
 
 const Phase = {
   IDLE: '待機中',
@@ -334,6 +349,12 @@ sensorCalibrateButton.addEventListener('click', () => {
   sensorStatus.textContent = '角度を再計測します。逆さまに固定して数秒待ってください。';
 });
 
+themeToggle.addEventListener('click', () => {
+  const nextTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', nextTheme);
+  applyTheme(nextTheme);
+});
+
 const launchConfetti = () => {
   confettiCanvas.width = window.innerWidth;
   confettiCanvas.height = window.innerHeight;
@@ -373,4 +394,5 @@ const stopConfetti = () => {
   confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 };
 
+applyTheme(getPreferredTheme());
 updateDisplays();
