@@ -16,7 +16,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check_pages:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check GitHub Pages status
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.request('GET /repos/{owner}/{repo}/pages', {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              core.setOutput('enabled', 'true');
+            } catch (error) {
+              if (error.status === 404) {
+                core.setOutput('enabled', 'false');
+                core.info('GitHub Pages is not enabled; skipping deploy job.');
+                return;
+              }
+              throw error;
+            }
+
   build:
+    needs: check_pages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,6 +55,7 @@ jobs:
 
   deploy:
     needs: build
+    if: needs.check_pages.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
