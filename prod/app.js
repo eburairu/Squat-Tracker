@@ -4,6 +4,14 @@ const repDisplay = document.getElementById('rep-display');
 const phaseTimer = document.getElementById('phase-timer');
 const phaseHint = document.getElementById('phase-hint');
 const progressBar = document.getElementById('progress-bar');
+const statsTotalReps = document.getElementById('stats-total-reps');
+const statsTotalWorkouts = document.getElementById('stats-total-workouts');
+const statsLastDate = document.getElementById('stats-last-date');
+const statsLastReps = document.getElementById('stats-last-reps');
+const statsSessionReps = document.getElementById('stats-session-reps');
+const statsSessionTarget = document.getElementById('stats-session-target');
+const historyList = document.getElementById('history-list');
+const historyNote = document.getElementById('history-note');
 
 const setCountInput = document.getElementById('set-count');
 const repCountInput = document.getElementById('rep-count');
@@ -47,12 +55,18 @@ let currentRep = 1;
 let isPaused = false;
 let pausedAt = null;
 let timeoutIds = [];
+let workoutStarted = false;
+let workoutSaved = false;
 
 let sensorMode = false;
 let sensorActive = false;
 let sensorBaseline = null;
 let sensorThreshold = null;
 let lastSensorCounted = false;
+
+const HISTORY_KEY = 'squat-tracker-history-v1';
+const MAX_HISTORY_ENTRIES = 50;
+let historyEntries = [];
 
 const phases = [
   { key: Phase.DOWN, duration: () => parseInt(downDurationInput.value, 10) },
@@ -83,10 +97,244 @@ const beep = (frequency = 659.25, duration = 150) => {
   oscillator.stop(now + duration / 1000 + 0.05);
 };
 
+const isStorageAvailable = (() => {
+  try {
+    const testKey = '__squat_storage_test__';
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
+    return true;
+  } catch (error) {
+    return false;
+  }
+})();
+
+const sanitizeHistoryEntries = (data) => {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  return data
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return null;
+      }
+      const id = typeof entry.id === 'string' ? entry.id : null;
+      const date = typeof entry.date === 'string' ? entry.date : null;
+      const totalSets = Number(entry.totalSets);
+      const repsPerSet = Number(entry.repsPerSet);
+      const totalReps = Number(entry.totalReps);
+      if (!id || !date || !Number.isFinite(totalSets) || !Number.isFinite(repsPerSet) || !Number.isFinite(totalReps)) {
+        return null;
+      }
+      const durations = entry.durations && typeof entry.durations === 'object' ? entry.durations : {};
+      return {
+        id,
+        date,
+        totalSets,
+        repsPerSet,
+        totalReps,
+        durations: {
+          down: Number(durations.down) || 0,
+          hold: Number(durations.hold) || 0,
+          up: Number(durations.up) || 0,
+          rest: Number(durations.rest) || 0,
+          countdown: Number(durations.countdown) || 0,
+        },
+      };
+    })
+    .filter(Boolean);
+};
+
+const loadHistoryEntries = () => {
+  if (!isStorageAvailable) {
+    return [];
+  }
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    const sanitized = sanitizeHistoryEntries(parsed);
+    if (sanitized.length !== (Array.isArray(parsed) ? parsed.length : 0)) {
+      saveHistoryEntries(sanitized);
+    }
+    return sanitized;
+  } catch (error) {
+    localStorage.removeItem(HISTORY_KEY);
+    return [];
+  }
+};
+
+const saveHistoryEntries = (entries) => {
+  if (!isStorageAvailable) {
+    return false;
+  }
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+const computeStats = (entries) => {
+  const totalWorkouts = entries.length;
+  const totalRepsAllTime = entries.reduce((sum, entry) => sum + entry.totalReps, 0);
+  const lastEntry = entries[0];
+  return {
+    totalWorkouts,
+    totalRepsAllTime,
+    lastWorkoutDate: lastEntry ? lastEntry.date : null,
+    lastWorkoutTotalReps: lastEntry ? lastEntry.totalReps : 0,
+  };
+};
+
+const formatDate = (isoString) => {
+  if (!isoString) {
+    return '--';
+  }
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return '--';
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}/${month}/${day}`;
+};
+
+const updateHistoryNote = () => {
+  if (!historyNote) {
+    return;
+  }
+  historyNote.textContent = isStorageAvailable
+    ? '最新の記録を最大5件表示します。'
+    : 'この端末では履歴の自動保存が利用できません。';
+};
+
+const renderStats = () => {
+  if (!statsTotalReps || !statsTotalWorkouts || !statsLastDate || !statsLastReps) {
+    return;
+  }
+  const stats = computeStats(historyEntries);
+  statsTotalReps.textContent = stats.totalRepsAllTime.toLocaleString('ja-JP');
+  statsTotalWorkouts.textContent = stats.totalWorkouts.toLocaleString('ja-JP');
+  statsLastDate.textContent = stats.lastWorkoutDate ? formatDate(stats.lastWorkoutDate) : '--';
+  statsLastReps.textContent = stats.lastWorkoutDate ? stats.lastWorkoutTotalReps.toLocaleString('ja-JP') : '--';
+};
+
+const renderHistory = () => {
+  if (!historyList) {
+    return;
+  }
+  historyList.textContent = '';
+  if (historyEntries.length === 0) {
+    const emptyItem = document.createElement('li');
+    emptyItem.className = 'history-empty';
+    emptyItem.textContent = 'まだ記録がありません';
+    historyList.appendChild(emptyItem);
+    return;
+  }
+  historyEntries.slice(0, 5).forEach((entry) => {
+    const item = document.createElement('li');
+    item.className = 'history-item';
+
+    const date = document.createElement('div');
+    date.className = 'history-date';
+    date.textContent = formatDate(entry.date);
+
+    const meta = document.createElement('div');
+    meta.className = 'history-meta';
+    meta.textContent = `${entry.totalSets}セット × ${entry.repsPerSet}回`;
+
+    const total = document.createElement('div');
+    total.className = 'history-total';
+    total.textContent = `${entry.totalReps}回`;
+
+    item.append(date, meta, total);
+    historyList.appendChild(item);
+  });
+};
+
+const getPlannedTargetReps = () => {
+  const sets = Number.parseInt(setCountInput.value, 10);
+  const reps = Number.parseInt(repCountInput.value, 10);
+  if (!Number.isFinite(sets) || !Number.isFinite(reps)) {
+    return 0;
+  }
+  return Math.max(sets, 0) * Math.max(reps, 0);
+};
+
+const getSessionTargetReps = () => (workoutStarted ? totalSets * repsPerSet : getPlannedTargetReps());
+
+const getCompletedReps = () => {
+  if (!workoutStarted) {
+    return 0;
+  }
+  const completed = (currentSet - 1) * repsPerSet + (currentRep - 1);
+  return Math.max(Math.min(completed, getSessionTargetReps()), 0);
+};
+
+const updateSessionStats = () => {
+  if (!statsSessionReps || !statsSessionTarget) {
+    return;
+  }
+  statsSessionReps.textContent = getCompletedReps().toLocaleString('ja-JP');
+  statsSessionTarget.textContent = getSessionTargetReps().toLocaleString('ja-JP');
+};
+
+const createHistoryEntry = () => {
+  const durations = {
+    down: Number.parseInt(downDurationInput.value, 10),
+    hold: Number.parseInt(holdDurationInput.value, 10),
+    up: Number.parseInt(upDurationInput.value, 10),
+    rest: Number.parseInt(restDurationInput.value, 10),
+    countdown: Number.parseInt(countdownDurationInput.value, 10),
+  };
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    date: new Date().toISOString(),
+    totalSets,
+    repsPerSet,
+    totalReps: totalSets * repsPerSet,
+    durations,
+  };
+};
+
+const recordWorkout = () => {
+  if (workoutSaved) {
+    return;
+  }
+  const entry = createHistoryEntry();
+  historyEntries = [entry, ...historyEntries].slice(0, MAX_HISTORY_ENTRIES);
+  saveHistoryEntries(historyEntries);
+  workoutSaved = true;
+  renderStats();
+  renderHistory();
+};
+
+const runTests = () => {
+  const sample = sanitizeHistoryEntries([
+    {
+      id: '1',
+      date: '2024-01-02T00:00:00.000Z',
+      totalSets: 3,
+      repsPerSet: 10,
+      totalReps: 30,
+      durations: { down: 2, hold: 1, up: 1, rest: 30, countdown: 5 },
+    },
+  ]);
+  console.assert(sample.length === 1, 'sanitizeHistoryEntries should keep valid entries');
+  console.assert(computeStats(sample).totalRepsAllTime === 30, 'computeStats should sum reps');
+  console.assert(formatDate('2024-01-02T00:00:00.000Z') === '2024/01/02', 'formatDate should format date');
+  console.log('Test run completed.');
+};
+
 const updateDisplays = () => {
   setDisplay.textContent = `${currentSet} / ${totalSets}`;
   repDisplay.textContent = `${currentRep} / ${repsPerSet}`;
   phaseDisplay.textContent = currentPhase;
+  updateSessionStats();
 };
 
 const updateTimerUI = () => {
@@ -99,6 +347,14 @@ const updateTimerUI = () => {
   const remaining = Math.max(phaseDuration - elapsed, 0);
   phaseTimer.textContent = String(Math.ceil(remaining / 1000)).padStart(2, '0');
   progressBar.style.width = `${(elapsed / phaseDuration) * 100}%`;
+};
+
+const initializeHistory = () => {
+  historyEntries = loadHistoryEntries();
+  renderStats();
+  renderHistory();
+  updateHistoryNote();
+  updateSessionStats();
 };
 
 const setPhase = (phaseKey, durationSeconds, hint) => {
@@ -177,6 +433,7 @@ const finishWorkout = () => {
   phaseTimer.textContent = '00';
   progressBar.style.width = '100%';
   beep(440, 400);
+  recordWorkout();
   launchConfetti();
 };
 
@@ -196,6 +453,9 @@ const startWorkout = () => {
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
+  workoutStarted = true;
+  workoutSaved = false;
+  updateSessionStats();
   startCountdown('スタートまでカウントダウン', () => {
     startPhaseCycle();
   });
@@ -230,6 +490,8 @@ const resetWorkout = () => {
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
+  workoutStarted = false;
+  workoutSaved = false;
   pauseButton.textContent = '一時停止';
   phaseTimer.textContent = '05';
   phaseHint.textContent = 'スタートまでカウントダウン';
@@ -249,6 +511,8 @@ startButton.addEventListener('click', () => {
 
 pauseButton.addEventListener('click', pauseWorkout);
 resetButton.addEventListener('click', resetWorkout);
+setCountInput.addEventListener('input', updateSessionStats);
+repCountInput.addEventListener('input', updateSessionStats);
 
 const handleOrientation = (event) => {
   if (!sensorMode || !sensorActive) {
@@ -270,6 +534,7 @@ const handleOrientation = (event) => {
     lastSensorCounted = true;
     currentRep = Math.min(currentRep + 1, repsPerSet);
     repDisplay.textContent = `${currentRep} / ${repsPerSet}`;
+    updateSessionStats();
     beep(700, 120);
     if (currentRep >= repsPerSet) {
       nextRepOrSet();
@@ -373,4 +638,9 @@ const stopConfetti = () => {
   confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 };
 
+if (new URLSearchParams(window.location.search).has('test')) {
+  runTests();
+}
+
+initializeHistory();
 updateDisplays();
