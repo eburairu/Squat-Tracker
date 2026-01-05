@@ -1,0 +1,2 @@
+# Squat-Tracker
+スクワットアプリ
