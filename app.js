@@ -59,6 +59,7 @@ let pausedAt = null;
 let timeoutIds = [];
 let workoutStarted = false;
 let workoutSaved = false;
+let lastCountdownSecond = null;
 
 let sensorMode = false;
 let sensorActive = false;
@@ -83,21 +84,41 @@ const phaseBeepFrequencies = {
   [Phase.UP]: 784,
 };
 
-const beep = (frequency = 659.25, duration = 150) => {
+const isCountdownPhase = (phaseKey) => phaseKey === Phase.COUNTDOWN || phaseKey === Phase.REST_COUNTDOWN;
+
+const playTone = (frequency, duration, options = {}) => {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
   const now = audioContext.currentTime;
+  const startTime = options.startTime ?? now;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(frequency, now);
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(0.18, now + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration / 1000);
+  oscillator.type = options.type ?? 'triangle';
+  oscillator.frequency.setValueAtTime(frequency * 0.96, startTime);
+  oscillator.frequency.linearRampToValueAtTime(frequency * 1.08, startTime + duration / 1000);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(options.volume ?? 0.2, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration / 1000);
   oscillator.connect(gain).connect(audioContext.destination);
-  oscillator.start(now);
-  oscillator.stop(now + duration / 1000 + 0.05);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + duration / 1000 + 0.05);
+};
+
+const beep = (frequency = 659.25, duration = 150) => {
+  playTone(frequency, duration, { type: 'triangle', volume: 0.2 });
+};
+
+const playCelebration = () => {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  const now = audioContext.currentTime;
+  const notes = [880, 1174.66, 1318.51, 1567.98];
+  notes.forEach((frequency, index) => {
+    playTone(frequency, 180, { startTime: now + index * 0.12, type: 'sine', volume: 0.22 });
+  });
+  playTone(2093, 260, { startTime: now + 0.1, type: 'triangle', volume: 0.16 });
 };
 
 const isStorageAvailable = (() => {
@@ -398,8 +419,11 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
   phaseHint.textContent = hint;
   updateDisplays();
   updateTimerUI();
-  const phaseFrequency = phaseBeepFrequencies[phaseKey];
-  beep(phaseFrequency ?? 880);
+  lastCountdownSecond = null;
+  if (!isCountdownPhase(phaseKey)) {
+    const phaseFrequency = phaseBeepFrequencies[phaseKey];
+    beep(phaseFrequency ?? 880);
+  }
 };
 
 const nextRepOrSet = () => {
@@ -466,7 +490,7 @@ const finishWorkout = () => {
   updateDisplays();
   phaseTimer.textContent = '00';
   progressBar.style.width = '100%';
-  beep(440, 400);
+  playCelebration();
   recordWorkout();
   launchConfetti();
 };
@@ -476,6 +500,15 @@ const tick = () => {
     return;
   }
   updateTimerUI();
+  if (isCountdownPhase(currentPhase)) {
+    const elapsed = Math.min(Date.now() - phaseStart, phaseDuration);
+    const remaining = Math.max(phaseDuration - elapsed, 0);
+    const remainingSeconds = Math.ceil(remaining / 1000);
+    if (remainingSeconds !== lastCountdownSecond) {
+      lastCountdownSecond = remainingSeconds;
+      beep(988, 140);
+    }
+  }
   if (Date.now() - phaseStart >= phaseDuration) {
     updateTimerUI();
   }
@@ -679,10 +712,7 @@ const stopConfetti = () => {
   confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 };
 
-if (new URLSearchParams(window.location.search).has('test')) {
-  runTests();
-}
-
+runTests();
 initializeTheme();
 initializeHistory();
 updateDisplays();
