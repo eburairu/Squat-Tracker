@@ -8,89 +8,134 @@
   </head>
   <body>
     <main class="app">
-      <header>
-        <div class="header-row">
-          <h1>Squat Tracker</h1>
-          <button id="theme-toggle" class="ghost" type="button" aria-pressed="false">
-            ダークモード
-          </button>
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Squat Tracker</p>
+          <h1>Rhythm. Depth. Flow.</h1>
+          <p class="subtitle">毎日のスクワットを、ネイティブアプリのような心地よさで記録。</p>
         </div>
-        <p class="subtitle">毎日のスクワットをリズムに合わせて記録しよう。</p>
+        <div class="hero-panel card reveal delay-1">
+          <div class="stat-grid">
+            <div class="stat-card">
+              <span class="stat-label">累計回数</span>
+              <span id="stats-total-reps" class="stat-value">0</span>
+              <span class="stat-unit">reps</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">累計セッション</span>
+              <span id="stats-total-workouts" class="stat-value">0</span>
+              <span class="stat-unit">sessions</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">直近の日付</span>
+              <span id="stats-last-date" class="stat-value">--</span>
+              <span class="stat-unit">last</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">直近の回数</span>
+              <span id="stats-last-reps" class="stat-value">--</span>
+              <span class="stat-unit">reps</span>
+            </div>
+          </div>
+        </div>
       </header>
 
-      <section class="panel">
-        <div class="status">
-          <div class="status-item">
-            <span class="label">セット</span>
-            <span id="set-display" class="value">1 / 3</span>
+      <section class="grid primary-grid">
+        <div class="card workout-card reveal delay-2">
+          <div class="card-head">
+            <div>
+              <p class="card-eyebrow">Session</p>
+              <h2>セッションガイド</h2>
+            </div>
+            <div class="phase-chip">
+              <span class="phase-label">フェーズ</span>
+              <span id="phase-display" class="phase-value">待機中</span>
+            </div>
           </div>
-          <div class="status-item">
-            <span class="label">回数</span>
-            <span id="rep-display" class="value">1 / 10</span>
+
+          <div class="status-grid">
+            <div class="status-item">
+              <span class="label">セット</span>
+              <span id="set-display" class="value">1 / 3</span>
+            </div>
+            <div class="status-item">
+              <span class="label">回数</span>
+              <span id="rep-display" class="value">1 / 10</span>
+            </div>
+            <div class="status-item">
+              <span class="label">セッション進捗</span>
+              <span class="value"><span id="stats-session-reps">0</span> / <span id="stats-session-target">0</span></span>
+            </div>
           </div>
-          <div class="status-item phase-status">
-            <span class="label">フェーズ</span>
-            <span id="phase-display" class="value">待機中</span>
+
+          <div class="timer">
+            <div id="phase-timer" class="timer-value">05</div>
+            <div id="phase-hint" class="timer-hint">スタートまでカウントダウン</div>
+            <div class="progress">
+              <div id="progress-bar" class="progress-bar"></div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="start-button" class="primary">スタート</button>
+            <button id="pause-button">一時停止</button>
+            <button id="reset-button" class="ghost">リセット</button>
           </div>
         </div>
 
-        <div class="timer">
-          <div id="phase-timer" class="timer-value">05</div>
-          <div id="phase-hint" class="timer-hint">スタートまでカウントダウン</div>
-          <div class="progress">
-            <div id="progress-bar" class="progress-bar"></div>
+        <div class="card control-card reveal delay-3">
+          <div class="card-head">
+            <div>
+              <p class="card-eyebrow">Setup</p>
+              <h2>ワークアウト設定</h2>
+            </div>
+          </div>
+          <div class="control-group">
+            <label>
+              セット数
+              <input id="set-count" type="number" min="1" max="10" value="3" />
+            </label>
+            <label>
+              1セットの回数
+              <input id="rep-count" type="number" min="1" max="50" value="10" />
+            </label>
+          </div>
+          <div class="control-group">
+            <label>
+              しゃがむ時間（秒）
+              <input id="down-duration" type="number" min="1" max="5" value="2" />
+            </label>
+            <label>
+              キープ時間（秒）
+              <input id="hold-duration" type="number" min="1" max="5" value="1" />
+            </label>
+            <label>
+              立つ時間（秒）
+              <input id="up-duration" type="number" min="1" max="5" value="1" />
+            </label>
+          </div>
+          <div class="control-group">
+            <label>
+              セット間休憩（秒）
+              <input id="rest-duration" type="number" min="10" max="120" value="30" />
+            </label>
+            <label>
+              カウントダウン（秒）
+              <input id="countdown-duration" type="number" min="3" max="10" value="5" />
+            </label>
           </div>
         </div>
       </section>
 
-      <section class="controls">
-        <div class="control-group">
-          <label>
-            セット数
-            <input id="set-count" type="number" min="1" max="10" value="3" />
-          </label>
-          <label>
-            1セットの回数
-            <input id="rep-count" type="number" min="1" max="50" value="10" />
-          </label>
-        </div>
-        <div class="control-group">
-          <label>
-            しゃがむ時間（秒）
-            <input id="down-duration" type="number" min="1" max="5" value="2" />
-          </label>
-          <label>
-            キープ時間（秒）
-            <input id="hold-duration" type="number" min="1" max="5" value="1" />
-          </label>
-          <label>
-            立つ時間（秒）
-            <input id="up-duration" type="number" min="1" max="5" value="1" />
-          </label>
-        </div>
-        <div class="control-group">
-          <label>
-            セット間休憩（秒）
-            <input id="rest-duration" type="number" min="10" max="120" value="30" />
-          </label>
-          <label>
-            カウントダウン（秒）
-            <input id="countdown-duration" type="number" min="3" max="10" value="5" />
-          </label>
-        </div>
-      </section>
-
-      <section class="modes">
-        <div class="mode-card">
-          <h2>タイマー mode</h2>
-          <p>2秒しゃがむ → 1秒キープ → 1秒で立つをガイドします。</p>
-          <button id="start-button" class="primary">スタート</button>
-          <button id="pause-button">一時停止</button>
-          <button id="reset-button" class="ghost">リセット</button>
-        </div>
-        <div class="mode-card">
-          <h2>センサーモード</h2>
-          <p>スマホを太ももの前面に固定し、深さが十分になったらカウントアップ。</p>
+      <section class="grid secondary-grid">
+        <div class="card mode-card reveal delay-4">
+          <div class="card-head">
+            <div>
+              <p class="card-eyebrow">Sensor</p>
+              <h2>センサーモード</h2>
+            </div>
+          </div>
+          <p class="card-copy">スマホを太ももの前面に固定し、深さが十分になったらカウントします。</p>
           <div class="sensor-controls">
             <label class="switch">
               <input id="sensor-toggle" type="checkbox" />
@@ -101,15 +146,33 @@
           </div>
           <p class="sensor-note" id="sensor-status">未使用</p>
         </div>
+
+        <div class="card instructions reveal delay-5">
+          <div class="card-head">
+            <div>
+              <p class="card-eyebrow">Guide</p>
+              <h2>使い方</h2>
+            </div>
+          </div>
+          <ol>
+            <li>回数とセット数を設定してスタート。</li>
+            <li>音と表示に合わせてスクワット。</li>
+            <li>センサーモードでは、スタート時にスマホを逆さまに装着してください。</li>
+          </ol>
+        </div>
       </section>
 
-      <section class="instructions">
-        <h2>使い方</h2>
-        <ol>
-          <li>回数とセット数を設定してスタート。</li>
-          <li>音と表示に合わせてスクワット。</li>
-          <li>センサーモードでは、スタート時にスマホを逆さまに装着してください。</li>
-        </ol>
+      <section class="card history reveal delay-6">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">History</p>
+            <h2>過去の実績</h2>
+          </div>
+          <p id="history-note" class="history-note"></p>
+        </div>
+        <ul id="history-list" class="history-list">
+          <li class="history-empty">まだ記録がありません</li>
+        </ul>
       </section>
     </main>
 
