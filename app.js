@@ -12,6 +12,8 @@ const statsSessionReps = document.getElementById('stats-session-reps');
 const statsSessionTarget = document.getElementById('stats-session-target');
 const historyList = document.getElementById('history-list');
 const historyNote = document.getElementById('history-note');
+const themeToggle = document.getElementById('theme-toggle');
+const themeStatus = document.getElementById('theme-status');
 
 const setCountInput = document.getElementById('set-count');
 const repCountInput = document.getElementById('rep-count');
@@ -66,6 +68,7 @@ let lastSensorCounted = false;
 
 const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
+const THEME_KEY = 'squat-tracker-theme';
 let historyEntries = [];
 
 const phases = [
@@ -107,6 +110,37 @@ const isStorageAvailable = (() => {
     return false;
   }
 })();
+
+const getPreferredTheme = () => {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+  return 'light';
+};
+
+const applyTheme = (theme) => {
+  const isDark = theme === 'dark';
+  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  if (themeToggle) {
+    themeToggle.checked = isDark;
+  }
+  if (themeStatus) {
+    themeStatus.textContent = isDark ? 'ダーク' : 'ライト';
+  }
+};
+
+const persistTheme = (theme) => {
+  if (!isStorageAvailable) {
+    return;
+  }
+  localStorage.setItem(THEME_KEY, theme);
+};
+
+const initializeTheme = () => {
+  const stored = isStorageAvailable ? localStorage.getItem(THEME_KEY) : null;
+  const theme = stored || getPreferredTheme();
+  applyTheme(theme);
+};
 
 const sanitizeHistoryEntries = (data) => {
   if (!Array.isArray(data)) {
@@ -513,6 +547,13 @@ pauseButton.addEventListener('click', pauseWorkout);
 resetButton.addEventListener('click', resetWorkout);
 setCountInput.addEventListener('input', updateSessionStats);
 repCountInput.addEventListener('input', updateSessionStats);
+if (themeToggle) {
+  themeToggle.addEventListener('change', (event) => {
+    const theme = event.target.checked ? 'dark' : 'light';
+    applyTheme(theme);
+    persistTheme(theme);
+  });
+}
 
 const handleOrientation = (event) => {
   if (!sensorMode || !sensorActive) {
@@ -642,5 +683,6 @@ if (new URLSearchParams(window.location.search).has('test')) {
   runTests();
 }
 
+initializeTheme();
 initializeHistory();
 updateDisplays();
