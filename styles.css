@@ -7,7 +7,44 @@
   --accent-2: #2bb9a7;
   --card: #ffffff;
   --card-border: rgba(255, 255, 255, 0.6);
+  --surface-muted: #f8f9f6;
+  --surface-soft: #f1ede3;
+  --surface-strong: #f4efe2;
+  --surface-progress: #f0ece2;
+  --input-bg: #ffffff;
+  --input-border: rgba(27, 30, 40, 0.15);
+  --switch-track: #d6d0c5;
+  --surface-border: rgba(27, 30, 40, 0.06);
+  --button-border: rgba(27, 30, 40, 0.14);
   --shadow: 0 18px 40px rgba(13, 29, 45, 0.12);
+  --bg-spot-1: #ffe5c6;
+  --bg-spot-2: #d7f5f1;
+  --bg-grad-1: #f7f1e6;
+  --bg-grad-2: #f4fbfa;
+  --overlay-blob: rgba(255, 255, 255, 0.35);
+}
+
+body[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #f4f6fb;
+  --muted: #a7b0c4;
+  --card: #171c26;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --surface-muted: #1f2432;
+  --surface-soft: #222838;
+  --surface-strong: #242b3c;
+  --surface-progress: #2a3145;
+  --input-bg: #111622;
+  --input-border: rgba(244, 246, 251, 0.14);
+  --switch-track: #3c465d;
+  --surface-border: rgba(244, 246, 251, 0.08);
+  --button-border: rgba(244, 246, 251, 0.2);
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  --bg-spot-1: #1b2235;
+  --bg-spot-2: #18333a;
+  --bg-grad-1: #0e1118;
+  --bg-grad-2: #131928;
+  --overlay-blob: rgba(255, 255, 255, 0.06);
 }
 
 * {
@@ -18,9 +55,9 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  background: radial-gradient(circle at 15% 10%, #ffe5c6 0, rgba(255, 229, 198, 0) 55%),
-    radial-gradient(circle at 85% 15%, #d7f5f1 0, rgba(215, 245, 241, 0) 50%),
-    linear-gradient(160deg, #f7f1e6 0%, #f4fbfa 100%);
+  background: radial-gradient(circle at 15% 10%, var(--bg-spot-1) 0, rgba(255, 229, 198, 0) 55%),
+    radial-gradient(circle at 85% 15%, var(--bg-spot-2) 0, rgba(215, 245, 241, 0) 50%),
+    linear-gradient(160deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
   position: relative;
   overflow-x: hidden;
 }
@@ -32,7 +69,7 @@ body::after {
   width: 320px;
   height: 320px;
   border-radius: 40% 60% 50% 70% / 60% 40% 60% 40%;
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--overlay-blob);
   filter: blur(2px);
   z-index: 0;
 }
@@ -63,6 +100,20 @@ body::after {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
   align-items: center;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.theme-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .hero-copy h1 {
@@ -131,10 +182,10 @@ body::after {
 }
 
 .stat-card {
-  background: #f8f9f6;
+  background: var(--surface-muted);
   border-radius: 18px;
   padding: 14px;
-  border: 1px solid rgba(27, 30, 40, 0.06);
+  border: 1px solid var(--surface-border);
   display: grid;
   gap: 4px;
 }
@@ -170,7 +221,7 @@ body::after {
 }
 
 .phase-chip {
-  background: #f4efe2;
+  background: var(--surface-strong);
   border-radius: 999px;
   padding: 10px 16px;
   display: grid;
@@ -198,7 +249,7 @@ body::after {
 }
 
 .status-item {
-  background: #f8f9f6;
+  background: var(--surface-muted);
   border-radius: 16px;
   padding: 12px;
   display: grid;
@@ -233,7 +284,7 @@ body::after {
 .progress {
   width: 100%;
   height: 10px;
-  background: #f0ece2;
+  background: var(--surface-progress);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -258,7 +309,7 @@ button {
   border-radius: 14px;
   font-size: 0.95rem;
   cursor: pointer;
-  background: #f1ede3;
+  background: var(--surface-soft);
   color: var(--ink);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -275,7 +326,7 @@ button.primary {
 
 button.ghost {
   background: transparent;
-  border: 1px solid rgba(27, 30, 40, 0.14);
+  border: 1px solid var(--button-border);
 }
 
 button:disabled {
@@ -301,9 +352,10 @@ label {
 input[type="number"] {
   padding: 8px 10px;
   border-radius: 12px;
-  border: 1px solid rgba(27, 30, 40, 0.15);
+  border: 1px solid var(--input-border);
   font-size: 0.95rem;
-  background: #fff;
+  background: var(--input-bg);
+  color: var(--ink);
 }
 
 .sensor-controls {
@@ -327,7 +379,7 @@ input[type="number"] {
 .slider {
   width: 50px;
   height: 26px;
-  background: #d6d0c5;
+  background: var(--switch-track);
   border-radius: 999px;
   position: relative;
   transition: background 0.3s;
@@ -386,7 +438,7 @@ input[type="number"] {
 }
 
 .history-item {
-  background: #f8f9f6;
+  background: var(--surface-muted);
   border-radius: 16px;
   padding: 12px 14px;
   display: grid;
@@ -410,7 +462,7 @@ input[type="number"] {
 
 .history-empty {
   color: var(--muted);
-  background: #f8f9f6;
+  background: var(--surface-muted);
   border-radius: 16px;
   padding: 12px 14px;
 }
