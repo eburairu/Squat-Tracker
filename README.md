@@ -29,7 +29,7 @@ python -m http.server 8000
 
 `main` への push は本番用、`develop` への push は検証用として GitHub Pages に自動デプロイします。公開先は `gh-pages` ブランチ配下のディレクトリを使い分けます。
 
-- 本番: `https://<user>.github.io/Squat-Tracker/prod/`
-- 検証: `https://<user>.github.io/Squat-Tracker/staging/`
+- 本番: `https://eburairu.github.io/Squat-Tracker/prod/`
+- 検証: `https://eburairu.github.io/Squat-Tracker/staging/`
 
 `Settings` → `Pages` で `Source` を `Deploy from a branch` にし、`gh-pages` ブランチの `/ (root)` を選択してください（`/prod` と `/staging` はその配下でホストされます）。
