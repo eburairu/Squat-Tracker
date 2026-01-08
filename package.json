@@ -1,0 +1,15 @@
+{
+  "name": "squat-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  },
+  "scripts": {
+    "pretest": "npm ci && npx playwright install --with-deps",
+    "pretest:screenshot": "npm ci && npx playwright install --with-deps",
+    "test": "playwright test",
+    "test:screenshot": "playwright test tests/theme-toggle.spec.js"
+  }
+}

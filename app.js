@@ -12,6 +12,8 @@ const statsSessionReps = document.getElementById('stats-session-reps');
 const statsSessionTarget = document.getElementById('stats-session-target');
 const historyList = document.getElementById('history-list');
 const historyNote = document.getElementById('history-note');
+const themeToggle = document.getElementById('theme-toggle');
+const themeStatus = document.getElementById('theme-status');
 
 const setCountInput = document.getElementById('set-count');
 const repCountInput = document.getElementById('rep-count');
@@ -30,7 +32,7 @@ const sensorCalibrateButton = document.getElementById('sensor-calibrate');
 const sensorStatus = document.getElementById('sensor-status');
 
 const confettiCanvas = document.getElementById('confetti');
-const confettiCtx = confettiCanvas.getContext('2d');
+let confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
 
 const Phase = {
   IDLE: '待機中',
@@ -57,6 +59,7 @@ let pausedAt = null;
 let timeoutIds = [];
 let workoutStarted = false;
 let workoutSaved = false;
+let lastCountdownSecond = null;
 
 let sensorMode = false;
 let sensorActive = false;
@@ -66,6 +69,7 @@ let lastSensorCounted = false;
 
 const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
+const THEME_KEY = 'squat-tracker-theme';
 let historyEntries = [];
 
 const phases = [
@@ -80,21 +84,51 @@ const phaseBeepFrequencies = {
   [Phase.UP]: 784,
 };
 
-const beep = (frequency = 659.25, duration = 150) => {
+const isCountdownPhase = (phaseKey) => phaseKey === Phase.COUNTDOWN || phaseKey === Phase.REST_COUNTDOWN;
+
+const playTone = (frequency, duration, options = {}) => {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
   const now = audioContext.currentTime;
+  const startTime = options.startTime ?? now;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(frequency, now);
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(0.18, now + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration / 1000);
+  oscillator.type = options.type ?? 'triangle';
+  oscillator.frequency.setValueAtTime(frequency * 0.96, startTime);
+  oscillator.frequency.linearRampToValueAtTime(frequency * 1.08, startTime + duration / 1000);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(options.volume ?? 0.2, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration / 1000);
   oscillator.connect(gain).connect(audioContext.destination);
-  oscillator.start(now);
-  oscillator.stop(now + duration / 1000 + 0.05);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + duration / 1000 + 0.05);
+};
+
+const beep = (frequency = 659.25, duration = 150) => {
+  playTone(frequency, duration, { type: 'triangle', volume: 0.2 });
+};
+
+const playCelebration = () => {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  const now = audioContext.currentTime;
+  const notes = [880, 1174.66, 1318.51, 1567.98];
+  notes.forEach((frequency, index) => {
+    playTone(frequency, 180, { startTime: now + index * 0.12, type: 'sine', volume: 0.22 });
+  });
+  playTone(2093, 260, { startTime: now + 0.1, type: 'triangle', volume: 0.16 });
+};
+
+const ensureConfettiContext = () => {
+  if (!confettiCanvas) {
+    return null;
+  }
+  if (!confettiCtx) {
+    confettiCtx = confettiCanvas.getContext('2d');
+  }
+  return confettiCtx;
 };
 
 const isStorageAvailable = (() => {
@@ -107,6 +141,37 @@ const isStorageAvailable = (() => {
     return false;
   }
 })();
+
+const getPreferredTheme = () => {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+  return 'light';
+};
+
+const applyTheme = (theme) => {
+  const isDark = theme === 'dark';
+  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  if (themeToggle) {
+    themeToggle.checked = isDark;
+  }
+  if (themeStatus) {
+    themeStatus.textContent = isDark ? 'ダーク' : 'ライト';
+  }
+};
+
+const persistTheme = (theme) => {
+  if (!isStorageAvailable) {
+    return;
+  }
+  localStorage.setItem(THEME_KEY, theme);
+};
+
+const initializeTheme = () => {
+  const stored = isStorageAvailable ? localStorage.getItem(THEME_KEY) : null;
+  const theme = stored || getPreferredTheme();
+  applyTheme(theme);
+};
 
 const sanitizeHistoryEntries = (data) => {
   if (!Array.isArray(data)) {
@@ -364,8 +429,11 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
   phaseHint.textContent = hint;
   updateDisplays();
   updateTimerUI();
-  const phaseFrequency = phaseBeepFrequencies[phaseKey];
-  beep(phaseFrequency ?? 880);
+  lastCountdownSecond = null;
+  if (!isCountdownPhase(phaseKey)) {
+    const phaseFrequency = phaseBeepFrequencies[phaseKey];
+    beep(phaseFrequency ?? 880);
+  }
 };
 
 const nextRepOrSet = () => {
@@ -432,7 +500,7 @@ const finishWorkout = () => {
   updateDisplays();
   phaseTimer.textContent = '00';
   progressBar.style.width = '100%';
-  beep(440, 400);
+  playCelebration();
   recordWorkout();
   launchConfetti();
 };
@@ -442,6 +510,15 @@ const tick = () => {
     return;
   }
   updateTimerUI();
+  if (isCountdownPhase(currentPhase)) {
+    const elapsed = Math.min(Date.now() - phaseStart, phaseDuration);
+    const remaining = Math.max(phaseDuration - elapsed, 0);
+    const remainingSeconds = Math.ceil(remaining / 1000);
+    if (remainingSeconds !== lastCountdownSecond) {
+      lastCountdownSecond = remainingSeconds;
+      beep(988, 140);
+    }
+  }
   if (Date.now() - phaseStart >= phaseDuration) {
     updateTimerUI();
   }
@@ -513,6 +590,13 @@ pauseButton.addEventListener('click', pauseWorkout);
 resetButton.addEventListener('click', resetWorkout);
 setCountInput.addEventListener('input', updateSessionStats);
 repCountInput.addEventListener('input', updateSessionStats);
+if (themeToggle) {
+  themeToggle.addEventListener('change', (event) => {
+    const theme = event.target.checked ? 'dark' : 'light';
+    applyTheme(theme);
+    persistTheme(theme);
+  });
+}
 
 const handleOrientation = (event) => {
   if (!sensorMode || !sensorActive) {
@@ -600,12 +684,25 @@ sensorCalibrateButton.addEventListener('click', () => {
 });
 
 const launchConfetti = () => {
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
+  if (!confettiCanvas) {
+    return;
+  }
+  const ctx = ensureConfettiContext();
+  if (!ctx) {
+    return;
+  }
+  const pixelRatio = window.devicePixelRatio || 1;
+  const canvasWidth = window.innerWidth;
+  const canvasHeight = window.innerHeight;
+  confettiCanvas.width = Math.floor(canvasWidth * pixelRatio);
+  confettiCanvas.height = Math.floor(canvasHeight * pixelRatio);
+  confettiCanvas.style.width = '100%';
+  confettiCanvas.style.height = '100%';
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   confettiCanvas.classList.add('active');
   const pieces = Array.from({ length: 120 }).map(() => ({
-    x: Math.random() * confettiCanvas.width,
-    y: Math.random() * -confettiCanvas.height,
+    x: Math.random() * canvasWidth,
+    y: Math.random() * -canvasHeight,
     size: 6 + Math.random() * 6,
     speed: 2 + Math.random() * 4,
     color: `hsl(${Math.random() * 360}, 80%, 60%)`,
@@ -614,13 +711,13 @@ const launchConfetti = () => {
   let frame = 0;
   const draw = () => {
     frame += 1;
-    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     pieces.forEach((piece) => {
       piece.y += piece.speed;
       piece.x += Math.sin((piece.y + frame) / 20);
-      confettiCtx.fillStyle = piece.color;
-      confettiCtx.fillRect(piece.x, piece.y, piece.size, piece.size);
-      if (piece.y > confettiCanvas.height) {
+      ctx.fillStyle = piece.color;
+      ctx.fillRect(piece.x, piece.y, piece.size, piece.size);
+      if (piece.y > canvasHeight) {
         piece.y = -20;
       }
     });
@@ -634,13 +731,18 @@ const launchConfetti = () => {
 };
 
 const stopConfetti = () => {
+  if (!confettiCanvas) {
+    return;
+  }
+  const ctx = ensureConfettiContext();
+  if (!ctx) {
+    return;
+  }
   confettiCanvas.classList.remove('active');
-  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 };
 
-if (new URLSearchParams(window.location.search).has('test')) {
-  runTests();
-}
-
+runTests();
+initializeTheme();
 initializeHistory();
 updateDisplays();
