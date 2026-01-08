@@ -4,13 +4,17 @@
 
 ```
 /
-├── .github/        # GitHub設定
-├── .sdd/           # SDD関連ファイル
-├── app.js          # アプリの主要ロジック
-├── index.html      # エントリHTML
-├── styles.css      # スタイルシート
-├── README.md       # プロジェクト概要
-└── AGENTS.md       # エージェント指示
+├── .github/             # GitHub設定
+├── .sdd/                # SDD関連ファイル
+├── tests/               # Playwrightテスト
+├── app.js               # アプリの主要ロジック
+├── index.html           # エントリHTML
+├── styles.css           # スタイルシート
+├── package.json         # npm設定
+├── package-lock.json    # npmロック
+├── playwright.config.js # Playwright設定
+├── README.md            # プロジェクト概要
+└── AGENTS.md            # エージェント指示
 ```
 
 ## コード構成パターン

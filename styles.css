@@ -423,6 +423,33 @@ input[type="number"] {
   gap: 16px;
 }
 
+.support-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.support-item {
+  background: var(--surface-muted);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--surface-border);
+}
+
+.support-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.support-value {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 .history-note {
   margin: 0;
   font-size: 0.8rem;
@@ -509,6 +536,10 @@ input[type="number"] {
 
 .delay-6 {
   animation-delay: 0.5s;
+}
+
+.delay-7 {
+  animation-delay: 0.58s;
 }
 
 @keyframes rise {
