@@ -32,7 +32,7 @@ const sensorCalibrateButton = document.getElementById('sensor-calibrate');
 const sensorStatus = document.getElementById('sensor-status');
 
 const confettiCanvas = document.getElementById('confetti');
-const confettiCtx = confettiCanvas.getContext('2d');
+let confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
 
 const Phase = {
   IDLE: '待機中',
@@ -119,6 +119,16 @@ const playCelebration = () => {
     playTone(frequency, 180, { startTime: now + index * 0.12, type: 'sine', volume: 0.22 });
   });
   playTone(2093, 260, { startTime: now + 0.1, type: 'triangle', volume: 0.16 });
+};
+
+const ensureConfettiContext = () => {
+  if (!confettiCanvas) {
+    return null;
+  }
+  if (!confettiCtx) {
+    confettiCtx = confettiCanvas.getContext('2d');
+  }
+  return confettiCtx;
 };
 
 const isStorageAvailable = (() => {
@@ -674,12 +684,25 @@ sensorCalibrateButton.addEventListener('click', () => {
 });
 
 const launchConfetti = () => {
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
+  if (!confettiCanvas) {
+    return;
+  }
+  const ctx = ensureConfettiContext();
+  if (!ctx) {
+    return;
+  }
+  const pixelRatio = window.devicePixelRatio || 1;
+  const canvasWidth = window.innerWidth;
+  const canvasHeight = window.innerHeight;
+  confettiCanvas.width = Math.floor(canvasWidth * pixelRatio);
+  confettiCanvas.height = Math.floor(canvasHeight * pixelRatio);
+  confettiCanvas.style.width = '100%';
+  confettiCanvas.style.height = '100%';
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   confettiCanvas.classList.add('active');
   const pieces = Array.from({ length: 120 }).map(() => ({
-    x: Math.random() * confettiCanvas.width,
-    y: Math.random() * -confettiCanvas.height,
+    x: Math.random() * canvasWidth,
+    y: Math.random() * -canvasHeight,
     size: 6 + Math.random() * 6,
     speed: 2 + Math.random() * 4,
     color: `hsl(${Math.random() * 360}, 80%, 60%)`,
@@ -688,13 +711,13 @@ const launchConfetti = () => {
   let frame = 0;
   const draw = () => {
     frame += 1;
-    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     pieces.forEach((piece) => {
       piece.y += piece.speed;
       piece.x += Math.sin((piece.y + frame) / 20);
-      confettiCtx.fillStyle = piece.color;
-      confettiCtx.fillRect(piece.x, piece.y, piece.size, piece.size);
-      if (piece.y > confettiCanvas.height) {
+      ctx.fillStyle = piece.color;
+      ctx.fillRect(piece.x, piece.y, piece.size, piece.size);
+      if (piece.y > canvasHeight) {
         piece.y = -20;
       }
     });
@@ -708,8 +731,15 @@ const launchConfetti = () => {
 };
 
 const stopConfetti = () => {
+  if (!confettiCanvas) {
+    return;
+  }
+  const ctx = ensureConfettiContext();
+  if (!ctx) {
+    return;
+  }
   confettiCanvas.classList.remove('active');
-  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 };
 
 runTests();
