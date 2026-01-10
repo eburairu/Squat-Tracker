@@ -566,14 +566,56 @@ const tick = () => {
   }
 };
 
+const parsePositiveInt = (value) => {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 1 ? parsed : null;
+};
+
+const validateWorkoutInputs = () => {
+  const totalSetsValue = parsePositiveInt(setCountInput.value);
+  const repsPerSetValue = parsePositiveInt(repCountInput.value);
+  const downSeconds = parsePositiveInt(downDurationInput.value);
+  const holdSeconds = parsePositiveInt(holdDurationInput.value);
+  const upSeconds = parsePositiveInt(upDurationInput.value);
+  const restSeconds = parsePositiveInt(restDurationInput.value);
+  const countdownSeconds = parsePositiveInt(countdownDurationInput.value);
+
+  if (
+    !totalSetsValue
+    || !repsPerSetValue
+    || !downSeconds
+    || !holdSeconds
+    || !upSeconds
+    || !restSeconds
+    || !countdownSeconds
+  ) {
+    phaseHint.textContent = '入力値が不正です。セット数・回数・各秒数は1以上で入力してください。';
+    return null;
+  }
+
+  return {
+    totalSetsValue,
+    repsPerSetValue,
+  };
+};
+
 const startWorkout = () => {
-  totalSets = parseInt(setCountInput.value, 10);
-  repsPerSet = parseInt(repCountInput.value, 10);
+  if (workoutStarted || currentPhase !== Phase.IDLE) {
+    return;
+  }
+  const validatedInputs = validateWorkoutInputs();
+  if (!validatedInputs) {
+    return;
+  }
+  totalSets = validatedInputs.totalSetsValue;
+  repsPerSet = validatedInputs.repsPerSetValue;
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
   workoutStarted = true;
   workoutSaved = false;
+  startButton.disabled = true;
+  startButton.textContent = '進行中';
   updateSessionStats();
   startCountdown('スタートまでカウントダウン', () => {
     startPhaseCycle();
@@ -612,6 +654,8 @@ const resetWorkout = () => {
   isPaused = false;
   workoutStarted = false;
   workoutSaved = false;
+  startButton.disabled = false;
+  startButton.textContent = 'スタート';
   pauseButton.textContent = '一時停止';
   phaseTimer.textContent = '05';
   phaseHint.textContent = 'スタートまでカウントダウン';
