@@ -3,6 +3,8 @@ const setDisplay = document.getElementById('set-display');
 const repDisplay = document.getElementById('rep-display');
 const phaseTimer = document.getElementById('phase-timer');
 const phaseHint = document.getElementById('phase-hint');
+const quizProblem = document.getElementById('quiz-problem');
+const quizAnswer = document.getElementById('quiz-answer');
 const progressBar = document.getElementById('progress-bar');
 const statsTotalReps = document.getElementById('stats-total-reps');
 const statsTotalWorkouts = document.getElementById('stats-total-workouts');
@@ -60,6 +62,7 @@ let timeoutIds = [];
 let workoutStarted = false;
 let workoutSaved = false;
 let lastCountdownSecond = null;
+let currentQuiz = null;
 
 let sensorMode = false;
 let sensorActive = false;
@@ -82,6 +85,43 @@ const phaseBeepFrequencies = {
   [Phase.DOWN]: 523.25,
   [Phase.HOLD]: 659.25,
   [Phase.UP]: 784,
+};
+
+const timesTableRange = { min: 1, max: 9 };
+
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const generateQuiz = () => {
+  const divisor = getRandomInt(timesTableRange.min, timesTableRange.max);
+  const multiplier = getRandomInt(timesTableRange.min, timesTableRange.max);
+  return {
+    divisor,
+    dividend: divisor * multiplier,
+    answer: multiplier,
+  };
+};
+
+const updateQuizDisplay = (phaseKey) => {
+  if (!quizProblem || !quizAnswer) {
+    return;
+  }
+  if (phaseKey === Phase.DOWN) {
+    currentQuiz = generateQuiz();
+  }
+  if (phaseKey === Phase.DOWN || phaseKey === Phase.HOLD) {
+    const quiz = currentQuiz ?? generateQuiz();
+    currentQuiz = quiz;
+    quizProblem.textContent = `問題: ${quiz.dividend} ÷ ${quiz.divisor} = ?`;
+    quizAnswer.textContent = '答え: --';
+    return;
+  }
+  if (phaseKey === Phase.UP && currentQuiz) {
+    quizProblem.textContent = `問題: ${currentQuiz.dividend} ÷ ${currentQuiz.divisor} = ?`;
+    quizAnswer.textContent = `答え: ${currentQuiz.answer}`;
+    return;
+  }
+  quizProblem.textContent = '問題: --';
+  quizAnswer.textContent = '答え: --';
 };
 
 const isCountdownPhase = (phaseKey) => phaseKey === Phase.COUNTDOWN || phaseKey === Phase.REST_COUNTDOWN;
@@ -427,6 +467,7 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
   phaseDuration = durationSeconds * 1000;
   phaseStart = Date.now();
   phaseHint.textContent = hint;
+  updateQuizDisplay(phaseKey);
   updateDisplays();
   updateTimerUI();
   lastCountdownSecond = null;
@@ -497,6 +538,7 @@ const finishWorkout = () => {
   currentPhase = Phase.FINISHED;
   phaseDuration = null;
   phaseHint.textContent = 'お疲れさまでした！';
+  updateQuizDisplay(Phase.FINISHED);
   updateDisplays();
   phaseTimer.textContent = '00';
   progressBar.style.width = '100%';
@@ -564,6 +606,7 @@ const resetWorkout = () => {
   timeoutIds = [];
   phaseDuration = null;
   currentPhase = Phase.IDLE;
+  updateQuizDisplay(Phase.IDLE);
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
