@@ -281,6 +281,26 @@ body::after {
   margin-bottom: 12px;
 }
 
+.quiz-area {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  background: var(--surface-muted);
+  border-radius: 16px;
+  border: 1px solid var(--surface-border);
+}
+
+.quiz-problem,
+.quiz-answer {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.quiz-answer {
+  color: var(--accent-2);
+}
+
 .progress {
   width: 100%;
   height: 10px;
