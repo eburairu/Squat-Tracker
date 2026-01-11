@@ -3,6 +3,8 @@ const setDisplay = document.getElementById('set-display');
 const repDisplay = document.getElementById('rep-display');
 const phaseTimer = document.getElementById('phase-timer');
 const phaseHint = document.getElementById('phase-hint');
+const quizProblem = document.getElementById('quiz-problem');
+const quizAnswer = document.getElementById('quiz-answer');
 const progressBar = document.getElementById('progress-bar');
 const statsTotalReps = document.getElementById('stats-total-reps');
 const statsTotalWorkouts = document.getElementById('stats-total-workouts');
@@ -36,6 +38,7 @@ const sensorStatus = document.getElementById('sensor-status');
 
 const confettiCanvas = document.getElementById('confetti');
 let confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
+const prefersReducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
 
 const Phase = {
   IDLE: '待機中',
@@ -63,6 +66,7 @@ let timeoutIds = [];
 let workoutStarted = false;
 let workoutSaved = false;
 let lastCountdownSecond = null;
+let currentQuiz = null;
 
 let sensorMode = false;
 let sensorActive = false;
@@ -97,6 +101,43 @@ const phaseBeepFrequencies = {
   [Phase.DOWN]: 523.25,
   [Phase.HOLD]: 659.25,
   [Phase.UP]: 784,
+};
+
+const timesTableRange = { min: 1, max: 9 };
+
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const generateQuiz = () => {
+  const divisor = getRandomInt(timesTableRange.min, timesTableRange.max);
+  const multiplier = getRandomInt(timesTableRange.min, timesTableRange.max);
+  return {
+    divisor,
+    dividend: divisor * multiplier,
+    answer: multiplier,
+  };
+};
+
+const updateQuizDisplay = (phaseKey) => {
+  if (!quizProblem || !quizAnswer) {
+    return;
+  }
+  if (phaseKey === Phase.DOWN) {
+    currentQuiz = generateQuiz();
+  }
+  if (phaseKey === Phase.DOWN || phaseKey === Phase.HOLD) {
+    const quiz = currentQuiz ?? generateQuiz();
+    currentQuiz = quiz;
+    quizProblem.textContent = `問題: ${quiz.dividend} ÷ ${quiz.divisor} = ?`;
+    quizAnswer.textContent = '答え: --';
+    return;
+  }
+  if (phaseKey === Phase.UP && currentQuiz) {
+    quizProblem.textContent = `問題: ${currentQuiz.dividend} ÷ ${currentQuiz.divisor} = ?`;
+    quizAnswer.textContent = `答え: ${currentQuiz.answer}`;
+    return;
+  }
+  quizProblem.textContent = '問題: --';
+  quizAnswer.textContent = '答え: --';
 };
 
 const isCountdownPhase = (phaseKey) => phaseKey === Phase.COUNTDOWN || phaseKey === Phase.REST_COUNTDOWN;
@@ -431,6 +472,21 @@ const updateSessionStats = () => {
   statsSessionTarget.textContent = getSessionTargetReps().toLocaleString('ja-JP');
 };
 
+const updateActionButtonStates = () => {
+  if (!startButton || !pauseButton) {
+    return;
+  }
+  startButton.setAttribute('aria-pressed', workoutStarted ? 'true' : 'false');
+  pauseButton.setAttribute('aria-pressed', isPaused ? 'true' : 'false');
+};
+
+const applyReducedMotionPreference = () => {
+  if (!prefersReducedMotion) {
+    return;
+  }
+  document.body.classList.toggle('reduced-motion', prefersReducedMotion.matches);
+};
+
 const createHistoryEntry = () => {
   const durations = {
     down: Number.parseInt(downDurationInput.value, 10),
@@ -515,6 +571,7 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
   phaseDuration = durationSeconds * 1000;
   phaseStart = Date.now();
   phaseHint.textContent = hint;
+  updateQuizDisplay(phaseKey);
   updateDisplays();
   updateTimerUI();
   lastCountdownSecond = null;
@@ -584,13 +641,16 @@ const startRest = () => {
 const finishWorkout = () => {
   currentPhase = Phase.FINISHED;
   phaseDuration = null;
+  isPaused = false;
   phaseHint.textContent = 'お疲れさまでした！';
+  updateQuizDisplay(Phase.FINISHED);
   updateDisplays();
   phaseTimer.textContent = '00';
   progressBar.style.width = '100%';
   playCelebration();
   recordWorkout();
   launchConfetti();
+  updateActionButtonStates();
 };
 
 const tick = () => {
@@ -612,14 +672,57 @@ const tick = () => {
   }
 };
 
+const parsePositiveInt = (value) => {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 1 ? parsed : null;
+};
+
+const validateWorkoutInputs = () => {
+  const totalSetsValue = parsePositiveInt(setCountInput.value);
+  const repsPerSetValue = parsePositiveInt(repCountInput.value);
+  const downSeconds = parsePositiveInt(downDurationInput.value);
+  const holdSeconds = parsePositiveInt(holdDurationInput.value);
+  const upSeconds = parsePositiveInt(upDurationInput.value);
+  const restSeconds = parsePositiveInt(restDurationInput.value);
+  const countdownSeconds = parsePositiveInt(countdownDurationInput.value);
+
+  if (
+    !totalSetsValue
+    || !repsPerSetValue
+    || !downSeconds
+    || !holdSeconds
+    || !upSeconds
+    || !restSeconds
+    || !countdownSeconds
+  ) {
+    phaseHint.textContent = '入力値が不正です。セット数・回数・各秒数は1以上で入力してください。';
+    return null;
+  }
+
+  return {
+    totalSetsValue,
+    repsPerSetValue,
+  };
+};
+
 const startWorkout = () => {
-  totalSets = parseInt(setCountInput.value, 10);
-  repsPerSet = parseInt(repCountInput.value, 10);
+  if (workoutStarted || currentPhase !== Phase.IDLE) {
+    return;
+  }
+  const validatedInputs = validateWorkoutInputs();
+  if (!validatedInputs) {
+    return;
+  }
+  totalSets = validatedInputs.totalSetsValue;
+  repsPerSet = validatedInputs.repsPerSetValue;
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
   workoutStarted = true;
   workoutSaved = false;
+  startButton.disabled = true;
+  startButton.textContent = '進行中';
+  updateActionButtonStates();
   updateSessionStats();
   startCountdown('スタートまでカウントダウン', () => {
     startPhaseCycle();
@@ -645,6 +748,7 @@ const pauseWorkout = () => {
       schedulePhase(callback, durationSeconds);
     }
   }
+  updateActionButtonStates();
 };
 
 const resetWorkout = () => {
@@ -652,12 +756,16 @@ const resetWorkout = () => {
   timeoutIds = [];
   phaseDuration = null;
   currentPhase = Phase.IDLE;
+  updateQuizDisplay(Phase.IDLE);
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
   workoutStarted = false;
   workoutSaved = false;
+  startButton.disabled = false;
+  startButton.textContent = 'スタート';
   pauseButton.textContent = '一時停止';
+  updateActionButtonStates();
   phaseTimer.textContent = '05';
   phaseHint.textContent = 'スタートまでカウントダウン';
   progressBar.style.width = '0%';
@@ -685,6 +793,40 @@ if (themeToggle) {
     persistTheme(theme);
   });
 }
+if (prefersReducedMotion) {
+  prefersReducedMotion.addEventListener('change', applyReducedMotionPreference);
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.defaultPrevented) {
+    return;
+  }
+  const key = event.key;
+  if (key !== ' ' && key !== 'Enter') {
+    return;
+  }
+  const target = event.target;
+  if (target instanceof HTMLElement) {
+    const tagName = target.tagName;
+    if (
+      tagName === 'INPUT'
+      || tagName === 'TEXTAREA'
+      || tagName === 'SELECT'
+      || tagName === 'BUTTON'
+      || target.isContentEditable
+    ) {
+      return;
+    }
+  }
+  event.preventDefault();
+  if (currentPhase === Phase.IDLE && !workoutStarted) {
+    startWorkout();
+    return;
+  }
+  if (currentPhase !== Phase.FINISHED) {
+    pauseWorkout();
+  }
+});
 
 const handleOrientation = (event) => {
   if (!sensorMode || !sensorActive) {
@@ -782,17 +924,21 @@ const launchConfetti = () => {
   const pixelRatio = window.devicePixelRatio || 1;
   const canvasWidth = window.innerWidth;
   const canvasHeight = window.innerHeight;
+  const reduceMotion = (prefersReducedMotion && prefersReducedMotion.matches)
+    || document.body.classList.contains('reduced-motion');
+  const pieceCount = reduceMotion ? 40 : 120;
+  const maxFrames = reduceMotion ? 120 : 240;
   confettiCanvas.width = Math.floor(canvasWidth * pixelRatio);
   confettiCanvas.height = Math.floor(canvasHeight * pixelRatio);
   confettiCanvas.style.width = '100%';
   confettiCanvas.style.height = '100%';
   ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   confettiCanvas.classList.add('active');
-  const pieces = Array.from({ length: 120 }).map(() => ({
+  const pieces = Array.from({ length: pieceCount }).map(() => ({
     x: Math.random() * canvasWidth,
     y: Math.random() * -canvasHeight,
     size: 6 + Math.random() * 6,
-    speed: 2 + Math.random() * 4,
+    speed: (reduceMotion ? 1 : 2) + Math.random() * (reduceMotion ? 2 : 4),
     color: `hsl(${Math.random() * 360}, 80%, 60%)`,
   }));
 
@@ -809,7 +955,7 @@ const launchConfetti = () => {
         piece.y = -20;
       }
     });
-    if (frame < 240) {
+    if (frame < maxFrames) {
       requestAnimationFrame(draw);
     } else {
       stopConfetti();
@@ -831,6 +977,8 @@ const stopConfetti = () => {
 };
 
 runTests();
+applyReducedMotionPreference();
 initializeTheme();
 initializeHistory();
 updateDisplays();
+updateActionButtonStates();
