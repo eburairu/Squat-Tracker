@@ -291,6 +291,11 @@ body::after {
   border: 1px solid var(--surface-border);
 }
 
+.quiz-area-flipped {
+  transform: rotate(180deg);
+  transform-origin: center;
+}
+
 .quiz-problem,
 .quiz-answer {
   font-size: 1rem;
