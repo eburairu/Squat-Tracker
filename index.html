@@ -77,6 +77,10 @@
           </div>
 
           <div class="timer">
+            <div class="quiz-area quiz-area-flipped" aria-live="polite">
+              <div id="quiz-problem" class="quiz-problem">問題: --</div>
+              <div id="quiz-answer" class="quiz-answer">答え: --</div>
+            </div>
             <div id="phase-timer" class="timer-value">05</div>
             <div id="phase-hint" class="timer-hint">スタートまでカウントダウン</div>
             <div class="progress">
@@ -85,9 +89,9 @@
           </div>
 
           <div class="actions">
-            <button id="start-button" class="primary">スタート</button>
-            <button id="pause-button">一時停止</button>
-            <button id="reset-button" class="ghost">リセット</button>
+            <button id="start-button" class="primary" aria-label="セッションを開始" aria-pressed="false">スタート</button>
+            <button id="pause-button" aria-label="セッションを一時停止/再開" aria-pressed="false">一時停止</button>
+            <button id="reset-button" class="ghost" aria-label="セッションをリセット">リセット</button>
           </div>
         </div>
 
