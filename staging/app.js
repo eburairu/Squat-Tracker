@@ -35,6 +35,7 @@ const sensorStatus = document.getElementById('sensor-status');
 
 const confettiCanvas = document.getElementById('confetti');
 let confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
+const prefersReducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
 
 const Phase = {
   IDLE: '待機中',
@@ -388,6 +389,21 @@ const updateSessionStats = () => {
   statsSessionTarget.textContent = getSessionTargetReps().toLocaleString('ja-JP');
 };
 
+const updateActionButtonStates = () => {
+  if (!startButton || !pauseButton) {
+    return;
+  }
+  startButton.setAttribute('aria-pressed', workoutStarted ? 'true' : 'false');
+  pauseButton.setAttribute('aria-pressed', isPaused ? 'true' : 'false');
+};
+
+const applyReducedMotionPreference = () => {
+  if (!prefersReducedMotion) {
+    return;
+  }
+  document.body.classList.toggle('reduced-motion', prefersReducedMotion.matches);
+};
+
 const createHistoryEntry = () => {
   const durations = {
     down: Number.parseInt(downDurationInput.value, 10),
@@ -537,6 +553,7 @@ const startRest = () => {
 const finishWorkout = () => {
   currentPhase = Phase.FINISHED;
   phaseDuration = null;
+  isPaused = false;
   phaseHint.textContent = 'お疲れさまでした！';
   updateQuizDisplay(Phase.FINISHED);
   updateDisplays();
@@ -545,6 +562,7 @@ const finishWorkout = () => {
   playCelebration();
   recordWorkout();
   launchConfetti();
+  updateActionButtonStates();
 };
 
 const tick = () => {
@@ -616,6 +634,7 @@ const startWorkout = () => {
   workoutSaved = false;
   startButton.disabled = true;
   startButton.textContent = '進行中';
+  updateActionButtonStates();
   updateSessionStats();
   startCountdown('スタートまでカウントダウン', () => {
     startPhaseCycle();
@@ -641,6 +660,7 @@ const pauseWorkout = () => {
       schedulePhase(callback, durationSeconds);
     }
   }
+  updateActionButtonStates();
 };
 
 const resetWorkout = () => {
@@ -657,6 +677,7 @@ const resetWorkout = () => {
   startButton.disabled = false;
   startButton.textContent = 'スタート';
   pauseButton.textContent = '一時停止';
+  updateActionButtonStates();
   phaseTimer.textContent = '05';
   phaseHint.textContent = 'スタートまでカウントダウン';
   progressBar.style.width = '0%';
@@ -684,6 +705,40 @@ if (themeToggle) {
     persistTheme(theme);
   });
 }
+if (prefersReducedMotion) {
+  prefersReducedMotion.addEventListener('change', applyReducedMotionPreference);
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.defaultPrevented) {
+    return;
+  }
+  const key = event.key;
+  if (key !== ' ' && key !== 'Enter') {
+    return;
+  }
+  const target = event.target;
+  if (target instanceof HTMLElement) {
+    const tagName = target.tagName;
+    if (
+      tagName === 'INPUT'
+      || tagName === 'TEXTAREA'
+      || tagName === 'SELECT'
+      || tagName === 'BUTTON'
+      || target.isContentEditable
+    ) {
+      return;
+    }
+  }
+  event.preventDefault();
+  if (currentPhase === Phase.IDLE && !workoutStarted) {
+    startWorkout();
+    return;
+  }
+  if (currentPhase !== Phase.FINISHED) {
+    pauseWorkout();
+  }
+});
 
 const handleOrientation = (event) => {
   if (!sensorMode || !sensorActive) {
@@ -781,17 +836,21 @@ const launchConfetti = () => {
   const pixelRatio = window.devicePixelRatio || 1;
   const canvasWidth = window.innerWidth;
   const canvasHeight = window.innerHeight;
+  const reduceMotion = (prefersReducedMotion && prefersReducedMotion.matches)
+    || document.body.classList.contains('reduced-motion');
+  const pieceCount = reduceMotion ? 40 : 120;
+  const maxFrames = reduceMotion ? 120 : 240;
   confettiCanvas.width = Math.floor(canvasWidth * pixelRatio);
   confettiCanvas.height = Math.floor(canvasHeight * pixelRatio);
   confettiCanvas.style.width = '100%';
   confettiCanvas.style.height = '100%';
   ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   confettiCanvas.classList.add('active');
-  const pieces = Array.from({ length: 120 }).map(() => ({
+  const pieces = Array.from({ length: pieceCount }).map(() => ({
     x: Math.random() * canvasWidth,
     y: Math.random() * -canvasHeight,
     size: 6 + Math.random() * 6,
-    speed: 2 + Math.random() * 4,
+    speed: (reduceMotion ? 1 : 2) + Math.random() * (reduceMotion ? 2 : 4),
     color: `hsl(${Math.random() * 360}, 80%, 60%)`,
   }));
 
@@ -808,7 +867,7 @@ const launchConfetti = () => {
         piece.y = -20;
       }
     });
-    if (frame < 240) {
+    if (frame < maxFrames) {
       requestAnimationFrame(draw);
     } else {
       stopConfetti();
@@ -830,6 +889,8 @@ const stopConfetti = () => {
 };
 
 runTests();
+applyReducedMotionPreference();
 initializeTheme();
 initializeHistory();
 updateDisplays();
+updateActionButtonStates();

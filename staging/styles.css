@@ -507,6 +507,20 @@ input[type="number"] {
   animation: rise 0.7s ease forwards;
 }
 
+.reduced-motion .reveal {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+.reduced-motion .progress-bar {
+  transition: none;
+}
+
+.reduced-motion .confetti.active {
+  display: none;
+}
+
 .delay-1 {
   animation-delay: 0.1s;
 }
@@ -539,6 +553,22 @@ input[type="number"] {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .progress-bar {
+    transition: none;
+  }
+
+  .confetti.active {
+    display: none;
   }
 }
 
