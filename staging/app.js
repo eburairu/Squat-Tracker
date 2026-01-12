@@ -73,6 +73,7 @@ let sensorActive = false;
 let sensorBaseline = null;
 let sensorThreshold = null;
 let lastSensorCounted = false;
+let lastOrientationTime = 0;
 
 const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
@@ -832,6 +833,14 @@ const handleOrientation = (event) => {
   if (!sensorMode || !sensorActive) {
     return;
   }
+
+  // Throttle sensor updates to ~20Hz (50ms) to reduce CPU usage and battery drain
+  const now = Date.now();
+  if (now - lastOrientationTime < 50) {
+    return;
+  }
+  lastOrientationTime = now;
+
   const beta = event.beta;
   if (beta === null || beta === undefined) {
     sensorStatus.textContent = '角度データを取得できません。';
