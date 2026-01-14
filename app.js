@@ -461,6 +461,9 @@ const getCompletedReps = () => {
   if (!workoutStarted) {
     return 0;
   }
+  if (currentPhase === Phase.FINISHED) {
+    return getSessionTargetReps();
+  }
   const completed = (currentSet - 1) * repsPerSet + (currentRep - 1);
   return Math.max(Math.min(completed, getSessionTargetReps()), 0);
 };
