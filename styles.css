@@ -373,12 +373,19 @@ input[type="number"] {
   min-height: 44px;
 }
 
-.sensor-controls {
+.sensor-controls,
+.voice-controls {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.voice-controls .label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .switch {

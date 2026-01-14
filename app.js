@@ -16,6 +16,8 @@ const historyList = document.getElementById('history-list');
 const historyNote = document.getElementById('history-note');
 const themeToggle = document.getElementById('theme-toggle');
 const themeStatus = document.getElementById('theme-status');
+const voiceToggle = document.getElementById('voice-toggle');
+const voiceStatus = document.getElementById('voice-status');
 const dailyMessage = document.getElementById('daily-message');
 const dailyGoal = document.getElementById('daily-goal');
 const dailyStreak = document.getElementById('daily-streak');
@@ -78,6 +80,7 @@ let lastOrientationTime = 0;
 const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
 const THEME_KEY = 'squat-tracker-theme';
+const VOICE_COACH_KEY = 'squat-tracker-voice';
 let historyEntries = [];
 
 const dailyTips = [
@@ -142,6 +145,29 @@ const updateQuizDisplay = (phaseKey) => {
 };
 
 const isCountdownPhase = (phaseKey) => phaseKey === Phase.COUNTDOWN || phaseKey === Phase.REST_COUNTDOWN;
+
+const VoiceCoach = {
+  enabled: false,
+
+  speak(text) {
+    const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+    if (!this.enabled || !synth) return;
+
+    synth.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 1.2;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    synth.speak(utterance);
+  },
+
+  setEnabled(value) {
+    this.enabled = value;
+  }
+};
 
 const playTone = (frequency, duration, options = {}) => {
   if (!audioContext) {
@@ -228,6 +254,17 @@ const initializeTheme = () => {
   const stored = isStorageAvailable ? localStorage.getItem(THEME_KEY) : null;
   const theme = stored || getPreferredTheme();
   applyTheme(theme);
+};
+
+const initializeVoiceCoach = () => {
+  if (!voiceToggle || !voiceStatus) return;
+
+  const stored = isStorageAvailable ? localStorage.getItem(VOICE_COACH_KEY) : null;
+  const enabled = stored === 'true';
+
+  voiceToggle.checked = enabled;
+  VoiceCoach.setEnabled(enabled);
+  voiceStatus.textContent = enabled ? 'ON' : 'OFF';
 };
 
 const sanitizeHistoryEntries = (data) => {
@@ -582,6 +619,11 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
   if (!isCountdownPhase(phaseKey)) {
     const phaseFrequency = phaseBeepFrequencies[phaseKey];
     beep(phaseFrequency ?? 880);
+
+    if (phaseKey === Phase.DOWN) VoiceCoach.speak('しゃがんで');
+    else if (phaseKey === Phase.HOLD) VoiceCoach.speak('キープ');
+    else if (phaseKey === Phase.UP) VoiceCoach.speak('立って');
+    else if (phaseKey === Phase.REST) VoiceCoach.speak('休憩です。深呼吸しましょう');
   }
 };
 
@@ -652,6 +694,7 @@ const finishWorkout = () => {
   phaseTimer.textContent = '00';
   progressBar.style.width = '100%';
   playCelebration();
+  VoiceCoach.speak('お疲れ様でした！ナイスファイト');
   recordWorkout();
   launchConfetti();
   updateActionButtonStates();
@@ -669,6 +712,9 @@ const tick = () => {
     if (remainingSeconds !== lastCountdownSecond) {
       lastCountdownSecond = remainingSeconds;
       beep(988, 140);
+      if (remainingSeconds <= 3 && remainingSeconds >= 1) {
+        VoiceCoach.speak(String(remainingSeconds));
+      }
     }
   }
   if (Date.now() - phaseStart >= phaseDuration) {
@@ -728,6 +774,7 @@ const startWorkout = () => {
   startButton.textContent = '進行中';
   updateActionButtonStates();
   updateSessionStats();
+  VoiceCoach.speak('準備して。スタートします');
   startCountdown('スタートまでカウントダウン', () => {
     startPhaseCycle();
   });
@@ -795,6 +842,23 @@ if (themeToggle) {
     const theme = event.target.checked ? 'dark' : 'light';
     applyTheme(theme);
     persistTheme(theme);
+  });
+}
+
+if (voiceToggle) {
+  voiceToggle.addEventListener('change', (event) => {
+    const enabled = event.target.checked;
+    VoiceCoach.setEnabled(enabled);
+    if (voiceStatus) {
+      voiceStatus.textContent = enabled ? 'ON' : 'OFF';
+    }
+    if (isStorageAvailable) {
+      localStorage.setItem(VOICE_COACH_KEY, String(enabled));
+    }
+    // モバイルの制限解除のため、ユーザー操作時に空の音声を再生しておく
+    if (enabled) {
+      VoiceCoach.speak('');
+    }
   });
 }
 if (prefersReducedMotion) {
@@ -991,6 +1055,7 @@ const stopConfetti = () => {
 runTests();
 applyReducedMotionPreference();
 initializeTheme();
+initializeVoiceCoach();
 initializeHistory();
 updateDisplays();
 updateActionButtonStates();
