@@ -81,6 +81,7 @@ const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
 const THEME_KEY = 'squat-tracker-theme';
 const VOICE_COACH_KEY = 'squat-tracker-voice';
+const WORKOUT_SETTINGS_KEY = 'squat-tracker-workout-settings';
 let historyEntries = [];
 
 const dailyTips = [
@@ -265,6 +266,68 @@ const initializeVoiceCoach = () => {
   voiceToggle.checked = enabled;
   VoiceCoach.setEnabled(enabled);
   voiceStatus.textContent = enabled ? 'ON' : 'OFF';
+};
+
+const saveWorkoutSettings = () => {
+  if (!isStorageAvailable) return;
+
+  const settings = {
+    setCount: setCountInput.value,
+    repCount: repCountInput.value,
+    downDuration: downDurationInput.value,
+    holdDuration: holdDurationInput.value,
+    upDuration: upDurationInput.value,
+    restDuration: restDurationInput.value,
+    countdownDuration: countdownDurationInput.value,
+  };
+
+  try {
+    localStorage.setItem(WORKOUT_SETTINGS_KEY, JSON.stringify(settings));
+  } catch (error) {
+    // Ignore errors
+  }
+};
+
+const loadWorkoutSettings = () => {
+  if (!isStorageAvailable) return;
+
+  try {
+    const raw = localStorage.getItem(WORKOUT_SETTINGS_KEY);
+    if (!raw) return;
+
+    const settings = JSON.parse(raw);
+    if (!settings || typeof settings !== 'object') return;
+
+    if (settings.setCount) setCountInput.value = settings.setCount;
+    if (settings.repCount) repCountInput.value = settings.repCount;
+    if (settings.downDuration) downDurationInput.value = settings.downDuration;
+    if (settings.holdDuration) holdDurationInput.value = settings.holdDuration;
+    if (settings.upDuration) upDurationInput.value = settings.upDuration;
+    if (settings.restDuration) restDurationInput.value = settings.restDuration;
+    if (settings.countdownDuration) countdownDurationInput.value = settings.countdownDuration;
+  } catch (error) {
+    // Ignore errors
+  }
+};
+
+const initializeWorkoutSettings = () => {
+  loadWorkoutSettings();
+
+  const inputs = [
+    setCountInput,
+    repCountInput,
+    downDurationInput,
+    holdDurationInput,
+    upDurationInput,
+    restDurationInput,
+    countdownDurationInput,
+  ];
+
+  inputs.forEach((input) => {
+    if (input) {
+      input.addEventListener('change', saveWorkoutSettings);
+    }
+  });
 };
 
 const sanitizeHistoryEntries = (data) => {
@@ -1056,6 +1119,7 @@ runTests();
 applyReducedMotionPreference();
 initializeTheme();
 initializeVoiceCoach();
+initializeWorkoutSettings();
 initializeHistory();
 updateDisplays();
 updateActionButtonStates();
