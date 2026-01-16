@@ -634,3 +634,14 @@ input[type="number"] {
     text-align: left;
   }
 }
+
+/* Validation Styles */
+input[type="number"].input-error {
+  border-color: #ff3b30; /* System Red */
+  background-color: rgba(255, 59, 48, 0.05);
+}
+
+input[type="number"].input-error:focus-visible {
+  outline-color: #ff3b30;
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.2);
+}
