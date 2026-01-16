@@ -147,8 +147,36 @@ const updateQuizDisplay = (phaseKey) => {
 
 const isCountdownPhase = (phaseKey) => phaseKey === Phase.COUNTDOWN || phaseKey === Phase.REST_COUNTDOWN;
 
+const ensureAudioContext = () => {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+  return audioContext;
+};
+
 const VoiceCoach = {
   enabled: false,
+  voice: null,
+
+  init() {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const setVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      this.voice = voices.find((v) => v.lang === 'ja-JP' && v.default)
+        || voices.find((v) => v.lang === 'ja-JP')
+        || voices[0]
+        || null;
+    };
+
+    setVoice();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = setVoice;
+    }
+  },
 
   speak(text) {
     const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
@@ -158,6 +186,9 @@ const VoiceCoach = {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ja-JP';
+    if (this.voice) {
+      utterance.voice = this.voice;
+    }
     utterance.rate = 1.2;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
@@ -171,9 +202,7 @@ const VoiceCoach = {
 };
 
 const playTone = (frequency, duration, options = {}) => {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  ensureAudioContext();
   const now = audioContext.currentTime;
   const startTime = options.startTime ?? now;
   const oscillator = audioContext.createOscillator();
@@ -194,9 +223,7 @@ const beep = (frequency = 659.25, duration = 150) => {
 };
 
 const playCelebration = () => {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  ensureAudioContext();
   const now = audioContext.currentTime;
   const notes = [880, 1174.66, 1318.51, 1567.98];
   notes.forEach((frequency, index) => {
@@ -258,6 +285,7 @@ const initializeTheme = () => {
 };
 
 const initializeVoiceCoach = () => {
+  VoiceCoach.init();
   if (!voiceToggle || !voiceStatus) return;
 
   const stored = isStorageAvailable ? localStorage.getItem(VOICE_COACH_KEY) : null;
@@ -819,6 +847,7 @@ const validateWorkoutInputs = () => {
 };
 
 const startWorkout = () => {
+  ensureAudioContext();
   if (workoutStarted || currentPhase !== Phase.IDLE) {
     return;
   }
