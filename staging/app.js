@@ -296,8 +296,39 @@ const initializeVoiceCoach = () => {
   voiceStatus.textContent = enabled ? 'ON' : 'OFF';
 };
 
+const validateInput = (input) => {
+  const isValid = input.checkValidity() && input.value !== '';
+  if (isValid) {
+    input.classList.remove('input-error');
+  } else {
+    input.classList.add('input-error');
+  }
+  return isValid;
+};
+
+const areAllInputsValid = () => {
+  const inputs = [
+    setCountInput,
+    repCountInput,
+    downDurationInput,
+    holdDurationInput,
+    upDurationInput,
+    restDurationInput,
+    countdownDurationInput,
+  ];
+  return inputs.every((input) => validateInput(input));
+};
+
+const updateStartButtonAvailability = () => {
+  const valid = areAllInputsValid();
+  if (!workoutStarted) {
+    startButton.disabled = !valid;
+  }
+};
+
 const saveWorkoutSettings = () => {
   if (!isStorageAvailable) return;
+  if (!areAllInputsValid()) return;
 
   const settings = {
     setCount: setCountInput.value,
@@ -353,9 +384,22 @@ const initializeWorkoutSettings = () => {
 
   inputs.forEach((input) => {
     if (input) {
-      input.addEventListener('change', saveWorkoutSettings);
+      input.addEventListener('input', () => {
+        validateInput(input);
+        updateStartButtonAvailability();
+      });
+      input.addEventListener('change', () => {
+        if (validateInput(input)) {
+          saveWorkoutSettings();
+        }
+        updateStartButtonAvailability();
+      });
+    }
+    if (input) {
+      validateInput(input);
     }
   });
+  updateStartButtonAvailability();
 };
 
 const sanitizeHistoryEntries = (data) => {
