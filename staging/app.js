@@ -53,8 +53,57 @@ const Phase = {
   FINISHED: '終了',
 };
 
+class WorkoutTimer {
+  constructor() {
+    this.timeoutId = null;
+    this.callback = null;
+    this.remaining = 0;
+    this.startTime = 0;
+    this.isRunning = false;
+  }
+
+  schedule(durationSeconds, callback) {
+    this.cancel();
+    this.callback = callback;
+    this.remaining = durationSeconds * 1000;
+    this.resume();
+  }
+
+  pause() {
+    if (!this.isRunning) return;
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = null;
+    const elapsed = Date.now() - this.startTime;
+    this.remaining = Math.max(0, this.remaining - elapsed);
+    this.isRunning = false;
+  }
+
+  resume() {
+    if (this.isRunning || !this.callback) return;
+    // If remaining is 0 or less, execute immediately (or next tick)
+    this.startTime = Date.now();
+    this.isRunning = true;
+    this.timeoutId = setTimeout(() => {
+      this.isRunning = false;
+      this.callback();
+    }, Math.max(0, this.remaining));
+  }
+
+  cancel() {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = null;
+    this.callback = null;
+    this.remaining = 0;
+    this.isRunning = false;
+  }
+}
+
+const workoutTimer = new WorkoutTimer();
 let audioContext = null;
-let timerId = null;
 let phaseStart = null;
 let phaseDuration = null;
 let currentPhase = Phase.IDLE;
@@ -64,7 +113,6 @@ let currentSet = 1;
 let currentRep = 1;
 let isPaused = false;
 let pausedAt = null;
-let timeoutIds = [];
 let workoutStarted = false;
 let workoutSaved = false;
 let lastCountdownSecond = null;
@@ -797,14 +845,7 @@ const startPhaseCycle = () => {
 };
 
 const schedulePhase = (callback, durationSeconds) => {
-  const timeoutId = setTimeout(() => {
-    if (isPaused) {
-      timerId = { callback, durationSeconds };
-      return;
-    }
-    callback();
-  }, durationSeconds * 1000);
-  timeoutIds.push(timeoutId);
+  workoutTimer.schedule(durationSeconds, callback);
 };
 
 const startCountdown = (label, callback) => {
@@ -930,22 +971,18 @@ const pauseWorkout = () => {
     pausedAt = Date.now();
     phaseHint.textContent = '一時停止中';
     pauseButton.textContent = '再開';
+    workoutTimer.pause();
   } else {
     const pausedDuration = Date.now() - pausedAt;
     phaseStart += pausedDuration;
     pauseButton.textContent = '一時停止';
-    if (timerId) {
-      const { callback, durationSeconds } = timerId;
-      timerId = null;
-      schedulePhase(callback, durationSeconds);
-    }
+    workoutTimer.resume();
   }
   updateActionButtonStates();
 };
 
 const resetWorkout = () => {
-  timeoutIds.forEach((timeoutId) => clearTimeout(timeoutId));
-  timeoutIds = [];
+  workoutTimer.cancel();
   phaseDuration = null;
   currentPhase = Phase.IDLE;
   updateQuizDisplay(Phase.IDLE);
