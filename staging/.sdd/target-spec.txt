@@ -1,1 +1,1 @@
-.sdd/specs/archives/20250220_apple-style-redesign
+.sdd/specs/20250318_agents-md-refactor
