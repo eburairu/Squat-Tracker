@@ -9,10 +9,11 @@ const progressBar = document.getElementById('progress-bar');
 const statsTotalReps = document.getElementById('stats-total-reps');
 const statsTotalWorkouts = document.getElementById('stats-total-workouts');
 const statsLastDate = document.getElementById('stats-last-date');
-const statsLastReps = document.getElementById('stats-last-reps');
+const statsRank = document.getElementById('stats-rank');
 const statsSessionReps = document.getElementById('stats-session-reps');
 const statsSessionTarget = document.getElementById('stats-session-target');
 const historyList = document.getElementById('history-list');
+const heatmapContainer = document.getElementById('activity-heatmap');
 const historyNote = document.getElementById('history-note');
 const themeToggle = document.getElementById('theme-toggle');
 const themeStatus = document.getElementById('theme-status');
@@ -627,15 +628,24 @@ const updateHistoryNote = () => {
     : 'この端末では履歴の自動保存が利用できません。';
 };
 
+const calculateRank = (totalReps) => {
+  if (totalReps >= 10000) return 'Diamond';
+  if (totalReps >= 5000) return 'Platinum';
+  if (totalReps >= 1000) return 'Gold';
+  if (totalReps >= 500) return 'Silver';
+  if (totalReps >= 100) return 'Bronze';
+  return 'Beginner';
+};
+
 const renderStats = () => {
-  if (!statsTotalReps || !statsTotalWorkouts || !statsLastDate || !statsLastReps) {
+  if (!statsTotalReps || !statsTotalWorkouts || !statsLastDate || !statsRank) {
     return;
   }
   const stats = computeStats(historyEntries);
   statsTotalReps.textContent = stats.totalRepsAllTime.toLocaleString('ja-JP');
   statsTotalWorkouts.textContent = stats.totalWorkouts.toLocaleString('ja-JP');
   statsLastDate.textContent = stats.lastWorkoutDate ? formatDate(stats.lastWorkoutDate) : '--';
-  statsLastReps.textContent = stats.lastWorkoutDate ? stats.lastWorkoutTotalReps.toLocaleString('ja-JP') : '--';
+  statsRank.textContent = calculateRank(stats.totalRepsAllTime);
 };
 
 const renderHistory = () => {
@@ -744,6 +754,7 @@ const recordWorkout = () => {
   workoutSaved = true;
   renderStats();
   renderHistory();
+  renderHeatmap();
   updateDailySupport();
 };
 
@@ -786,10 +797,97 @@ const updateTimerUI = () => {
   progressBar.style.width = `${(elapsed / phaseDuration) * 100}%`;
 };
 
+let heatmapTooltip = null;
+
+const renderHeatmap = () => {
+  if (!heatmapContainer) return;
+  heatmapContainer.innerHTML = '';
+
+  if (!heatmapTooltip) {
+    heatmapTooltip = document.createElement('div');
+    heatmapTooltip.className = 'heatmap-tooltip';
+    document.body.appendChild(heatmapTooltip);
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'heatmap-grid';
+
+  const dataMap = new Map();
+  historyEntries.forEach((entry) => {
+    const key = getLocalDateKey(new Date(entry.date));
+    if (key) {
+      dataMap.set(key, (dataMap.get(key) || 0) + entry.totalReps);
+    }
+  });
+
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - (26 * 7) - dayOfWeek);
+
+  const cursor = new Date(startDate);
+  const daysToRender = [];
+
+  while (cursor <= today || cursor.getDay() !== 0) {
+    if (cursor > today && cursor.getDay() === 0) break;
+    daysToRender.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  daysToRender.forEach((date) => {
+    const key = getLocalDateKey(date);
+    const count = dataMap.get(key) || 0;
+
+    const cell = document.createElement('div');
+    cell.className = 'heatmap-cell';
+
+    let level = 0;
+    if (count > 0) level = 1;
+    if (count >= 30) level = 2;
+    if (count >= 60) level = 3;
+    if (count >= 100) level = 4;
+
+    cell.dataset.level = level;
+    cell.dataset.date = key || '';
+    cell.dataset.count = count;
+
+    const showTooltip = () => {
+      if (!key) return;
+      const rect = cell.getBoundingClientRect();
+      const dateStr = formatDate(date.toISOString());
+      heatmapTooltip.textContent = `${dateStr}: ${count}回`;
+      heatmapTooltip.classList.add('visible');
+
+      const tooltipWidth = heatmapTooltip.offsetWidth;
+      heatmapTooltip.style.top = `${rect.top - 34 + window.scrollY}px`;
+      heatmapTooltip.style.left = `${rect.left + rect.width / 2 - tooltipWidth / 2 + window.scrollX}px`;
+    };
+
+    const hideTooltip = () => {
+      heatmapTooltip.classList.remove('visible');
+    };
+
+    cell.addEventListener('mouseenter', showTooltip);
+    cell.addEventListener('mouseleave', hideTooltip);
+    cell.addEventListener('touchstart', () => {
+      showTooltip();
+      setTimeout(hideTooltip, 2500);
+    }, { passive: true });
+
+    grid.appendChild(cell);
+  });
+
+  heatmapContainer.appendChild(grid);
+  requestAnimationFrame(() => {
+    heatmapContainer.scrollLeft = heatmapContainer.scrollWidth;
+  });
+};
+
 const initializeHistory = () => {
   historyEntries = loadHistoryEntries();
   renderStats();
   renderHistory();
+  renderHeatmap();
   updateHistoryNote();
   updateDailySupport();
   updateSessionStats();
