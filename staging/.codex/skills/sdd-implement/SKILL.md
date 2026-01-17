@@ -1,5 +1,9 @@
 # 仕様駆動開発：実装
 
+## Description
+タスクリストに従ってテスト駆動開発（TDD）で実装を行い、機能を完成させる。
+Trigger examples: "実装開始", "コード書いて", "implement feature", "start coding"
+
 ## 前提確認とspec特定
 1. `.sdd/target-spec.txt` を読み込み、開発対象のspec名を取得
 2. `.sdd/specs/[spec名]/` ディレクトリが存在するか確認
