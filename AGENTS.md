@@ -30,3 +30,10 @@
 - draft-commit-message: Conventional Commitsの草案生成
 - security-quick-audit: 変更差分に対する簡易セキュリティ監査
 - general-task-playbook: 汎用タスクの進め方テンプレート
+- sdd-steering: プロジェクト背景とゴールの整理
+- sdd-requirements: 要件と受け入れ基準の定義
+- sdd-highway: 設計から実装までの高速化
+- sdd-design: 実装方針と技術設計
+- sdd-tasks: タスク分解と手順決定
+- sdd-implement: 実装とテスト
+- sdd-archive: 振り返りと成果共有
