@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self';" />
     <title>Squat Tracker</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -101,6 +102,14 @@
               <p class="card-eyebrow">Setup</p>
               <h2>ワークアウト設定</h2>
             </div>
+          </div>
+          <div class="voice-controls">
+            <span class="label">音声ガイド</span>
+            <label class="switch">
+              <input id="voice-toggle" type="checkbox" />
+              <span class="slider"></span>
+              <span id="voice-status" class="switch-label">OFF</span>
+            </label>
           </div>
           <div class="control-group">
             <label>

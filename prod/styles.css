@@ -279,7 +279,7 @@ body {
 
 .quiz-problem,
 .quiz-answer {
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 600;
 }
 
@@ -373,12 +373,19 @@ input[type="number"] {
   min-height: 44px;
 }
 
-.sensor-controls {
+.sensor-controls,
+.voice-controls {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.voice-controls .label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .switch {
@@ -626,4 +633,15 @@ input[type="number"] {
   .history-total {
     text-align: left;
   }
+}
+
+/* Validation Styles */
+input[type="number"].input-error {
+  border-color: #ff3b30; /* System Red */
+  background-color: rgba(255, 59, 48, 0.05);
+}
+
+input[type="number"].input-error:focus-visible {
+  outline-color: #ff3b30;
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.2);
 }
