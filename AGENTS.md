@@ -26,14 +26,14 @@
 
 利用可能なスキル:
 
-- pr-review-checklist: PRレビュー観点の標準化
-- draft-commit-message: Conventional Commitsの草案生成
-- security-quick-audit: 変更差分に対する簡易セキュリティ監査
-- general-task-playbook: 汎用タスクの進め方テンプレート
-- sdd-steering: プロジェクト背景とゴールの整理
-- sdd-requirements: 要件と受け入れ基準の定義
-- sdd-highway: 設計から実装までの高速化
-- sdd-design: 実装方針と技術設計
-- sdd-tasks: タスク分解と手順決定
-- sdd-implement: 実装とテスト
-- sdd-archive: 振り返りと成果共有
+- pr-review-checklist: Pull Request のレビュー観点を標準化し、見落としを防ぐためのチェックリストを提供する。
+- draft-commit-message: ステージングされた変更内容から Conventional Commits に準拠したコミットメッセージ案を生成する。
+- security-quick-audit: 変更差分に対する簡易セキュリティ監査を行い、リスクを洗い出す。
+- general-task-playbook: 汎用的なタスクを抜け漏れなく進めるための計画・実行テンプレートを提供する。
+- sdd-steering: プロジェクトの全体像を把握し、SDDプロセスのための基本ドキュメント（Product, Tech, Structure）を生成・更新する。
+- sdd-requirements: 実装したい機能の要件と受け入れ基準を定義し、要件定義書（requirements.md）を作成する。
+- sdd-highway: 要件定義から設計・実装までを一気に実行する高速開発モード。
+- sdd-design: 要件に基づき実装方針や技術設計を固め、設計書（design.md）を作成する。
+- sdd-tasks: 設計書に基づき実装タスクを分解し、タスクリスト（tasks.md）を作成する。
+- sdd-implement: タスクリストに従ってテスト駆動開発（TDD）で実装を行い、機能を完成させる。
+- sdd-archive: 完了した仕様（spec）をアーカイブし、開発サイクルをクローズする。

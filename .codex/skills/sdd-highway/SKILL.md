@@ -1,5 +1,9 @@
 # Highway モード
 
+## Description
+要件定義から設計・実装までを一気に実行する高速開発モード。
+Trigger examples: "一気に実装", "高速モード", "highway mode", "implement fast"
+
 ## 準備
 1. `.sdd/steering/` のドキュメントを読込
 2. `.sdd/target-spec.txt` からspec名を取得
