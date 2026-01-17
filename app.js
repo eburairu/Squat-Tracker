@@ -16,6 +16,8 @@ const historyList = document.getElementById('history-list');
 const historyNote = document.getElementById('history-note');
 const themeToggle = document.getElementById('theme-toggle');
 const themeStatus = document.getElementById('theme-status');
+const voiceToggle = document.getElementById('voice-toggle');
+const voiceStatus = document.getElementById('voice-status');
 const dailyMessage = document.getElementById('daily-message');
 const dailyGoal = document.getElementById('daily-goal');
 const dailyStreak = document.getElementById('daily-streak');
@@ -73,10 +75,13 @@ let sensorActive = false;
 let sensorBaseline = null;
 let sensorThreshold = null;
 let lastSensorCounted = false;
+let lastOrientationTime = 0;
 
 const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
 const THEME_KEY = 'squat-tracker-theme';
+const VOICE_COACH_KEY = 'squat-tracker-voice';
+const WORKOUT_SETTINGS_KEY = 'squat-tracker-workout-settings';
 let historyEntries = [];
 
 const dailyTips = [
@@ -142,10 +147,67 @@ const updateQuizDisplay = (phaseKey) => {
 
 const isCountdownPhase = (phaseKey) => phaseKey === Phase.COUNTDOWN || phaseKey === Phase.REST_COUNTDOWN;
 
-const playTone = (frequency, duration, options = {}) => {
+const ensureAudioContext = () => {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+  return audioContext;
+};
+
+const VoiceCoach = {
+  enabled: false,
+  voice: null,
+
+  init() {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const setVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoices = ['Google', 'Haruka', 'Ichiro', 'Kyoko', 'Nanami'];
+
+      this.voice = voices.find((v) => v.lang === 'ja-JP' && preferredVoices.some(name => v.name.includes(name)))
+        || voices.find((v) => v.lang === 'ja-JP' && v.default)
+        || voices.find((v) => v.lang === 'ja-JP')
+        || voices[0]
+        || null;
+
+      console.log('VoiceCoach selected voice:', this.voice ? this.voice.name : 'none');
+    };
+
+    setVoice();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = setVoice;
+    }
+  },
+
+  speak(text) {
+    const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+    if (!this.enabled || !synth) return;
+
+    synth.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+    if (this.voice) {
+      utterance.voice = this.voice;
+    }
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    synth.speak(utterance);
+  },
+
+  setEnabled(value) {
+    this.enabled = value;
+  }
+};
+
+const playTone = (frequency, duration, options = {}) => {
+  ensureAudioContext();
   const now = audioContext.currentTime;
   const startTime = options.startTime ?? now;
   const oscillator = audioContext.createOscillator();
@@ -166,9 +228,7 @@ const beep = (frequency = 659.25, duration = 150) => {
 };
 
 const playCelebration = () => {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  ensureAudioContext();
   const now = audioContext.currentTime;
   const notes = [880, 1174.66, 1318.51, 1567.98];
   notes.forEach((frequency, index) => {
@@ -227,6 +287,124 @@ const initializeTheme = () => {
   const stored = isStorageAvailable ? localStorage.getItem(THEME_KEY) : null;
   const theme = stored || getPreferredTheme();
   applyTheme(theme);
+};
+
+const initializeVoiceCoach = () => {
+  VoiceCoach.init();
+  if (!voiceToggle || !voiceStatus) return;
+
+  const stored = isStorageAvailable ? localStorage.getItem(VOICE_COACH_KEY) : null;
+  const enabled = stored === 'true';
+
+  voiceToggle.checked = enabled;
+  VoiceCoach.setEnabled(enabled);
+  voiceStatus.textContent = enabled ? 'ON' : 'OFF';
+};
+
+const validateInput = (input) => {
+  const isValid = input.checkValidity() && input.value !== '';
+  if (isValid) {
+    input.classList.remove('input-error');
+  } else {
+    input.classList.add('input-error');
+  }
+  return isValid;
+};
+
+const areAllInputsValid = () => {
+  const inputs = [
+    setCountInput,
+    repCountInput,
+    downDurationInput,
+    holdDurationInput,
+    upDurationInput,
+    restDurationInput,
+    countdownDurationInput,
+  ];
+  return inputs.every((input) => validateInput(input));
+};
+
+const updateStartButtonAvailability = () => {
+  const valid = areAllInputsValid();
+  if (!workoutStarted) {
+    startButton.disabled = !valid;
+  }
+};
+
+const saveWorkoutSettings = () => {
+  if (!isStorageAvailable) return;
+  if (!areAllInputsValid()) return;
+
+  const settings = {
+    setCount: setCountInput.value,
+    repCount: repCountInput.value,
+    downDuration: downDurationInput.value,
+    holdDuration: holdDurationInput.value,
+    upDuration: upDurationInput.value,
+    restDuration: restDurationInput.value,
+    countdownDuration: countdownDurationInput.value,
+  };
+
+  try {
+    localStorage.setItem(WORKOUT_SETTINGS_KEY, JSON.stringify(settings));
+  } catch (error) {
+    // Ignore errors
+  }
+};
+
+const loadWorkoutSettings = () => {
+  if (!isStorageAvailable) return;
+
+  try {
+    const raw = localStorage.getItem(WORKOUT_SETTINGS_KEY);
+    if (!raw) return;
+
+    const settings = JSON.parse(raw);
+    if (!settings || typeof settings !== 'object') return;
+
+    if (settings.setCount) setCountInput.value = settings.setCount;
+    if (settings.repCount) repCountInput.value = settings.repCount;
+    if (settings.downDuration) downDurationInput.value = settings.downDuration;
+    if (settings.holdDuration) holdDurationInput.value = settings.holdDuration;
+    if (settings.upDuration) upDurationInput.value = settings.upDuration;
+    if (settings.restDuration) restDurationInput.value = settings.restDuration;
+    if (settings.countdownDuration) countdownDurationInput.value = settings.countdownDuration;
+  } catch (error) {
+    // Ignore errors
+  }
+};
+
+const initializeWorkoutSettings = () => {
+  loadWorkoutSettings();
+
+  const inputs = [
+    setCountInput,
+    repCountInput,
+    downDurationInput,
+    holdDurationInput,
+    upDurationInput,
+    restDurationInput,
+    countdownDurationInput,
+  ];
+
+  inputs.forEach((input) => {
+    if (input) {
+      input.addEventListener('input', () => {
+        validateInput(input);
+        updateStartButtonAvailability();
+      });
+      input.addEventListener('change', () => {
+        if (validateInput(input)) {
+          saveWorkoutSettings();
+        }
+        updateStartButtonAvailability();
+      });
+    }
+    if (input) {
+      validateInput(input);
+    }
+  });
+  updateStartButtonAvailability();
 };
 
 const sanitizeHistoryEntries = (data) => {
@@ -460,6 +638,9 @@ const getCompletedReps = () => {
   if (!workoutStarted) {
     return 0;
   }
+  if (currentPhase === Phase.FINISHED) {
+    return getSessionTargetReps();
+  }
   const completed = (currentSet - 1) * repsPerSet + (currentRep - 1);
   return Math.max(Math.min(completed, getSessionTargetReps()), 0);
 };
@@ -578,6 +759,11 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
   if (!isCountdownPhase(phaseKey)) {
     const phaseFrequency = phaseBeepFrequencies[phaseKey];
     beep(phaseFrequency ?? 880);
+
+    if (phaseKey === Phase.DOWN) VoiceCoach.speak('しゃがんで');
+    else if (phaseKey === Phase.HOLD) VoiceCoach.speak('キープ');
+    else if (phaseKey === Phase.UP) VoiceCoach.speak('立って');
+    else if (phaseKey === Phase.REST) VoiceCoach.speak('休憩です。深呼吸しましょう');
   }
 };
 
@@ -648,6 +834,7 @@ const finishWorkout = () => {
   phaseTimer.textContent = '00';
   progressBar.style.width = '100%';
   playCelebration();
+  VoiceCoach.speak('お疲れ様でした！ナイスファイト');
   recordWorkout();
   launchConfetti();
   updateActionButtonStates();
@@ -665,6 +852,9 @@ const tick = () => {
     if (remainingSeconds !== lastCountdownSecond) {
       lastCountdownSecond = remainingSeconds;
       beep(988, 140);
+      if (remainingSeconds <= 3 && remainingSeconds >= 1) {
+        VoiceCoach.speak(String(remainingSeconds));
+      }
     }
   }
   if (Date.now() - phaseStart >= phaseDuration) {
@@ -706,6 +896,7 @@ const validateWorkoutInputs = () => {
 };
 
 const startWorkout = () => {
+  ensureAudioContext();
   if (workoutStarted || currentPhase !== Phase.IDLE) {
     return;
   }
@@ -724,6 +915,7 @@ const startWorkout = () => {
   startButton.textContent = '進行中';
   updateActionButtonStates();
   updateSessionStats();
+  VoiceCoach.speak('準備して。スタートします');
   startCountdown('スタートまでカウントダウン', () => {
     startPhaseCycle();
   });
@@ -793,6 +985,23 @@ if (themeToggle) {
     persistTheme(theme);
   });
 }
+
+if (voiceToggle) {
+  voiceToggle.addEventListener('change', (event) => {
+    const enabled = event.target.checked;
+    VoiceCoach.setEnabled(enabled);
+    if (voiceStatus) {
+      voiceStatus.textContent = enabled ? 'ON' : 'OFF';
+    }
+    if (isStorageAvailable) {
+      localStorage.setItem(VOICE_COACH_KEY, String(enabled));
+    }
+    // モバイルの制限解除のため、ユーザー操作時に空の音声を再生しておく
+    if (enabled) {
+      VoiceCoach.speak('');
+    }
+  });
+}
 if (prefersReducedMotion) {
   prefersReducedMotion.addEventListener('change', applyReducedMotionPreference);
 }
@@ -832,6 +1041,14 @@ const handleOrientation = (event) => {
   if (!sensorMode || !sensorActive) {
     return;
   }
+
+  // Throttle sensor updates to ~20Hz (50ms) to reduce CPU usage and battery drain
+  const now = Date.now();
+  if (now - lastOrientationTime < 50) {
+    return;
+  }
+  lastOrientationTime = now;
+
   const beta = event.beta;
   if (beta === null || beta === undefined) {
     sensorStatus.textContent = '角度データを取得できません。';
@@ -979,6 +1196,8 @@ const stopConfetti = () => {
 runTests();
 applyReducedMotionPreference();
 initializeTheme();
+initializeVoiceCoach();
+initializeWorkoutSettings();
 initializeHistory();
 updateDisplays();
 updateActionButtonStates();
