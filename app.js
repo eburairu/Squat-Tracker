@@ -166,10 +166,15 @@ const VoiceCoach = {
 
     const setVoice = () => {
       const voices = window.speechSynthesis.getVoices();
-      this.voice = voices.find((v) => v.lang === 'ja-JP' && v.default)
+      const preferredVoices = ['Google', 'Haruka', 'Ichiro', 'Kyoko', 'Nanami'];
+
+      this.voice = voices.find((v) => v.lang === 'ja-JP' && preferredVoices.some(name => v.name.includes(name)))
+        || voices.find((v) => v.lang === 'ja-JP' && v.default)
         || voices.find((v) => v.lang === 'ja-JP')
         || voices[0]
         || null;
+
+      console.log('VoiceCoach selected voice:', this.voice ? this.voice.name : 'none');
     };
 
     setVoice();
@@ -189,7 +194,7 @@ const VoiceCoach = {
     if (this.voice) {
       utterance.voice = this.voice;
     }
-    utterance.rate = 1.2;
+    utterance.rate = 1.0;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
