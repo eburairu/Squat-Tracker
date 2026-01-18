@@ -50,6 +50,33 @@
       </header>
 
       <section class="grid primary-grid">
+        <div class="card boss-card reveal delay-2" id="boss-card">
+          <div class="card-head">
+            <div>
+              <p class="card-eyebrow">Battle</p>
+              <h2>ボスバトル</h2>
+            </div>
+            <div class="boss-kills">
+              <span class="label">討伐数</span>
+              <span id="boss-kill-count">0</span>
+            </div>
+          </div>
+          <div class="boss-display">
+            <div class="boss-avatar-wrapper">
+               <div id="boss-avatar" class="boss-avatar"></div>
+            </div>
+            <div class="boss-info">
+              <div class="boss-name-row">
+                <span id="boss-name">Loading...</span>
+                <span id="boss-hp-text">-- / --</span>
+              </div>
+              <div class="progress boss-progress">
+                <div id="boss-hp-bar" class="progress-bar" style="width: 100%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card workout-card reveal delay-2">
           <div class="card-head">
             <div>

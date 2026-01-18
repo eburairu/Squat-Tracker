@@ -58,6 +58,140 @@ const Phase = {
   FINISHED: '終了',
 };
 
+const MONSTERS = [
+  { name: 'スライム', emoji: '💧', hpRange: [10, 15] },
+  { name: 'コウモリ', emoji: '🦇', hpRange: [15, 20] },
+  { name: 'ゴースト', emoji: '👻', hpRange: [20, 30] },
+  { name: 'ゴブリン', emoji: '👺', hpRange: [30, 40] },
+  { name: 'スケルトン', emoji: '💀', hpRange: [35, 45] },
+  { name: 'オーク', emoji: '👹', hpRange: [40, 60] },
+  { name: '宇宙人', emoji: '👽', hpRange: [50, 70] },
+  { name: 'ロボット', emoji: '🤖', hpRange: [60, 90] },
+  { name: '恐竜', emoji: '🦖', hpRange: [80, 120] },
+  { name: 'ドラゴン', emoji: '🐉', hpRange: [100, 150] },
+];
+
+const BossBattle = {
+  state: {
+    currentMonster: null,
+    totalKills: 0,
+  },
+  elements: {},
+
+  init() {
+    this.elements = {
+      card: document.getElementById('boss-card'),
+      avatar: document.getElementById('boss-avatar'),
+      name: document.getElementById('boss-name'),
+      hpText: document.getElementById('boss-hp-text'),
+      hpBar: document.getElementById('boss-hp-bar'),
+      killCount: document.getElementById('boss-kill-count'),
+    };
+
+    if (!this.elements.card) return;
+
+    this.loadState();
+    if (!this.state.currentMonster) {
+      this.spawnMonster(false);
+    }
+    this.render();
+  },
+
+  loadState() {
+    try {
+      const raw = localStorage.getItem('squat-tracker-boss-v1');
+      if (raw) {
+        this.state = JSON.parse(raw);
+      }
+    } catch (e) {
+      console.error('Failed to load boss state', e);
+    }
+  },
+
+  saveState() {
+    try {
+      localStorage.setItem('squat-tracker-boss-v1', JSON.stringify(this.state));
+    } catch (e) {
+      // Ignore
+    }
+  },
+
+  spawnMonster(animate = true) {
+    const template = MONSTERS[Math.floor(Math.random() * MONSTERS.length)];
+    const maxHp = getRandomInt(template.hpRange[0], template.hpRange[1]);
+
+    this.state.currentMonster = {
+      name: template.name,
+      emoji: template.emoji,
+      maxHp: maxHp,
+      currentHp: maxHp,
+    };
+
+    this.saveState();
+    this.render();
+
+    if (animate && this.elements.avatar) {
+      this.elements.avatar.classList.remove('boss-spawn', 'boss-defeat');
+      void this.elements.avatar.offsetWidth;
+      this.elements.avatar.classList.add('boss-spawn');
+    }
+  },
+
+  damage(amount) {
+    if (!this.state.currentMonster) return;
+
+    const monster = this.state.currentMonster;
+    monster.currentHp = Math.max(0, monster.currentHp - amount);
+
+    if (this.elements.avatar) {
+      this.elements.avatar.classList.remove('boss-shake');
+      void this.elements.avatar.offsetWidth;
+      this.elements.avatar.classList.add('boss-shake');
+    }
+
+    if (monster.currentHp <= 0) {
+      this.handleDefeat();
+    } else {
+      this.saveState();
+      this.render();
+    }
+  },
+
+  handleDefeat() {
+    this.state.totalKills += 1;
+    this.saveState();
+    this.render();
+
+    if (this.elements.avatar) {
+      this.elements.avatar.classList.add('boss-defeat');
+    }
+
+    setTimeout(() => {
+      this.spawnMonster(true);
+    }, 1000);
+  },
+
+  render() {
+    if (!this.elements.card) return;
+
+    const { currentMonster, totalKills } = this.state;
+    if (currentMonster) {
+      this.elements.avatar.textContent = currentMonster.emoji;
+      this.elements.name.textContent = currentMonster.name;
+      this.elements.hpText.textContent = `${currentMonster.currentHp} / ${currentMonster.maxHp}`;
+
+      const pct = (currentMonster.currentHp / currentMonster.maxHp) * 100;
+      this.elements.hpBar.style.width = `${pct}%`;
+    }
+
+    this.elements.killCount.textContent = totalKills;
+  }
+};
+
+if (typeof window !== 'undefined') {
+  window.BossBattle = BossBattle;
+}
+
 class WorkoutTimer {
   constructor() {
     this.timeoutId = null;
@@ -1495,5 +1629,12 @@ initializeVoiceCoach();
 initializeWorkoutSettings();
 initializePresets();
 initializeHistory();
+// BossBattle.init(); // Moved to DOMContentLoaded
 updateDisplays();
 updateActionButtonStates();
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => BossBattle.init());
+} else {
+  BossBattle.init();
+}

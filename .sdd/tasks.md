@@ -1,0 +1,7 @@
+- [ ] Create unit/integration tests in `tests/boss_battle.test.js` covering logic (load, save, damage, spawn).
+- [ ] Add `BossBattle` class structure and logic to `app.js`.
+- [ ] Add HTML markup for Boss Battle card in `index.html`.
+- [ ] Add styles for Boss Battle card and animations in `styles.css`.
+- [ ] Integrate `BossBattle.damage(1)` calls into `app.js` workflow (timer & sensor).
+- [ ] Verify UI update and animations manually.
+- [ ] Run full test suite.
