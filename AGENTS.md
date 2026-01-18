@@ -13,8 +13,7 @@
 ## プロジェクトコマンド
 
 - Install: pnpm i
-- Test: pnpm test
-- Lint: pnpm lint
+- Test: npm test
 
 ## 共有スキルカタログ
 
