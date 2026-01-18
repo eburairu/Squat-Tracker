@@ -35,6 +35,10 @@ const startButton = document.getElementById('start-button');
 const pauseButton = document.getElementById('pause-button');
 const resetButton = document.getElementById('reset-button');
 
+const presetSelect = document.getElementById('preset-select');
+const savePresetButton = document.getElementById('save-preset-button');
+const deletePresetButton = document.getElementById('delete-preset-button');
+
 const sensorToggle = document.getElementById('sensor-toggle');
 const sensorCalibrateButton = document.getElementById('sensor-calibrate');
 const sensorStatus = document.getElementById('sensor-status');
@@ -131,6 +135,7 @@ const MAX_HISTORY_ENTRIES = 50;
 const THEME_KEY = 'squat-tracker-theme';
 const VOICE_COACH_KEY = 'squat-tracker-voice';
 const WORKOUT_SETTINGS_KEY = 'squat-tracker-workout-settings';
+const PRESET_KEY = 'squat-tracker-presets';
 let historyEntries = [];
 
 const dailyTips = [
@@ -348,6 +353,161 @@ const initializeVoiceCoach = () => {
   voiceToggle.checked = enabled;
   VoiceCoach.setEnabled(enabled);
   voiceStatus.textContent = enabled ? 'ON' : 'OFF';
+};
+
+const PresetManager = {
+  presets: [],
+
+  init() {
+    this.loadPresets();
+    if (this.presets.length === 0) {
+      this.createDefaultPresets();
+    }
+    this.renderOptions();
+    this.updateButtons();
+  },
+
+  loadPresets() {
+    if (!isStorageAvailable) return;
+    try {
+      const stored = localStorage.getItem(PRESET_KEY);
+      if (stored) {
+        this.presets = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('Failed to load presets', e);
+    }
+  },
+
+  savePresets() {
+    if (!isStorageAvailable) return;
+    try {
+      localStorage.setItem(PRESET_KEY, JSON.stringify(this.presets));
+    } catch (e) {
+      console.error('Failed to save presets', e);
+    }
+  },
+
+  createDefaultPresets() {
+    this.presets = [
+      {
+        name: 'ノーマル (標準)',
+        settings: { setCount: 3, repCount: 10, downDuration: 2, holdDuration: 1, upDuration: 1, restDuration: 30, countdownDuration: 5 }
+      },
+      {
+        name: '初心者 (軽め)',
+        settings: { setCount: 2, repCount: 5, downDuration: 2, holdDuration: 1, upDuration: 1, restDuration: 60, countdownDuration: 5 }
+      },
+      {
+        name: 'スロー (じっくり)',
+        settings: { setCount: 3, repCount: 8, downDuration: 4, holdDuration: 2, upDuration: 4, restDuration: 45, countdownDuration: 5 }
+      }
+    ];
+    this.savePresets();
+  },
+
+  addPreset(name, settings) {
+    const existingIndex = this.presets.findIndex(p => p.name === name);
+    if (existingIndex >= 0) {
+      this.presets[existingIndex] = { name, settings };
+    } else {
+      this.presets.push({ name, settings });
+    }
+    this.savePresets();
+    this.renderOptions(name);
+  },
+
+  deletePreset(name) {
+    this.presets = this.presets.filter(p => p.name !== name);
+    this.savePresets();
+    this.renderOptions('');
+  },
+
+  getPreset(name) {
+    return this.presets.find(p => p.name === name);
+  },
+
+  renderOptions(selectedName = null) {
+    if (!presetSelect) return;
+    const currentVal = selectedName !== null ? selectedName : presetSelect.value;
+    presetSelect.innerHTML = '<option value="">-- 選択してください --</option>';
+    this.presets.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.name;
+      option.textContent = p.name;
+      presetSelect.appendChild(option);
+    });
+
+    if (selectedName !== null) {
+         presetSelect.value = selectedName;
+    } else if (currentVal && this.presets.some(p => p.name === currentVal)) {
+         presetSelect.value = currentVal;
+    }
+
+    this.updateButtons();
+  },
+
+  updateButtons() {
+    if (deletePresetButton) {
+        deletePresetButton.disabled = !presetSelect.value;
+    }
+  }
+};
+
+const initializePresets = () => {
+  PresetManager.init();
+
+  if (presetSelect) {
+    presetSelect.addEventListener('change', () => {
+      const name = presetSelect.value;
+      PresetManager.updateButtons();
+      if (!name) return;
+
+      const preset = PresetManager.getPreset(name);
+      if (preset && preset.settings) {
+        const s = preset.settings;
+        if (s.setCount) setCountInput.value = s.setCount;
+        if (s.repCount) repCountInput.value = s.repCount;
+        if (s.downDuration) downDurationInput.value = s.downDuration;
+        if (s.holdDuration) holdDurationInput.value = s.holdDuration;
+        if (s.upDuration) upDurationInput.value = s.upDuration;
+        if (s.restDuration) restDurationInput.value = s.restDuration;
+        if (s.countdownDuration) countdownDurationInput.value = s.countdownDuration;
+
+        // Trigger input events to validate and save current settings
+        setCountInput.dispatchEvent(new Event('input'));
+        setCountInput.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  if (savePresetButton) {
+    savePresetButton.addEventListener('click', () => {
+      const name = prompt('プリセット名を入力してください', presetSelect.value || '');
+      if (name) {
+        const settings = {
+          setCount: setCountInput.value,
+          repCount: repCountInput.value,
+          downDuration: downDurationInput.value,
+          holdDuration: holdDurationInput.value,
+          upDuration: upDurationInput.value,
+          restDuration: restDurationInput.value,
+          countdownDuration: countdownDurationInput.value,
+        };
+        PresetManager.addPreset(name, settings);
+      }
+    });
+  }
+
+  if (deletePresetButton) {
+    deletePresetButton.addEventListener('click', () => {
+      const name = presetSelect.value;
+      if (!name) return;
+      if (confirm(`プリセット「${name}」を削除しますか？`)) {
+        PresetManager.deletePreset(name);
+      }
+    });
+  }
 };
 
 const validateInput = (input) => {
@@ -1333,6 +1493,7 @@ applyReducedMotionPreference();
 initializeTheme();
 initializeVoiceCoach();
 initializeWorkoutSettings();
+initializePresets();
 initializeHistory();
 updateDisplays();
 updateActionButtonStates();
