@@ -366,14 +366,52 @@ const timesTableRange = { min: 1, max: 9 };
 const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const generateQuiz = () => {
-  const divisor = getRandomInt(timesTableRange.min, timesTableRange.max);
-  const multiplier = getRandomInt(timesTableRange.min, timesTableRange.max);
+  const types = ['+', '-', '×', '÷'];
+  const type = types[getRandomInt(0, 3)];
+  const range = timesTableRange; // { min: 1, max: 9 }
+
+  if (type === '+') {
+    const a = getRandomInt(range.min, range.max);
+    const b = getRandomInt(range.min, range.max);
+    return {
+      expression: `${a} + ${b}`,
+      answer: a + b,
+    };
+  }
+
+  if (type === '-') {
+    const a = getRandomInt(range.min, range.max);
+    const b = getRandomInt(range.min, range.max);
+    const big = Math.max(a, b);
+    const small = Math.min(a, b);
+    return {
+      expression: `${big} - ${small}`,
+      answer: big - small,
+    };
+  }
+
+  if (type === '×') {
+    const a = getRandomInt(range.min, range.max);
+    const b = getRandomInt(range.min, range.max);
+    return {
+      expression: `${a} × ${b}`,
+      answer: a * b,
+    };
+  }
+
+  // Division (÷)
+  const divisor = getRandomInt(range.min, range.max);
+  const answer = getRandomInt(range.min, range.max);
+  const dividend = divisor * answer;
   return {
-    divisor,
-    dividend: divisor * multiplier,
-    answer: multiplier,
+    expression: `${dividend} ÷ ${divisor}`,
+    answer,
   };
 };
+
+if (typeof window !== 'undefined') {
+  window.generateQuiz = generateQuiz;
+}
 
 const updateQuizDisplay = (phaseKey) => {
   if (!quizProblem || !quizAnswer) {
@@ -385,12 +423,12 @@ const updateQuizDisplay = (phaseKey) => {
   if (phaseKey === Phase.DOWN || phaseKey === Phase.HOLD) {
     const quiz = currentQuiz ?? generateQuiz();
     currentQuiz = quiz;
-    quizProblem.textContent = `問題: ${quiz.dividend} ÷ ${quiz.divisor} = ?`;
+    quizProblem.textContent = `問題: ${quiz.expression} = ?`;
     quizAnswer.textContent = '答え: --';
     return;
   }
   if (phaseKey === Phase.UP && currentQuiz) {
-    quizProblem.textContent = `問題: ${currentQuiz.dividend} ÷ ${currentQuiz.divisor} = ?`;
+    quizProblem.textContent = `問題: ${currentQuiz.expression} = ?`;
     quizAnswer.textContent = `答え: ${currentQuiz.answer}`;
     return;
   }
