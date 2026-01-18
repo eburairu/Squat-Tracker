@@ -664,6 +664,7 @@ button.small {
   background-color: var(--color-bg);
   padding: 1.5rem;
   border-radius: var(--radius-md);
+  position: relative; /* For critical text */
 }
 .boss-avatar-wrapper {
   position: relative;
@@ -709,6 +710,15 @@ button.small {
   100% { transform: translate(0, 0); }
 }
 
+@keyframes criticalShake {
+  0% { transform: translate(0, 0) scale(1.5); filter: hue-rotate(0deg); }
+  20% { transform: translate(-10px, 0) scale(1.5); }
+  40% { transform: translate(10px, 0) scale(1.5); }
+  60% { transform: translate(-10px, 0) scale(1.5); }
+  80% { transform: translate(10px, 0) scale(1.5); }
+  100% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg); }
+}
+
 @keyframes spawnPop {
   0% { transform: scale(0); opacity: 0; }
   60% { transform: scale(1.2); opacity: 1; }
@@ -721,14 +731,38 @@ button.small {
   100% { transform: scale(0); opacity: 0; }
 }
 
+@keyframes floatUp {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+  50% { transform: translate(-50%, -80%) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -100%) scale(1.5); }
+}
+
 .boss-shake {
   animation: shake 0.4s ease-in-out;
+}
+.boss-critical {
+  animation: criticalShake 0.5s ease-out;
 }
 .boss-spawn {
   animation: spawnPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .boss-defeat {
   animation: defeatFade 0.8s ease-in forwards;
+}
+
+.critical-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fbbf24;
+  font-weight: 900;
+  font-size: 1.5rem;
+  text-shadow: 2px 2px 0 #b45309, 0 0 10px rgba(251, 191, 36, 0.5);
+  z-index: 10;
+  pointer-events: none;
+  animation: floatUp 0.8s ease-out forwards;
+  white-space: nowrap;
 }
 
 [data-theme='dark'] .boss-progress {
