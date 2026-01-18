@@ -579,18 +579,26 @@ li {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 3rem; /* Avoid layout shift */
-  margin-bottom: 0.5rem;
-  gap: 0.25rem;
+  min-height: 6rem; /* Avoid layout shift */
+  margin-bottom: 1rem;
+  gap: 0.5rem;
   font-size: 1.1rem;
   font-weight: 600;
 }
+
+.quiz-area-flipped {
+  transform: rotate(180deg);
+}
+
 .quiz-problem {
   color: var(--color-text-muted);
+  font-size: 2.5rem;
+  line-height: 1.2;
 }
 .quiz-answer {
   color: var(--color-primary);
   min-height: 1.5em; /* reserve space */
+  font-size: 1.5rem;
 }
 
 /* Voice & Presets */
