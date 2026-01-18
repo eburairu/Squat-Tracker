@@ -75,6 +75,34 @@ const MONSTERS = [
   { name: 'ドラゴン', emoji: '🐉', hpRange: [100, 150] },
 ];
 
+const RpgSystem = {
+  calculateLevel(totalReps) {
+    if (typeof totalReps !== 'number' || totalReps < 0) return 1;
+    // Level = floor(1 + sqrt(TotalReps) * 0.5)
+    return Math.floor(1 + Math.sqrt(totalReps) * 0.5);
+  },
+
+  calculateAttackPower(level) {
+    if (typeof level !== 'number' || level < 1) return 1;
+    // AP = 1 + floor((Level - 1) * 0.5)
+    return 1 + Math.floor((level - 1) * 0.5);
+  },
+
+  calculateDamage(baseAttackPower) {
+    const isCritical = Math.random() < 0.1; // 10% chance
+    const multiplier = isCritical ? 2 : 1;
+    return {
+      amount: baseAttackPower * multiplier,
+      isCritical
+    };
+  }
+};
+
+// Expose for testing
+if (typeof window !== 'undefined') {
+  window.RpgSystem = RpgSystem;
+}
+
 const BossBattle = {
   state: {
     currentMonster: null,
@@ -194,7 +222,7 @@ const BossBattle = {
     }
   },
 
-  damage(amount) {
+  damage(amount, isCritical = false) {
     this.regenerateHp();
 
     if (!this.state.currentMonster) return;
@@ -204,9 +232,15 @@ const BossBattle = {
     this.state.lastInteraction = Date.now();
 
     if (this.elements.avatar) {
-      this.elements.avatar.classList.remove('boss-shake');
+      this.elements.avatar.classList.remove('boss-shake', 'boss-critical');
       void this.elements.avatar.offsetWidth;
-      this.elements.avatar.classList.add('boss-shake');
+
+      if (isCritical) {
+        this.elements.avatar.classList.add('boss-critical');
+        this.showCriticalEffect();
+      } else {
+        this.elements.avatar.classList.add('boss-shake');
+      }
     }
 
     if (monster.currentHp <= 0) {
@@ -214,6 +248,22 @@ const BossBattle = {
     } else {
       this.saveState();
       this.render();
+    }
+  },
+
+  showCriticalEffect() {
+    // Simple visual effect for critical hit
+    const damageText = document.createElement('div');
+    damageText.textContent = 'CRITICAL!';
+    damageText.className = 'critical-text';
+
+    // Append to avatar wrapper for better positioning
+    const wrapper = this.elements.avatar ? this.elements.avatar.parentElement : this.elements.card;
+    if (wrapper) {
+      wrapper.appendChild(damageText);
+      setTimeout(() => {
+        damageText.remove();
+      }, 1000);
     }
   },
 
@@ -1109,15 +1159,6 @@ const updateHistoryNote = () => {
     : 'この端末では履歴の自動保存が利用できません。';
 };
 
-const calculateRank = (totalReps) => {
-  if (totalReps >= 10000) return 'Diamond';
-  if (totalReps >= 5000) return 'Platinum';
-  if (totalReps >= 1000) return 'Gold';
-  if (totalReps >= 500) return 'Silver';
-  if (totalReps >= 100) return 'Bronze';
-  return 'Beginner';
-};
-
 const renderStats = () => {
   if (!statsTotalReps || !statsTotalWorkouts || !statsLastDate || !statsRank) {
     return;
@@ -1126,7 +1167,11 @@ const renderStats = () => {
   statsTotalReps.textContent = stats.totalRepsAllTime.toLocaleString('ja-JP');
   statsTotalWorkouts.textContent = stats.totalWorkouts.toLocaleString('ja-JP');
   statsLastDate.textContent = stats.lastWorkoutDate ? formatDate(stats.lastWorkoutDate) : '--';
-  statsRank.textContent = calculateRank(stats.totalRepsAllTime);
+
+  // Use Level and AP instead of Rank
+  const level = RpgSystem.calculateLevel(stats.totalRepsAllTime);
+  const ap = RpgSystem.calculateAttackPower(level);
+  statsRank.textContent = `Lv.${level} (AP:${ap})`;
 };
 
 const renderHistory = () => {
@@ -1374,6 +1419,14 @@ const initializeHistory = () => {
   updateSessionStats();
 };
 
+const performAttack = () => {
+  const stats = computeStats(historyEntries);
+  const level = RpgSystem.calculateLevel(stats.totalRepsAllTime);
+  const baseAp = RpgSystem.calculateAttackPower(level);
+  const damage = RpgSystem.calculateDamage(baseAp);
+  BossBattle.damage(damage.amount, damage.isCritical);
+};
+
 const setPhase = (phaseKey, durationSeconds, hint) => {
   currentPhase = phaseKey;
   phaseDuration = durationSeconds * 1000;
@@ -1417,7 +1470,7 @@ const startPhaseCycle = () => {
     schedulePhase(() => {
       setPhase(Phase.UP, upPhase.duration(), '1秒で立ちます');
       schedulePhase(() => {
-        BossBattle.damage(1);
+        performAttack();
         nextRepOrSet();
       }, upPhase.duration());
     }, holdPhase.duration());
@@ -1684,7 +1737,7 @@ const handleOrientation = (event) => {
     repDisplay.textContent = `${currentRep} / ${repsPerSet}`;
     updateSessionStats();
     beep(700, 120);
-    BossBattle.damage(1);
+    performAttack(); // Updated to use performAttack helper
     if (currentRep >= repsPerSet) {
       nextRepOrSet();
       lastSensorCounted = false;
