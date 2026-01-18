@@ -646,6 +646,11 @@ button.small {
   font-size: 0.8rem;
 }
 
+.data-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* Boss Battle */
 .boss-kills {
   display: flex;

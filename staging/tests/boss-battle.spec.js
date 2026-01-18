@@ -43,6 +43,10 @@ test.describe('Boss Battle Mode', () => {
   });
 
   test('should persist monster state after reload', async ({ page }) => {
+    // Freeze time to prevent HP regeneration
+    const fixedTime = new Date('2024-01-01T12:00:00Z').getTime();
+    await page.clock.install({ time: fixedTime });
+
     // Manually set a state
     const state = {
       currentMonster: {
@@ -51,7 +55,9 @@ test.describe('Boss Battle Mode', () => {
         maxHp: 50,
         currentHp: 25
       },
-      totalKills: 10
+      totalKills: 10,
+      // Set interaction to future to guarantee no healing happens (elapsed < 0)
+      lastInteraction: fixedTime + 1000000
     };
 
     await page.addInitScript(state => {
