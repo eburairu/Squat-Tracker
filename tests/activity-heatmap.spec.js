@@ -33,7 +33,8 @@ test('Activity Heatmap Verification', async ({ page }) => {
   // Wait, the random seed is not fixed. Math.random() is used in the init script.
   // I should remove randomness or assert loosely.
   // Or check if it is one of the ranks.
-  await expect(rank).toHaveText(/Beginner|Bronze|Silver|Gold|Platinum|Diamond/);
+  // Updated for RPG System: format is "Lv.X (AP:Y)"
+  await expect(rank).toHaveText(/Lv\.\d+ \(AP:\d+\)/);
 
   // Wait for rendering
   await page.waitForTimeout(500);
