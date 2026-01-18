@@ -75,6 +75,9 @@ const BossBattle = {
   state: {
     currentMonster: null,
     totalKills: 0,
+    monsterIndex: 0,
+    loopCount: 1,
+    lastInteraction: Date.now(),
   },
   elements: {},
 
@@ -91,17 +94,38 @@ const BossBattle = {
     if (!this.elements.card) return;
 
     this.loadState();
+
+    // Initial regeneration check
+    this.regenerateHp();
+
     if (!this.state.currentMonster) {
       this.spawnMonster(false);
     }
     this.render();
+
+    // Regenerate on visibility change (app becoming active)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.regenerateHp();
+        this.render();
+      }
+    });
   },
 
   loadState() {
     try {
       const raw = localStorage.getItem('squat-tracker-boss-v1');
       if (raw) {
-        this.state = JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        this.state = {
+          ...this.state,
+          ...parsed
+        };
+
+        // Migration: Ensure new fields exist
+        if (typeof this.state.monsterIndex !== 'number') this.state.monsterIndex = 0;
+        if (typeof this.state.loopCount !== 'number') this.state.loopCount = 1;
+        if (!this.state.lastInteraction) this.state.lastInteraction = Date.now();
       }
     } catch (e) {
       console.error('Failed to load boss state', e);
@@ -116,16 +140,45 @@ const BossBattle = {
     }
   },
 
+  regenerateHp() {
+    if (!this.state.currentMonster) return;
+
+    const now = Date.now();
+    const elapsed = now - (this.state.lastInteraction || now);
+    // 10% per 24 hours (86400000 ms)
+    const healRatio = 0.10 * (elapsed / 86400000);
+    const healAmount = this.state.currentMonster.maxHp * healRatio;
+
+    if (healAmount > 0) {
+      this.state.currentMonster.currentHp = Math.min(
+        this.state.currentMonster.maxHp,
+        this.state.currentMonster.currentHp + healAmount
+      );
+    }
+
+    this.state.lastInteraction = now;
+    this.saveState();
+  },
+
   spawnMonster(animate = true) {
-    const template = MONSTERS[Math.floor(Math.random() * MONSTERS.length)];
-    const maxHp = getRandomInt(template.hpRange[0], template.hpRange[1]);
+    const index = this.state.monsterIndex % MONSTERS.length;
+    const template = MONSTERS[index];
+
+    // Scaling: 1.0, 1.5, 2.0...
+    const scalingFactor = 1 + (this.state.loopCount - 1) * 0.5;
+
+    const minHp = Math.floor(template.hpRange[0] * scalingFactor);
+    const maxHp = Math.floor(template.hpRange[1] * scalingFactor);
+    const hp = getRandomInt(minHp, maxHp);
 
     this.state.currentMonster = {
       name: template.name,
       emoji: template.emoji,
-      maxHp: maxHp,
-      currentHp: maxHp,
+      maxHp: hp,
+      currentHp: hp,
     };
+
+    this.state.lastInteraction = Date.now();
 
     this.saveState();
     this.render();
@@ -138,10 +191,13 @@ const BossBattle = {
   },
 
   damage(amount) {
+    this.regenerateHp();
+
     if (!this.state.currentMonster) return;
 
     const monster = this.state.currentMonster;
     monster.currentHp = Math.max(0, monster.currentHp - amount);
+    this.state.lastInteraction = Date.now();
 
     if (this.elements.avatar) {
       this.elements.avatar.classList.remove('boss-shake');
@@ -159,6 +215,12 @@ const BossBattle = {
 
   handleDefeat() {
     this.state.totalKills += 1;
+    this.state.monsterIndex += 1;
+    if (this.state.monsterIndex >= MONSTERS.length) {
+      this.state.monsterIndex = 0;
+      this.state.loopCount += 1;
+    }
+
     this.saveState();
     this.render();
 
@@ -178,9 +240,12 @@ const BossBattle = {
     if (currentMonster) {
       this.elements.avatar.textContent = currentMonster.emoji;
       this.elements.name.textContent = currentMonster.name;
-      this.elements.hpText.textContent = `${currentMonster.currentHp} / ${currentMonster.maxHp}`;
+      // Show integer HP for cleaner UI
+      const current = Math.ceil(currentMonster.currentHp);
+      const max = Math.ceil(currentMonster.maxHp);
+      this.elements.hpText.textContent = `${current} / ${max}`;
 
-      const pct = (currentMonster.currentHp / currentMonster.maxHp) * 100;
+      const pct = (current / max) * 100;
       this.elements.hpBar.style.width = `${pct}%`;
     }
 
@@ -1230,6 +1295,7 @@ const startPhaseCycle = () => {
     schedulePhase(() => {
       setPhase(Phase.UP, upPhase.duration(), '1秒で立ちます');
       schedulePhase(() => {
+        BossBattle.damage(1);
         nextRepOrSet();
       }, upPhase.duration());
     }, holdPhase.duration());
@@ -1496,6 +1562,7 @@ const handleOrientation = (event) => {
     repDisplay.textContent = `${currentRep} / ${repsPerSet}`;
     updateSessionStats();
     beep(700, 120);
+    BossBattle.damage(1);
     if (currentRep >= repsPerSet) {
       nextRepOrSet();
       lastSensorCounted = false;
