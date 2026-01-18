@@ -5,22 +5,15 @@
 Trigger examples: "開発完了", "アーカイブして", "archive spec", "close feature"
 
 ## ステップ1：対象specの確認
-1. `.sdd/target-spec.txt` を読み込み、spec名を取得
-2. `.sdd/specs/[spec名]/tasks.md` を読み込み
-3. すべてのタスクが [x] になっているか確認
-
-完了していない場合：
-「未完了のタスクがあります。
-すべてのタスクを完了してからアーカイブしてください。
-または強制的にアーカイブする場合は、手動で
-.sdd/specs/[spec名]/ を .sdd/specs/archives/ に移動してください」
+1. `.sdd/target-spec.txt` からspec名を取得する。
+2. `.sdd/specs/[spec名]/tasks.md` を確認し、全タスクが完了 `[x]` しているか確認する。
+   - 未完了タスクがある場合はユーザーに警告し、強制アーカイブするか確認を求める。
 
 ## ステップ2：アーカイブ実行
-すべて完了している場合：
-1. `.sdd/specs/archives/` ディレクトリを作成（なければ）
-2. 現在の日付を取得（YYYYMMDD形式）
-3. `.sdd/specs/[spec名]/` を `.sdd/specs/archives/YYYYMMDD_[spec名]/` に移動
-4. `.sdd/target-spec.txt` の内容をクリア（空にする）
+1. ディレクトリ `.sdd/specs/archives/` が存在することを確認する（なければ作成）。
+2. 現在の日付（YYYYMMDD形式）を取得する。
+3. `.sdd/specs/[spec名]/` を `.sdd/specs/archives/YYYYMMDD_[spec名]/` に移動する。
+4. `.sdd/target-spec.txt` の内容をクリア（空にする）。
 
 ## ステップ3：完了報告
 「spec '[spec名]' をアーカイブしました。
