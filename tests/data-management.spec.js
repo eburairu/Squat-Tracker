@@ -51,8 +51,6 @@ test.describe('Data Management', () => {
       // Trigger file chooser
       const fileChooserPromise = page.waitForEvent('filechooser');
       // The import button should trigger the file input click
-      // Usually the button clicks the hidden input.
-      // If the UI is implemented as a label for input, or button triggering click on input.
       await page.locator('#import-data-button').click();
       const fileChooser = await fileChooserPromise;
       await fileChooser.setFiles(tempFile);
