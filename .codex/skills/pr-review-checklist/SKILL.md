@@ -17,7 +17,7 @@ Trigger examples: "レビューして", "PR見て", "review checklist", "code re
 # レビュー結果
 
 ## 概要
-<1〜3文でレビュー結果を要約>
+<1〜3文でレビュー結果を要約し、推奨アクション（Approve / Request Changes / Comment）を提示>
 
 ## チェック結果
 - **仕様整合性**: ✅/⚠️/❌ <短い理由>

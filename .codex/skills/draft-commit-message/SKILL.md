@@ -5,7 +5,7 @@
 Trigger examples: "コミットメッセージ作って", "generate commit msg", "commit message draft"
 
 ## 手順
-1. `git diff --staged` の結果を確認する（出力がない場合は実行する）。
+1. `git diff --staged` の結果を確認する（出力がない場合は実行し、何もなければユーザーにその旨を伝えて終了する）。
 2. 変更の性質から type（feat/fix/docs/chore/refactor/test/build/ci/perf/style）を選ぶ。
 3. scope（任意、1〜2語）を決める。
 4. 本文で背景・理由・影響範囲を簡潔に記述する。
