@@ -708,3 +708,50 @@ input[type="number"].input-error:focus-visible {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Preset Styles */
+.preset-group {
+  margin-bottom: 20px;
+  grid-template-columns: 1fr !important; /* Force full width in control-group grid */
+}
+
+.preset-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.preset-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#preset-select {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  height: 40px;
+}
+
+button.small {
+  padding: 8px 16px;
+  min-height: 40px;
+  font-size: 0.9rem;
+}
+
+button.delete-btn {
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+button.delete-btn:hover {
+  background: rgba(255, 149, 0, 0.1);
+}
