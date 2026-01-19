@@ -238,6 +238,9 @@ const BossBattle = {
       if (isCritical) {
         this.elements.avatar.classList.add('boss-critical');
         this.showCriticalEffect();
+        if (typeof AchievementSystem !== 'undefined') {
+          AchievementSystem.notify('critical');
+        }
       } else {
         this.elements.avatar.classList.add('boss-shake');
       }
@@ -370,6 +373,7 @@ let repsPerSet = 10;
 let currentSet = 1;
 let currentRep = 1;
 let isPaused = false;
+let hasPaused = false; // Track if pause was used
 let pausedAt = null;
 let workoutStarted = false;
 let workoutSaved = false;
@@ -677,6 +681,10 @@ const DataManager = {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    if (typeof AchievementSystem !== 'undefined') {
+      AchievementSystem.notify('backup');
+    }
   },
 
   handleFileSelect(event) {
@@ -1419,6 +1427,223 @@ const initializeHistory = () => {
   updateSessionStats();
 };
 
+const ACHIEVEMENTS_KEY = 'squat-tracker-achievements';
+
+const AchievementSystem = {
+  badges: [],
+  unlocked: {},
+
+  init() {
+    this.load();
+    this.defineBadges();
+    this.setupUI();
+    this.render();
+  },
+
+  setupUI() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+
+        tab.classList.add('active');
+        const targetId = `tab-${tab.dataset.tab}`;
+        const target = document.getElementById(targetId);
+        if (target) target.classList.add('active');
+
+        if (tab.dataset.tab === 'history' && typeof renderHeatmap === 'function') {
+             requestAnimationFrame(() => renderHeatmap());
+        }
+      });
+    });
+  },
+
+  defineBadges() {
+    this.badges = [
+      // Consistency
+      { id: 'baby-steps', name: '初めの一歩', emoji: '🐣', description: '初めてワークアウトを完了する', condition: (ctx) => (ctx.historyEntries || historyEntries).length >= 1 },
+      { id: 'consistency-3', name: '三日坊主回避', emoji: '🌱', description: '3日連続達成', condition: (ctx) => computeStreak(ctx.historyEntries || historyEntries) >= 3 },
+      { id: 'consistency-7', name: '週間チャンピオン', emoji: '🔥', description: '7日連続達成', condition: (ctx) => computeStreak(ctx.historyEntries || historyEntries) >= 7 },
+      { id: 'consistency-30', name: '習慣の達人', emoji: '📅', description: '30日連続達成', condition: (ctx) => computeStreak(ctx.historyEntries || historyEntries) >= 30 },
+      { id: 'consistency-100', name: '百日修業', emoji: '💯', description: '100日連続達成', condition: (ctx) => computeStreak(ctx.historyEntries || historyEntries) >= 100 },
+
+      // Total Reps
+      { id: 'reps-100', name: 'スクワット初心者', emoji: '🥉', description: '累計100回', condition: (ctx) => computeStats(ctx.historyEntries || historyEntries).totalRepsAllTime >= 100 },
+      { id: 'reps-500', name: '見習い戦士', emoji: '🥈', description: '累計500回', condition: (ctx) => computeStats(ctx.historyEntries || historyEntries).totalRepsAllTime >= 500 },
+      { id: 'reps-1000', name: '熟練の騎士', emoji: '🥇', description: '累計1,000回', condition: (ctx) => computeStats(ctx.historyEntries || historyEntries).totalRepsAllTime >= 1000 },
+      { id: 'reps-5000', name: '筋肉の将軍', emoji: '🎖️', description: '累計5,000回', condition: (ctx) => computeStats(ctx.historyEntries || historyEntries).totalRepsAllTime >= 5000 },
+      { id: 'reps-10000', name: '伝説の英雄', emoji: '👑', description: '累計10,000回', condition: (ctx) => computeStats(ctx.historyEntries || historyEntries).totalRepsAllTime >= 10000 },
+
+      // Boss
+      { id: 'boss-first-blood', name: 'モンスターハンター', emoji: '🗡️', description: '初めてボスを倒す', condition: (ctx) => ctx.bossState && ctx.bossState.totalKills >= 1 },
+      { id: 'boss-slayer', name: 'スレイヤー', emoji: '💀', description: 'ボス10体討伐', condition: (ctx) => ctx.bossState && ctx.bossState.totalKills >= 10 },
+      { id: 'boss-collector', name: '図鑑コンプ', emoji: '📚', description: '全種類のボスを討伐', condition: (ctx) => ctx.bossState && ctx.bossState.totalKills >= 10 },
+      { id: 'boss-critical', name: 'クリティカル', emoji: '💥', description: 'クリティカルヒットを出す', condition: () => false },
+      { id: 'boss-limit-break', name: '限界突破', emoji: '🚀', description: 'レベル10到達', condition: (ctx) => RpgSystem.calculateLevel(computeStats(ctx.historyEntries || historyEntries).totalRepsAllTime) >= 10 },
+
+      // Settings & Specials
+      { id: 'tech-user', name: 'センサー使い', emoji: '📱', description: 'センサーモードで完了', condition: (ctx) => ctx.sensorMode },
+      { id: 'stoic', name: 'ストイック', emoji: '⏱️', description: '休憩15秒以下で完了', condition: (ctx) => ctx.settings && parseInt(ctx.settings.restDuration) <= 15 },
+      { id: 'slow-life', name: 'スローライフ', emoji: '🐢', description: '動作3秒以上で完了', condition: (ctx) => ctx.settings && parseInt(ctx.settings.downDuration) >= 3 && parseInt(ctx.settings.upDuration) >= 3 },
+      { id: 'marathon', name: 'マラソンマン', emoji: '🏃', description: '1セット30回以上で完了', condition: (ctx) => ctx.settings && parseInt(ctx.settings.repCount) >= 30 },
+      { id: 'iron-will', name: '鉄の意志', emoji: '🛡️', description: '一時停止なしで完了', condition: (ctx) => ctx.hasPaused === false },
+      { id: 'customizer', name: 'カスタマイザー', emoji: '⚙️', description: 'プリセットを保存する', condition: () => PresetManager.presets.length > 3 },
+      { id: 'backup', name: '復活の呪文', emoji: '💾', description: 'データをエクスポートする', condition: () => false },
+      { id: 'balance', name: 'ハーフ＆ハーフ', emoji: '⚖️', description: 'しゃがむ時間と立つ時間が同じ', condition: (ctx) => ctx.settings && ctx.settings.downDuration == ctx.settings.upDuration },
+      { id: 'good-listener', name: 'フルコンボ', emoji: '🎧', description: '音声ガイドONで完了', condition: () => VoiceCoach.enabled },
+      { id: 'chameleon', name: 'テーマチェンジャー', emoji: '🎨', description: 'テーマを切り替える', condition: () => false },
+
+      // Time & Humor
+      { id: 'early-bird', name: '早起きは三文の徳', emoji: '☀️', description: '午前4時〜8時に完了', condition: () => { const h = new Date().getHours(); return h >= 4 && h < 8; } },
+      { id: 'night-owl', name: '夜更かしの筋トレ', emoji: '🦉', description: '午後10時〜午前2時に完了', condition: () => { const h = new Date().getHours(); return h >= 22 || h < 2; } },
+      { id: 'lunch-break', name: 'ランチタイム', emoji: '🍱', description: '正午〜午後1時に完了', condition: () => { const h = new Date().getHours(); return h === 12; } },
+      { id: 'weekend-warrior', name: '週末の戦士', emoji: '🏖️', description: '土日に完了', condition: () => { const d = new Date().getDay(); return d === 0 || d === 6; } },
+      { id: 'lucky-7', name: 'ラッキーセブン', emoji: '🎰', description: '1セット7回で完了', condition: (ctx) => ctx.settings && parseInt(ctx.settings.repCount) === 7 }
+    ];
+  },
+
+  notify(eventName) {
+    if (eventName === 'critical') this.unlock('boss-critical');
+    if (eventName === 'theme_change') this.unlock('chameleon');
+    if (eventName === 'backup') this.unlock('backup');
+  },
+
+  load() {
+    if (!isStorageAvailable) return;
+    try {
+      const raw = localStorage.getItem(ACHIEVEMENTS_KEY);
+      if (raw) {
+        this.unlocked = JSON.parse(raw);
+      }
+    } catch (e) {
+      console.error('Failed to load achievements', e);
+    }
+  },
+
+  save() {
+    if (!isStorageAvailable) return;
+    try {
+      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(this.unlocked));
+    } catch (e) {
+      // Ignore
+    }
+  },
+
+  check(triggerContext = {}) {
+    const context = {
+      historyEntries,
+      bossState: typeof BossBattle !== 'undefined' ? BossBattle.state : null,
+      ...triggerContext
+    };
+
+    let newUnlock = false;
+    this.badges.forEach(badge => {
+      if (this.isUnlocked(badge.id)) return;
+
+      try {
+        if (badge.condition(context)) {
+          this.unlocked[badge.id] = Date.now();
+          newUnlock = true;
+          if (triggerContext.type === 'finish' || triggerContext.forceNotify) {
+            this.showNotification(badge);
+          }
+        }
+      } catch (e) {
+        console.error(`Error checking badge ${badge.id}`, e);
+      }
+    });
+
+    if (newUnlock) {
+      this.save();
+      this.render();
+    }
+  },
+
+  showNotification(badge) {
+    const existing = document.querySelectorAll('.achievement-toast');
+    const offset = existing.length * 90; // Approx height + gap
+
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.style.top = `${20 + offset}px`;
+    toast.innerHTML = `
+      <div class="toast-icon">${badge.emoji}</div>
+      <div class="toast-content">
+        <div class="toast-title">実績解除！</div>
+        <div class="toast-message">${badge.name}</div>
+      </div>
+    `;
+    document.body.appendChild(toast);
+
+    // Play sound if context allows
+    if (typeof playCelebration === 'function') {
+      // Small delay to separate from other sounds
+      setTimeout(() => playCelebration(), 300);
+    }
+    if (typeof VoiceCoach !== 'undefined') {
+      VoiceCoach.speak(`実績解除。${badge.name}`);
+    }
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      toast.style.transition = 'all 0.5s ease-in';
+      setTimeout(() => toast.remove(), 500);
+    }, 4000);
+  },
+
+  unlock(badgeId) {
+    if (this.unlocked[badgeId]) return;
+    this.unlocked[badgeId] = Date.now();
+    this.save();
+  },
+
+  isUnlocked(badgeId) {
+    return !!this.unlocked[badgeId];
+  },
+
+  getBadge(badgeId) {
+    return this.badges.find(b => b.id === badgeId);
+  },
+
+  render() {
+    const grid = document.getElementById('badge-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    this.badges.forEach(badge => {
+      const isUnlocked = this.isUnlocked(badge.id);
+      const el = document.createElement('div');
+      el.className = `badge ${isUnlocked ? 'unlocked' : 'locked'}`;
+
+      const emoji = document.createElement('div');
+      emoji.className = 'badge-emoji';
+      emoji.textContent = badge.emoji;
+
+      const name = document.createElement('div');
+      name.className = 'badge-name';
+      name.textContent = badge.name;
+
+      el.append(emoji, name);
+
+      el.addEventListener('click', () => {
+        const status = isUnlocked ? '✅ 獲得済み' : '🔒 未獲得';
+        const dateStr = isUnlocked ? `\n獲得日: ${new Date(this.unlocked[badge.id]).toLocaleDateString()}` : '';
+        alert(`${badge.emoji} ${badge.name}\n\n${badge.description}\n\n${status}${dateStr}`);
+      });
+
+      grid.appendChild(el);
+    });
+  }
+};
+
+if (typeof window !== 'undefined') {
+  window.AchievementSystem = AchievementSystem;
+}
+
 const performAttack = () => {
   const stats = computeStats(historyEntries);
   const level = RpgSystem.calculateLevel(stats.totalRepsAllTime);
@@ -1510,6 +1735,20 @@ const finishWorkout = () => {
   playCelebration();
   VoiceCoach.speak('お疲れ様でした！ナイスファイト');
   recordWorkout();
+
+  if (typeof AchievementSystem !== 'undefined') {
+    const settings = {
+      setCount: setCountInput.value,
+      repCount: repCountInput.value,
+      downDuration: downDurationInput.value,
+      holdDuration: holdDurationInput.value,
+      upDuration: upDurationInput.value,
+      restDuration: restDurationInput.value,
+      countdownDuration: countdownDurationInput.value,
+    };
+    AchievementSystem.check({ type: 'finish', settings, sensorMode, hasPaused });
+  }
+
   launchConfetti();
   updateActionButtonStates();
 };
@@ -1601,6 +1840,7 @@ const pauseWorkout = () => {
   }
   isPaused = !isPaused;
   if (isPaused) {
+    hasPaused = true;
     pausedAt = Date.now();
     phaseHint.textContent = '一時停止中';
     pauseButton.textContent = '再開';
@@ -1622,6 +1862,7 @@ const resetWorkout = () => {
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
+  hasPaused = false;
   workoutStarted = false;
   workoutSaved = false;
   startButton.disabled = false;
@@ -1653,6 +1894,9 @@ if (themeToggle) {
     const theme = event.target.checked ? 'dark' : 'light';
     applyTheme(theme);
     persistTheme(theme);
+    if (typeof AchievementSystem !== 'undefined') {
+      AchievementSystem.notify('theme_change');
+    }
   });
 }
 
@@ -1871,6 +2115,7 @@ initializeVoiceCoach();
 initializeWorkoutSettings();
 initializePresets();
 initializeHistory();
+AchievementSystem.init();
 DataManager.init();
 // BossBattle.init(); // Moved to DOMContentLoaded
 updateDisplays();
