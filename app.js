@@ -75,6 +75,282 @@ const MONSTERS = [
   { name: 'ドラゴン', emoji: '🐉', hpRange: [100, 150] },
 ];
 
+const RARITY_SETTINGS = {
+  1: { weight: 500, multiplier: 1.0, name: 'Common' },
+  2: { weight: 300, multiplier: 1.5, name: 'Uncommon' },
+  3: { weight: 150, multiplier: 2.0, name: 'Rare' },
+  4: { weight: 45, multiplier: 3.5, name: 'Epic' },
+  5: { weight: 5, multiplier: 6.0, name: 'Legendary' }
+};
+
+const BASE_WEAPONS = [
+  { id: 'wood_sword', name: 'ひのきの棒', emoji: '🪵', baseAtk: 2, weight: 50 },
+  { id: 'club', name: 'こん棒', emoji: '🦴', baseAtk: 3, weight: 40 },
+  { id: 'stone_axe', name: '石の斧', emoji: '🪓', baseAtk: 6, weight: 25 },
+  { id: 'iron_sword', name: '鉄の剣', emoji: '⚔️', baseAtk: 12, weight: 20 },
+  { id: 'steel_hammer', name: '鋼のハンマー', emoji: '🔨', baseAtk: 20, weight: 10 },
+  { id: 'flame_sword', name: '炎の剣', emoji: '🔥', baseAtk: 35, weight: 3 },
+  { id: 'hero_sword', name: '勇者の剣', emoji: '🗡️', baseAtk: 50, weight: 1 },
+];
+
+const generateWeapons = () => {
+  const weapons = {
+    unarmed: { id: 'unarmed', name: '素手', emoji: '✊', baseAtk: 0, rarity: 1, maxLevel: 1, atkPerLevel: 0, weight: 0 }
+  };
+
+  BASE_WEAPONS.forEach(base => {
+    Object.keys(RARITY_SETTINGS).forEach(rKey => {
+      const rarity = parseInt(rKey);
+      const setting = RARITY_SETTINGS[rarity];
+      const id = `${base.id}_r${rarity}`;
+      const atk = Math.floor(base.baseAtk * setting.multiplier);
+
+      // Higher rarity means higher potential, but slower leveling curve or higher max level could be set here.
+      // For simplicity, keeping maxLevel/atkPerLevel somewhat consistent or scaled.
+      const atkPerLevel = Math.max(1, Math.floor(atk * 0.1));
+
+      weapons[id] = {
+        id: id,
+        baseId: base.id,
+        name: base.name, // Name is same, rarity distinguished by stars
+        emoji: base.emoji,
+        baseAtk: atk,
+        rarity: rarity,
+        maxLevel: 10,
+        atkPerLevel: atkPerLevel,
+        weight: base.weight // Used for base type selection
+      };
+    });
+  });
+  return weapons;
+};
+
+const WEAPONS = generateWeapons();
+
+const INVENTORY_KEY = 'squat-tracker-inventory';
+
+const InventoryManager = {
+  state: {
+    equippedId: 'unarmed',
+    items: {
+      unarmed: { level: 1, acquiredAt: Date.now() }
+    }
+  },
+
+  init() {
+    this.load();
+    // Ensure initial state validity
+    if (!this.state.items.unarmed) {
+      this.state.items.unarmed = { level: 1, acquiredAt: Date.now() };
+    }
+    if (!WEAPONS[this.state.equippedId]) {
+      this.state.equippedId = 'unarmed';
+    }
+    // Render UI if elements exist
+    this.render();
+    this.setupUI();
+  },
+
+  load() {
+    if (!isStorageAvailable) return;
+    try {
+      const raw = localStorage.getItem(INVENTORY_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && parsed.items) {
+          this.state = parsed;
+          this.migrate();
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load inventory', e);
+    }
+  },
+
+  migrate() {
+    // Migration: Convert old IDs (e.g., 'wood_sword') to new IDs (e.g., 'wood_sword_r1')
+    let changed = false;
+    const newItems = {};
+
+    // Handle equippedId migration
+    if (this.state.equippedId && !WEAPONS[this.state.equippedId]) {
+      const newId = `${this.state.equippedId}_r1`;
+      if (WEAPONS[newId]) {
+        this.state.equippedId = newId;
+        changed = true;
+      } else {
+        this.state.equippedId = 'unarmed';
+        changed = true;
+      }
+    }
+
+    // Handle items migration
+    Object.keys(this.state.items).forEach(key => {
+      if (WEAPONS[key]) {
+        newItems[key] = this.state.items[key];
+      } else {
+        const newId = `${key}_r1`;
+        if (WEAPONS[newId]) {
+          newItems[newId] = this.state.items[key];
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) {
+      this.state.items = newItems;
+      this.save();
+    }
+  },
+
+  save() {
+    if (!isStorageAvailable) return;
+    try {
+      localStorage.setItem(INVENTORY_KEY, JSON.stringify(this.state));
+    } catch (e) {
+      console.error('Failed to save inventory', e);
+    }
+  },
+
+  addWeapon(weaponId) {
+    const weaponDef = WEAPONS[weaponId];
+    if (!weaponDef) return null;
+
+    let result = 'NEW'; // NEW, LEVEL_UP, MAX
+    let item = this.state.items[weaponId];
+
+    if (item) {
+      if (item.level < weaponDef.maxLevel) {
+        item.level += 1;
+        result = 'LEVEL_UP';
+      } else {
+        result = 'MAX';
+      }
+    } else {
+      this.state.items[weaponId] = {
+        level: 1,
+        acquiredAt: Date.now()
+      };
+      result = 'NEW';
+    }
+
+    this.save();
+    this.render(); // Update UI if open
+    return { result, weapon: weaponDef, level: this.state.items[weaponId].level };
+  },
+
+  equipWeapon(weaponId) {
+    if (!this.state.items[weaponId] || !WEAPONS[weaponId]) return false;
+    this.state.equippedId = weaponId;
+    this.save();
+    this.render();
+    return true;
+  },
+
+  getEquippedWeapon() {
+    const id = this.state.equippedId;
+    const def = WEAPONS[id] || WEAPONS.unarmed;
+    const item = this.state.items[id] || { level: 1 };
+
+    // Calculate attack power: Base + (Level - 1) * Growth
+    const bonus = def.baseAtk + (item.level - 1) * def.atkPerLevel;
+
+    return {
+      ...def,
+      level: item.level,
+      bonusAtk: bonus
+    };
+  },
+
+  getAttackBonus() {
+    return this.getEquippedWeapon().bonusAtk;
+  },
+
+  setupUI() {
+    const openBtn = document.getElementById('equipment-button');
+    const modal = document.getElementById('equipment-modal');
+    if (!modal) return;
+
+    const closeElements = modal.querySelectorAll('[data-close]');
+
+    if (openBtn) {
+      openBtn.addEventListener('click', () => {
+        this.render();
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    closeElements.forEach(el => {
+      el.addEventListener('click', () => {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+      });
+    });
+  },
+
+  render() {
+    const listEl = document.getElementById('weapon-list');
+    const bonusEl = document.getElementById('equipment-total-bonus');
+    const totalBonus = this.getAttackBonus();
+
+    if (bonusEl) {
+      bonusEl.textContent = `+${totalBonus}`;
+    }
+
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    // Sort: Equipped first, then by rarity desc, then by power
+    const ownedIds = Object.keys(this.state.items);
+    ownedIds.sort((a, b) => {
+      if (a === this.state.equippedId) return -1;
+      if (b === this.state.equippedId) return 1;
+
+      const wa = WEAPONS[a];
+      const wb = WEAPONS[b];
+      if (wb.rarity !== wa.rarity) return wb.rarity - wa.rarity;
+      return wb.baseAtk - wa.baseAtk;
+    });
+
+    ownedIds.forEach(id => {
+      const def = WEAPONS[id];
+      const item = this.state.items[id];
+      if (!def) return;
+
+      const currentAtk = def.baseAtk + (item.level - 1) * def.atkPerLevel;
+      const isEquipped = id === this.state.equippedId;
+
+      const li = document.createElement('li');
+      li.className = `weapon-item ${isEquipped ? 'equipped' : ''}`;
+      li.innerHTML = `
+        <div class="weapon-icon">${def.emoji}</div>
+        <div class="weapon-info">
+          <div class="weapon-name">
+             ${def.name} <span style="font-size:0.8em; color:#666">Lv.${item.level}</span>
+             ${isEquipped ? '<span class="equip-status">装備中</span>' : ''}
+          </div>
+          <div class="weapon-meta">レア度 ${'★'.repeat(def.rarity)}</div>
+        </div>
+        <div class="weapon-stats">+${currentAtk}</div>
+      `;
+
+      li.addEventListener('click', () => {
+        if (!isEquipped) {
+          this.equipWeapon(id);
+        }
+      });
+
+      listEl.appendChild(li);
+    });
+  }
+};
+
+// Expose for testing
+if (typeof window !== 'undefined') {
+  window.InventoryManager = InventoryManager;
+}
+
 const RpgSystem = {
   calculateLevel(totalReps) {
     if (typeof totalReps !== 'number' || totalReps < 0) return 1;
@@ -111,6 +387,7 @@ const BossBattle = {
     loopCount: 1,
     lastInteraction: Date.now(),
   },
+  isRespawning: false,
   elements: {},
 
   init() {
@@ -223,6 +500,8 @@ const BossBattle = {
   },
 
   damage(amount, isCritical = false) {
+    if (this.isRespawning) return;
+
     this.regenerateHp();
 
     if (!this.state.currentMonster) return;
@@ -271,12 +550,17 @@ const BossBattle = {
   },
 
   handleDefeat() {
+    if (this.isRespawning) return;
+    this.isRespawning = true;
+
     this.state.totalKills += 1;
     this.state.monsterIndex += 1;
     if (this.state.monsterIndex >= MONSTERS.length) {
       this.state.monsterIndex = 0;
       this.state.loopCount += 1;
     }
+
+    this.rollDrop();
 
     this.saveState();
     this.render();
@@ -287,7 +571,68 @@ const BossBattle = {
 
     setTimeout(() => {
       this.spawnMonster(true);
+      this.isRespawning = false;
     }, 1000);
+  },
+
+  rollDrop() {
+    // 30% drop chance
+    if (Math.random() > 0.3) return;
+
+    // 1. Select Rarity
+    const rarityPool = Object.values(RARITY_SETTINGS);
+    const totalRarityWeight = rarityPool.reduce((sum, r) => sum + r.weight, 0);
+    let rRandom = Math.random() * totalRarityWeight;
+    let selectedRarity = 1;
+
+    // Iterate keys 1..5
+    for (let r = 1; r <= 5; r++) {
+      rRandom -= RARITY_SETTINGS[r].weight;
+      if (rRandom <= 0) {
+        selectedRarity = r;
+        break;
+      }
+    }
+
+    // 2. Select Base Weapon
+    const totalBaseWeight = BASE_WEAPONS.reduce((sum, w) => sum + w.weight, 0);
+    let bRandom = Math.random() * totalBaseWeight;
+    let selectedBase = BASE_WEAPONS[0];
+
+    for (const w of BASE_WEAPONS) {
+      bRandom -= w.weight;
+      if (bRandom <= 0) {
+        selectedBase = w;
+        break;
+      }
+    }
+
+    const weaponId = `${selectedBase.id}_r${selectedRarity}`;
+    const weapon = WEAPONS[weaponId];
+
+    if (weapon && typeof InventoryManager !== 'undefined') {
+      const result = InventoryManager.addWeapon(weaponId);
+      if (result) {
+        let title = result.result === 'NEW' ? '武器GET!' : '武器レベルUP!';
+        const rarityStars = '★'.repeat(weapon.rarity);
+
+        // Special message for high rarity
+        if (weapon.rarity >= 4 && result.result === 'NEW') {
+          title = `✨${RARITY_SETTINGS[weapon.rarity].name.toUpperCase()} GET!✨`;
+        }
+
+        const message = result.result === 'MAX'
+          ? `${weapon.name} ${rarityStars} (最大Lv)`
+          : `${weapon.name} ${rarityStars} (Lv.${result.level})`;
+
+        showToast({
+          emoji: weapon.emoji,
+          title: title,
+          message: message,
+          sound: true
+        });
+      }
+    }
   },
 
   render() {
@@ -1429,6 +1774,43 @@ const initializeHistory = () => {
 
 const ACHIEVEMENTS_KEY = 'squat-tracker-achievements';
 
+const showToast = ({ emoji, title, message, sound = true }) => {
+  const existing = document.querySelectorAll('.achievement-toast');
+  const offset = existing.length * 90; // Approx height + gap
+
+  const toast = document.createElement('div');
+  toast.className = 'achievement-toast';
+  toast.style.top = `${20 + offset}px`;
+  toast.innerHTML = `
+    <div class="toast-icon">${emoji}</div>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  if (sound) {
+    if (typeof playCelebration === 'function') {
+      setTimeout(() => playCelebration(), 300);
+    }
+    if (typeof VoiceCoach !== 'undefined') {
+      VoiceCoach.speak(`${title}。${message}`);
+    }
+  }
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    toast.style.transition = 'all 0.5s ease-in';
+    setTimeout(() => toast.remove(), 500);
+  }, 4000);
+};
+
+if (typeof window !== 'undefined') {
+  window.showToast = showToast;
+}
+
 const AchievementSystem = {
   badges: [],
   unlocked: {},
@@ -1563,36 +1945,12 @@ const AchievementSystem = {
   },
 
   showNotification(badge) {
-    const existing = document.querySelectorAll('.achievement-toast');
-    const offset = existing.length * 90; // Approx height + gap
-
-    const toast = document.createElement('div');
-    toast.className = 'achievement-toast';
-    toast.style.top = `${20 + offset}px`;
-    toast.innerHTML = `
-      <div class="toast-icon">${badge.emoji}</div>
-      <div class="toast-content">
-        <div class="toast-title">実績解除！</div>
-        <div class="toast-message">${badge.name}</div>
-      </div>
-    `;
-    document.body.appendChild(toast);
-
-    // Play sound if context allows
-    if (typeof playCelebration === 'function') {
-      // Small delay to separate from other sounds
-      setTimeout(() => playCelebration(), 300);
-    }
-    if (typeof VoiceCoach !== 'undefined') {
-      VoiceCoach.speak(`実績解除。${badge.name}`);
-    }
-
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateX(100%)';
-      toast.style.transition = 'all 0.5s ease-in';
-      setTimeout(() => toast.remove(), 500);
-    }, 4000);
+    showToast({
+      emoji: badge.emoji,
+      title: '実績解除！',
+      message: badge.name,
+      sound: true
+    });
   },
 
   unlock(badgeId) {
@@ -1648,7 +2006,8 @@ const performAttack = () => {
   const stats = computeStats(historyEntries);
   const level = RpgSystem.calculateLevel(stats.totalRepsAllTime);
   const baseAp = RpgSystem.calculateAttackPower(level);
-  const damage = RpgSystem.calculateDamage(baseAp);
+  const weaponBonus = typeof InventoryManager !== 'undefined' ? InventoryManager.getAttackBonus() : 0;
+  const damage = RpgSystem.calculateDamage(baseAp + weaponBonus);
   BossBattle.damage(damage.amount, damage.isCritical);
 };
 
@@ -2117,6 +2476,7 @@ initializePresets();
 initializeHistory();
 AchievementSystem.init();
 DataManager.init();
+InventoryManager.init(); // Initialize Inventory
 // BossBattle.init(); // Moved to DOMContentLoaded
 updateDisplays();
 updateActionButtonStates();
