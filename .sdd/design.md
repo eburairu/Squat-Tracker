@@ -1,85 +1,57 @@
-# Design Specification: Boss Battle Mode
+# Design Specification: Squat-Tracker
 
-## 1. Architecture
-The Boss Battle feature will be encapsulated in a `BossBattle` class within `app.js` (or a separate module if we were using modules, but adhering to the single-file `app.js` structure for now).
+## 1. Architecture Strategy
+The application uses a **Singleton-based Modular Architecture** within a single `app.js` file to maintain simplicity while ensuring separation of concerns.
 
-### Class Structure: `BossBattle`
-- **Properties**:
-  - `state`: Object `{ currentMonster: { name, emoji, maxHp, currentHp }, totalKills: 0 }`
-  - `elements`: Object storing references to DOM nodes (`container`, `avatar`, `hpFill`, `hpText`, `killCount`).
-  - `monsters`: Array of monster definitions.
+### Core Modules (Singletons)
+- **`WorkoutTimer`**: Manages the workout state machine (Countdown -> Down -> Hold -> Up -> Rest).
+- **`VoiceCoach`**: Handles text-to-speech synthesis.
+- **`SensorManager`**: Manages DeviceOrientation events for squat detection.
+- **`BossBattle`**: Manages RPG logic (Monster state, HP, Damage).
+- **`AchievementSystem`**: Monitors events and awards badges based on history/stats.
+- **`DataManager`**: Handles import/export of `localStorage` data.
+- **`PresetManager`**: Manages CRUD operations for workout settings.
+- **`HistoryManager` (Implicit)**: Handles loading/saving of workout history and stats calculation.
+- **`Heatmap`**: Renders the GitHub-style activity graph.
 
-- **Methods**:
-  - `init()`: Initialize DOM elements, load state from `localStorage`, render initial state.
-  - `loadState()`: Helper to parse local storage.
-  - `saveState()`: Helper to persist state.
-  - `spawnMonster()`: Select a new monster (randomly) and reset HP.
-  - `takeDamage(amount)`: Reduce HP, trigger animations, check for defeat.
-  - `handleDefeat()`: Process monster death, increment kills, delay spawn.
-  - `render()`: Update the UI based on current state.
-  - `triggerDamageAnimation()`: Apply CSS class temporarily.
+## 2. Data Persistence Model
+All data is persisted in `localStorage` with the prefix `squat-tracker-`.
 
-## 2. Data Model
-### Monster Definition
-```javascript
-const MONSTERS = [
-  { name: 'スライム', emoji: '💧', hpRange: [10, 20] },
-  { name: 'コウモリ', emoji: '🦇', hpRange: [15, 25] },
-  { name: 'ゴブリン', emoji: '👺', hpRange: [30, 50] },
-  { name: 'ドラゴン', emoji: '🐉', hpRange: [80, 120] },
-  // ...
-];
-```
+| Key | Description | Structure |
+| :--- | :--- | :--- |
+| `squat-tracker-history` | List of completed sessions | Array of `{ date, count, set, reps, ... }` |
+| `squat-tracker-achievements` | Unlocked badges | Object `{ unlocked: [badgeId, ...], ... }` |
+| `squat-tracker-boss-v1` | Boss battle state | Object `{ currentMonster, totalKills, ... }` |
+| `squat-tracker-presets` | User defined settings | Array of `{ id, name, settings: {...} }` |
+| `squat-tracker-settings` | Last used settings | Object `{ sets, reps, durations... }` |
 
-## 3. UI Design
-### HTML
-Added to `.primary-grid`:
-```html
-<div class="card boss-card reveal delay-2">
-  <div class="card-head">
-    <div>
-      <p class="card-eyebrow">Battle</p>
-      <h2>ボスバトル</h2>
-    </div>
-    <div class="boss-kills">
-      <span class="label">討伐数</span>
-      <span id="boss-kill-count">0</span>
-    </div>
-  </div>
-  <div class="boss-display">
-    <div id="boss-avatar" class="boss-avatar">👾</div>
-    <div class="boss-info">
-      <div class="boss-name-row">
-        <span id="boss-name">Unknown</span>
-        <span id="boss-hp-text">0 / 0</span>
-      </div>
-      <div class="progress boss-progress">
-        <div id="boss-hp-bar" class="progress-bar" style="width: 100%"></div>
-      </div>
-    </div>
-  </div>
-</div>
-```
+## 3. UI Design Principles
+- **Card-based Layout**: Content is organized in cards (`.card`) within a responsive grid.
+- **Progressive Disclosure**: Advanced features (Sensor, Data) are in secondary grids or tabs.
+- **Visual Feedback**:
+  - CSS Animations for Boss damage/spawn.
+  - Confetti for achievements/completion.
+  - Progress bars for Timer and HP.
+- **Dark/Light Theme**: CSS variables (`--bg-color`, etc.) controlled by a toggle.
 
-### CSS
-- **.boss-avatar**: Large font size (e.g., 4rem), centered.
-- **.boss-shake**: Keyframe animation for translating X/Y randomly for 0.5s.
-- **.boss-defeat**: Keyframe animation for scaling down and fading out.
-- **.boss-spawn**: Keyframe animation for popping in (scale 0->1).
+## 4. Key Feature Designs
 
-## 4. Integration
-- **Initialization**: Call `BossBattle.init()` in `window.onload` or at the end of `app.js`.
-- **Trigger**:
-  - Inside `nextRepOrSet()` (Timer logic): `BossBattle.damage(1)`
-  - Inside `handleOrientation()` (Sensor logic): `BossBattle.damage(1)`
+### Boss Battle
+- **Logic**: 1 Rep = 1 Damage (Normal) / Critical Logic based on stats.
+- **Regeneration**: Boss recovers HP based on time elapsed since last workout.
+- **Persistence**: State is saved on every damage event to prevent loss.
 
-## 5. Test Plan
-- **Unit Tests**:
-  - Verify state loading/saving.
-  - Verify HP reduction.
-  - Verify kill count increment.
-  - Verify new monster generation.
-- **E2E Tests (Playwright)**:
-  - Check if Boss Card is visible.
-  - Check if HP bar decreases after a squat.
-  - Check persistence after reload.
+### Achievement System
+- **Trigger**: Checked at `finishWorkout`, `BossBattle.damage` (for kills), and initialization.
+- **Retroactive**: Checks history on load to award badges for past accomplishments.
+- **Notification**: Toast notification (`.achievement-toast`) on unlock.
+
+### Data Management
+- **Format**: JSON containing all keys matching `squat-tracker-*`.
+- **Validation**: Import validates JSON structure before overwriting `localStorage`.
+
+## 5. Testing Strategy
+- **E2E Testing (Playwright)**: Primary verification method.
+  - Covers critical paths: Workout flow, Settings, Data persistence.
+  - Mocks `localStorage` for testing state-dependent features (Badges, Boss).
+  - Uses `clock` manipulation for timer tests.
