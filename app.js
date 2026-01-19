@@ -19,9 +19,6 @@ const themeToggle = document.getElementById('theme-toggle');
 const themeStatus = document.getElementById('theme-status');
 const voiceToggle = document.getElementById('voice-toggle');
 const voiceStatus = document.getElementById('voice-status');
-const dailyMessage = document.getElementById('daily-message');
-const dailyGoal = document.getElementById('daily-goal');
-const dailyStreak = document.getElementById('daily-streak');
 
 const setCountInput = document.getElementById('set-count');
 const repCountInput = document.getElementById('rep-count');
@@ -739,18 +736,6 @@ const VOICE_COACH_KEY = 'squat-tracker-voice';
 const WORKOUT_SETTINGS_KEY = 'squat-tracker-workout-settings';
 const PRESET_KEY = 'squat-tracker-presets';
 let historyEntries = [];
-
-const dailyTips = [
-  { message: '1セットだけでもOK。まず動く。', goal: '今日は1回だけ深くしゃがむ。' },
-  { message: '時間よりリズムを大事に。', goal: '今日は呼吸を合わせる。' },
-  { message: '短くても継続が勝ち。', goal: '今日はフォームを1回意識。' },
-  { message: '終わったら小さく記録。', goal: '今日は回数より丁寧さ。' },
-  { message: '疲れたら1分だけ。', goal: '今日は姿勢を整える。' },
-];
-const defaultDailyTip = {
-  message: '今日は1分だけ動く。',
-  goal: 'まず1回だけ。',
-};
 
 const phases = [
   { key: Phase.DOWN, duration: () => parseInt(downDurationInput.value, 10) },
@@ -1473,36 +1458,6 @@ const computeStreak = (entries) => {
   return streak;
 };
 
-const normalizeDailyTip = (tip) => {
-  const candidate = tip && typeof tip === 'object' ? tip : {};
-  const message =
-    typeof candidate.message === 'string' && candidate.message.trim()
-      ? candidate.message.trim()
-      : defaultDailyTip.message;
-  const goal =
-    typeof candidate.goal === 'string' && candidate.goal.trim() ? candidate.goal.trim() : defaultDailyTip.goal;
-  return { message, goal };
-};
-
-const getDailyTip = () => {
-  if (!Array.isArray(dailyTips) || dailyTips.length === 0) {
-    return defaultDailyTip;
-  }
-  const index = getDayOfYear() % dailyTips.length;
-  return normalizeDailyTip(dailyTips[index]);
-};
-
-const updateDailySupport = () => {
-  if (!dailyMessage || !dailyGoal || !dailyStreak) {
-    return;
-  }
-  const tip = getDailyTip();
-  dailyMessage.textContent = tip.message;
-  dailyGoal.textContent = tip.goal;
-  const streak = computeStreak(historyEntries);
-  dailyStreak.textContent = `${streak}日`;
-};
-
 const updateHistoryNote = () => {
   if (!historyNote) {
     return;
@@ -1634,7 +1589,6 @@ const recordWorkout = () => {
   renderStats();
   renderHistory();
   renderHeatmap();
-  updateDailySupport();
 };
 
 const runTests = () => {
@@ -1651,9 +1605,6 @@ const runTests = () => {
   console.assert(sample.length === 1, 'sanitizeHistoryEntries should keep valid entries');
   console.assert(computeStats(sample).totalRepsAllTime === 30, 'computeStats should sum reps');
   console.assert(formatDate('2024-01-02T00:00:00.000Z') === '2024/01/02', 'formatDate should format date');
-  const normalized = normalizeDailyTip({ message: '  ', goal: null });
-  console.assert(normalized.message === defaultDailyTip.message, 'normalizeDailyTip should fallback message');
-  console.assert(normalized.goal === defaultDailyTip.goal, 'normalizeDailyTip should fallback goal');
   console.log('Test run completed.');
 };
 
@@ -1768,7 +1719,6 @@ const initializeHistory = () => {
   renderHistory();
   renderHeatmap();
   updateHistoryNote();
-  updateDailySupport();
   updateSessionStats();
 };
 
