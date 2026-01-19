@@ -73,6 +73,11 @@
               <div class="progress boss-progress">
                 <div id="boss-hp-bar" class="progress-bar" style="width: 100%"></div>
               </div>
+              <div class="boss-actions">
+                <button id="equipment-button" class="ghost small" aria-label="装備を変更">
+                  <span style="margin-right: 4px;">⚔️</span> 装備
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -291,6 +296,25 @@
     </main>
 
     <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+
+    <div id="equipment-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" tabindex="-1" data-close></div>
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-header">
+          <h2 id="modal-title">装備一覧</h2>
+          <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="equipment-summary">
+            <span class="summary-label">現在の攻撃力ボーナス</span>
+            <span id="equipment-total-bonus" class="summary-value">+0</span>
+          </div>
+          <ul id="weapon-list" class="weapon-list">
+            <!-- Items injected by JS -->
+          </ul>
+        </div>
+      </div>
+    </div>
 
     <script src="app.js"></script>
   </body>
