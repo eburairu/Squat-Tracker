@@ -1,81 +1,48 @@
-# 技術設計書: 装備ドロップ＆コレクション機能
+# 技術設計書: 装備ドロップ＆コレクション機能（Update: レアリティ拡張）
 
-## アーキテクチャ概要
-既存の Singleton パターンを踏襲し、新たに `WeaponRegistry`（データ定義）と `InventoryManager`（状態管理）を導入する。
-これらを `RpgSystem` および `BossBattle` と連携させ、戦闘ロジックと報酬システムを拡張する。
-UIは既存の `index.html` にモーダルを追加し、Vanilla JS で制御する。
+## データモデル変更
 
-## 主要コンポーネント
+### 1. 武器データ構造の刷新
+静的な `WEAPONS` 定義を廃止し、`BASE_WEAPONS` と `RARITY_SETTINGS` から動的に生成する。
 
-### 1. WeaponRegistry (定数定義)
-- **責務**: 全武器のマスターデータを管理する。
-- **データ構造**:
-  ```javascript
-  const WEAPONS = {
-    unarmed: { name: '素手', emoji: '✊', baseAtk: 0, rarity: 1, maxLevel: 1, atkPerLevel: 0, weight: 0 },
-    wood_sword: { name: 'ひのきの棒', emoji: '🪵', baseAtk: 2, rarity: 1, maxLevel: 10, atkPerLevel: 1, weight: 50 },
-    iron_sword: { name: '鉄の剣', emoji: '🗡️', baseAtk: 5, rarity: 2, maxLevel: 10, atkPerLevel: 2, weight: 30 },
-    // ...他
-  };
-  ```
+```javascript
+// レアリティ設定
+const RARITY_SETTINGS = {
+  1: { weight: 500, multiplier: 1.0, name: 'Common' },
+  2: { weight: 300, multiplier: 1.5, name: 'Uncommon' },
+  3: { weight: 150, multiplier: 2.0, name: 'Rare' },
+  4: { weight: 45, multiplier: 3.5, name: 'Epic' },
+  5: { weight: 5, multiplier: 6.0, name: 'Legendary' }
+};
 
-### 2. InventoryManager (Singleton)
-- **責務**: ユーザーの所持武器、レベル、装備状態を管理し、永続化する。
-- **データモデル (localStorage: squat-tracker-inventory)**:
-  ```javascript
-  {
-    equippedId: 'unarmed',
-    items: {
-      'unarmed': { level: 1, acquiredAt: timestamp },
-      'wood_sword': { level: 2, acquiredAt: timestamp }
-    }
-  }
-  ```
-- **メソッド**:
-  - `init()`: ロードと初期化（初期データの保証）。
-  - `addWeapon(weaponId)`: 武器追加またはレベルアップ。戻り値で結果（NEW/LEVEL_UP/MAX）を返す。
-  - `equipWeapon(weaponId)`: 装備変更。
-  - `getEquippedWeapon()`: 現在の武器オブジェクトと補正値を返す。
-  - `getTotalAttackPower()`: 現在の攻撃力（基本AP + 武器AP）を計算するヘルパー。
+// 基本武器定義
+const BASE_WEAPONS = [
+  { id: 'wood_sword', name: 'ひのきの棒', emoji: '🪵', baseAtk: 2, weight: 50 },
+  // ...
+];
 
-### 3. BossBattle (拡張)
-- **変更点**:
-  - `handleDefeat()`: 討伐時に `InventoryManager` を介してドロップ処理を行う。
-  - UI更新: ドロップ演出（Toast）の呼び出し。
-  - UI追加: 装備モーダルを開くボタンのイベントハンドリング。
+// 生成されるWEAPONSのキー形式
+// "{baseId}_r{rarity}" -> 例: "wood_sword_r1", "wood_sword_r5"
+```
 
-### 4. RpgSystem (拡張)
-- **変更点**:
-  - `calculateDamage()`: `InventoryManager.getEquippedWeapon().attack` を加算してダメージ算出する。
+### 2. 生成ロジック (`generateWeapons`)
+- 全 `BASE_WEAPONS` × 全 `RARITY_SETTINGS` の組み合わせを生成し、`WEAPONS` オブジェクトにフラットに格納する。
+- **攻撃力計算**: `Math.floor(baseWeapon.baseAtk * rarity.multiplier)`
+- **名前**: 必要に応じて接尾辞をつけるが、今回は表示時に★で区別するためデータ上の `name` は基本名のままでも可。ただし、ユニーク性を出すなら「名工のひのきの棒」などの接頭辞ロジックを入れても良い（今回はシンプルに基本名ママで、IDとRarityプロパティで区別）。
 
-## 処理フロー
+## 処理フロー変更
 
-### ドロップフロー
-1. `BossBattle.damage` で HP <= 0 になる。
-2. `handleDefeat` が呼ばれる。
-3. `InventoryManager.rollDrop()` (新規メソッド) を呼び出す。
-   - 確率計算（今回は必ずドロップするか、一定確率か要調整。まずは 30% 程度で設定）。
-   - 抽選された武器IDを `addWeapon(id)` する。
-4. 結果に応じて通知を表示（「GET! ひのきの棒」「LEVEL UP! 鉄の剣」）。
-
-### ダメージ計算フロー
-1. スクワット検知 -> `performAttack`
-2. `RpgSystem.calculateLevel` -> 基本AP算出。
-3. `InventoryManager.getEquippedWeapon` -> 武器AP算出。
-4. 合算して `BossBattle.damage` へ渡す。
+### ドロップ抽選ロジック (`rollDrop`)
+1. **ドロップ判定**: 30% の確率でドロップ処理開始。
+2. **レアリティ抽選**: `RARITY_SETTINGS` の `weight` に基づいて ★1〜★5 を決定。
+3. **武器種抽選**: `BASE_WEAPONS` の `weight` に基づいて武器種を決定。
+4. **ID構築**: `{baseId}_r{rarity}` を作成。
+5. **付与**: `InventoryManager.addWeapon(id)` を呼び出す。
 
 ## UI設計
+- 特段のHTML変更は不要。
+- `app.js` の `render` メソッドにおいて、アイテム名表示時にレアリティに応じた装飾（色など）を追加すると良い。
 
-### モーダル構成
-- オーバーレイ (`.modal-overlay`)
-- コンテンツ (`.modal-content`)
-  - ヘッダー: 「装備一覧」
-  - リスト (`.weapon-list`):
-    - 各アイテム: アイコン、名前、Lv、攻撃力（+XX）、装備ボタン（または行クリック）。
-    - 装備中のアイテムには `.equipped` クラス付与（「E」マーク表示）。
-  - フッター: 「閉じる」ボタン
-
-### 変更計画
-- **index.html**: モーダルHTML、装備ボタン追加。
-- **styles.css**: モーダル、リスト、ボタンのスタイル追加。
-- **app.js**: `WeaponRegistry`, `InventoryManager` 実装、`BossBattle`, `RpgSystem` 修正。
+## 互換性
+- 既存の `wood_sword` などのIDは `wood_sword_r1` にマイグレーションするか、あるいは古いIDも `WEAPONS` にエイリアスとして残す必要がある。
+- **方針**: 既存データ（開発中のためユーザーデータは少ないと仮定するが念のため）との整合性を保つため、古いIDがロードされた場合、自動的に `_r1` 版に置換するマイグレーションロジックを `InventoryManager.load` に入れるのが安全。

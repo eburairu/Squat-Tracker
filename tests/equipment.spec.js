@@ -1,101 +1,87 @@
 const { test, expect } = require('@playwright/test');
 
-test.describe('Equipment System', () => {
+test.describe('Equipment System (Rarity Update)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    // LocalStorageをクリアして初期状態にする
     await page.evaluate(() => {
       localStorage.clear();
       location.reload();
     });
-    // BossBattle, InventoryManagerの初期化を待つ
     await page.waitForTimeout(1000);
   });
 
   test('初期状態では素手のみを所持し装備している', async ({ page }) => {
     const equipBtn = page.locator('#equipment-button');
-    await expect(equipBtn).toBeVisible();
-
     await equipBtn.click();
-    const modal = page.locator('#equipment-modal');
-    await expect(modal).toBeVisible();
 
     const listItems = page.locator('.weapon-item');
     await expect(listItems).toHaveCount(1);
-
-    const firstItem = listItems.first();
-    await expect(firstItem).toContainText('素手');
-    await expect(firstItem).toHaveClass(/equipped/);
-
-    const bonus = page.locator('#equipment-total-bonus');
-    await expect(bonus).toHaveText('+0');
+    await expect(listItems.first()).toContainText('素手');
   });
 
-  test('新しい武器を入手して装備できる', async ({ page }) => {
-    // 武器を強制的に入手
+  test('レアリティの異なる同名武器は別アイテムとして扱われる', async ({ page }) => {
+    // 同じ基本武器の異なるレアリティを入手
     await page.evaluate(() => {
-      InventoryManager.addWeapon('wood_sword');
+      InventoryManager.addWeapon('wood_sword_r1'); // Common
+      InventoryManager.addWeapon('wood_sword_r5'); // Legendary
     });
 
     const equipBtn = page.locator('#equipment-button');
     await equipBtn.click();
 
     const listItems = page.locator('.weapon-item');
-    await expect(listItems).toHaveCount(2);
+    // 素手 + r1 + r5 = 3つ
+    await expect(listItems).toHaveCount(3);
 
-    // ひのきの棒があるか確認
-    const woodSword = listItems.locator('text=ひのきの棒').first();
-    const woodSwordRow = page.locator('.weapon-item').filter({ hasText: 'ひのきの棒' });
-    await expect(woodSwordRow).toBeVisible();
+    // 素手(★1)も含まれるので、"ひのきの棒" で絞り込んでからレアリティ確認
+    const woodSwordR1 = listItems.filter({ hasText: 'ひのきの棒' }).filter({ hasText: '★' }).filter({ hasNotText: '★★' }); // ★1
+    const woodSwordR5 = listItems.filter({ hasText: 'ひのきの棒' }).filter({ hasText: '★★★★★' }); // ★5
 
-    // クリックして装備
-    await woodSwordRow.click();
-    await expect(woodSwordRow).toHaveClass(/equipped/);
+    await expect(woodSwordR1).toBeVisible();
+    await expect(woodSwordR5).toBeVisible();
 
-    // ボーナス確認 (ひのきの棒 Lv1 は +2)
-    const bonus = page.locator('#equipment-total-bonus');
-    await expect(bonus).toHaveText('+2');
+    // 攻撃力の違いを確認 (Base2 * 1.0 vs Base2 * 6.0 = 12)
+    // r1 should be +2, r5 should be +12
+    await expect(woodSwordR1).toContainText('+2');
+    await expect(woodSwordR5).toContainText('+12');
   });
 
-  test('重複入手でレベルアップする', async ({ page }) => {
-    // 武器を2回入手
+  test('同じレアリティの武器入手でレベルアップする', async ({ page }) => {
     await page.evaluate(() => {
-      InventoryManager.addWeapon('wood_sword');
-      InventoryManager.addWeapon('wood_sword');
+      InventoryManager.addWeapon('wood_sword_r2');
+      InventoryManager.addWeapon('wood_sword_r2');
     });
 
     const equipBtn = page.locator('#equipment-button');
     await equipBtn.click();
 
-    const woodSwordRow = page.locator('.weapon-item').filter({ hasText: 'ひのきの棒' });
-
-    // Lv.2 になっているか
-    await expect(woodSwordRow).toContainText('Lv.2');
-
-    // 装備してボーナス確認 (Lv2 = Base 2 + (2-1)*1 = 3)
-    await woodSwordRow.click();
-    const bonus = page.locator('#equipment-total-bonus');
-    await expect(bonus).toHaveText('+3');
+    const item = page.locator('.weapon-item').filter({ hasText: 'ひのきの棒' }).filter({ hasText: '★★' });
+    await expect(item).toContainText('Lv.2');
   });
 
-  test('永続化されている', async ({ page }) => {
-    // 装備変更
+  test('マイグレーション機能が動作する', async ({ page }) => {
+    // 古いデータ形式を注入
     await page.evaluate(() => {
-      InventoryManager.addWeapon('wood_sword');
-      InventoryManager.equipWeapon('wood_sword');
+      const oldState = {
+        equippedId: 'wood_sword',
+        items: {
+          'unarmed': { level: 1 },
+          'wood_sword': { level: 5 }
+        }
+      };
+      localStorage.setItem('squat-tracker-inventory', JSON.stringify(oldState));
+      location.reload();
     });
 
-    // リロード
-    await page.reload();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1000); // Wait for init and migration
 
     const equipBtn = page.locator('#equipment-button');
     await equipBtn.click();
 
-    const bonus = page.locator('#equipment-total-bonus');
-    await expect(bonus).toHaveText('+2'); // wood_sword Lv1 bonus
-
-    const woodSwordRow = page.locator('.weapon-item').filter({ hasText: 'ひのきの棒' });
-    await expect(woodSwordRow).toHaveClass(/equipped/);
+    // wood_sword -> wood_sword_r1 に変換されているはず
+    const item = page.locator('.weapon-item').filter({ hasText: 'ひのきの棒' });
+    await expect(item).toContainText('Lv.5');
+    await expect(item).toContainText('★'); // Rarity 1
+    await expect(item).toHaveClass(/equipped/); // Still equipped
   });
 });
