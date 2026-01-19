@@ -28,7 +28,7 @@
 - pr-review-checklist: Pull Request のレビュー観点を標準化し、見落としを防ぐためのチェックリストを提供する。
 - draft-commit-message: ステージングされた変更内容から Conventional Commits に準拠したコミットメッセージ案を生成する。
 - security-quick-audit: 変更差分に対する簡易セキュリティ監査を行い、リスクを洗い出す。
-- general-task-playbook: 汎用的なタスクを抜け漏れなく進めるための計画・実行テンプレートを提供する。
+- general-task-playbook: 非開発タスク（調査・ドキュメント作成・運用作業など）を抜け漏れなく進めるための計画・実行テンプレートを提供する。
 - sdd-steering: プロジェクトの全体像を把握し、SDDプロセスのための基本ドキュメント（Product, Tech, Structure）を生成・更新する。
 - sdd-requirements: 実装したい機能の要件と受け入れ基準を定義し、要件定義書（requirements.md）を作成する。
 - sdd-highway: 要件定義から設計・実装までを一気に実行する高速開発モード。
