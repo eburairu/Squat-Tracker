@@ -269,10 +269,24 @@
           </div>
           <p id="history-note" class="history-note"></p>
         </div>
-        <div id="activity-heatmap" class="heatmap-container"></div>
-        <ul id="history-list" class="history-list">
-          <li class="history-empty">まだ記録がありません</li>
-        </ul>
+
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="history">記録</button>
+          <button class="tab-btn" data-tab="achievements">実績</button>
+        </div>
+
+        <div id="tab-history" class="tab-content active">
+          <div id="activity-heatmap" class="heatmap-container"></div>
+          <ul id="history-list" class="history-list">
+            <li class="history-empty">まだ記録がありません</li>
+          </ul>
+        </div>
+
+        <div id="tab-achievements" class="tab-content">
+          <div id="badge-grid" class="badge-grid">
+            <!-- Badges will be rendered here -->
+          </div>
+        </div>
       </section>
     </main>
 
