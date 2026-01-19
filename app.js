@@ -75,6 +75,205 @@ const MONSTERS = [
   { name: 'ドラゴン', emoji: '🐉', hpRange: [100, 150] },
 ];
 
+const WEAPONS = {
+  unarmed: { id: 'unarmed', name: '素手', emoji: '✊', baseAtk: 0, rarity: 1, maxLevel: 1, atkPerLevel: 0, weight: 0 },
+  wood_sword: { id: 'wood_sword', name: 'ひのきの棒', emoji: '🪵', baseAtk: 2, rarity: 1, maxLevel: 10, atkPerLevel: 1, weight: 50 },
+  club: { id: 'club', name: 'こん棒', emoji: '🦴', baseAtk: 3, rarity: 1, maxLevel: 10, atkPerLevel: 1, weight: 40 },
+  stone_axe: { id: 'stone_axe', name: '石の斧', emoji: '🪓', baseAtk: 6, rarity: 2, maxLevel: 10, atkPerLevel: 2, weight: 25 },
+  iron_sword: { id: 'iron_sword', name: '鉄の剣', emoji: '⚔️', baseAtk: 12, rarity: 2, maxLevel: 10, atkPerLevel: 3, weight: 20 },
+  steel_hammer: { id: 'steel_hammer', name: '鋼のハンマー', emoji: '🔨', baseAtk: 20, rarity: 3, maxLevel: 10, atkPerLevel: 4, weight: 10 },
+  flame_sword: { id: 'flame_sword', name: '炎の剣', emoji: '🔥', baseAtk: 35, rarity: 4, maxLevel: 5, atkPerLevel: 6, weight: 3 },
+  hero_sword: { id: 'hero_sword', name: '勇者の剣', emoji: '🗡️', baseAtk: 50, rarity: 5, maxLevel: 5, atkPerLevel: 10, weight: 1 },
+};
+
+const INVENTORY_KEY = 'squat-tracker-inventory';
+
+const InventoryManager = {
+  state: {
+    equippedId: 'unarmed',
+    items: {
+      unarmed: { level: 1, acquiredAt: Date.now() }
+    }
+  },
+
+  init() {
+    this.load();
+    // Ensure initial state validity
+    if (!this.state.items.unarmed) {
+      this.state.items.unarmed = { level: 1, acquiredAt: Date.now() };
+    }
+    if (!WEAPONS[this.state.equippedId]) {
+      this.state.equippedId = 'unarmed';
+    }
+    // Render UI if elements exist
+    this.render();
+    this.setupUI();
+  },
+
+  load() {
+    if (!isStorageAvailable) return;
+    try {
+      const raw = localStorage.getItem(INVENTORY_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Basic schema validation
+        if (parsed && typeof parsed === 'object' && parsed.items) {
+          this.state = parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load inventory', e);
+    }
+  },
+
+  save() {
+    if (!isStorageAvailable) return;
+    try {
+      localStorage.setItem(INVENTORY_KEY, JSON.stringify(this.state));
+    } catch (e) {
+      console.error('Failed to save inventory', e);
+    }
+  },
+
+  addWeapon(weaponId) {
+    const weaponDef = WEAPONS[weaponId];
+    if (!weaponDef) return null;
+
+    let result = 'NEW'; // NEW, LEVEL_UP, MAX
+    let item = this.state.items[weaponId];
+
+    if (item) {
+      if (item.level < weaponDef.maxLevel) {
+        item.level += 1;
+        result = 'LEVEL_UP';
+      } else {
+        result = 'MAX';
+      }
+    } else {
+      this.state.items[weaponId] = {
+        level: 1,
+        acquiredAt: Date.now()
+      };
+      result = 'NEW';
+    }
+
+    this.save();
+    this.render(); // Update UI if open
+    return { result, weapon: weaponDef, level: this.state.items[weaponId].level };
+  },
+
+  equipWeapon(weaponId) {
+    if (!this.state.items[weaponId] || !WEAPONS[weaponId]) return false;
+    this.state.equippedId = weaponId;
+    this.save();
+    this.render();
+    return true;
+  },
+
+  getEquippedWeapon() {
+    const id = this.state.equippedId;
+    const def = WEAPONS[id] || WEAPONS.unarmed;
+    const item = this.state.items[id] || { level: 1 };
+
+    // Calculate attack power: Base + (Level - 1) * Growth
+    const bonus = def.baseAtk + (item.level - 1) * def.atkPerLevel;
+
+    return {
+      ...def,
+      level: item.level,
+      bonusAtk: bonus
+    };
+  },
+
+  getAttackBonus() {
+    return this.getEquippedWeapon().bonusAtk;
+  },
+
+  setupUI() {
+    const openBtn = document.getElementById('equipment-button');
+    const modal = document.getElementById('equipment-modal');
+    if (!modal) return;
+
+    const closeElements = modal.querySelectorAll('[data-close]');
+
+    if (openBtn) {
+      openBtn.addEventListener('click', () => {
+        this.render();
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    closeElements.forEach(el => {
+      el.addEventListener('click', () => {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+      });
+    });
+  },
+
+  render() {
+    const listEl = document.getElementById('weapon-list');
+    const bonusEl = document.getElementById('equipment-total-bonus');
+    const totalBonus = this.getAttackBonus();
+
+    if (bonusEl) {
+      bonusEl.textContent = `+${totalBonus}`;
+    }
+
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    // Sort: Equipped first, then by rarity desc, then by power
+    const ownedIds = Object.keys(this.state.items);
+    ownedIds.sort((a, b) => {
+      if (a === this.state.equippedId) return -1;
+      if (b === this.state.equippedId) return 1;
+
+      const wa = WEAPONS[a];
+      const wb = WEAPONS[b];
+      if (wb.rarity !== wa.rarity) return wb.rarity - wa.rarity;
+      return wb.baseAtk - wa.baseAtk;
+    });
+
+    ownedIds.forEach(id => {
+      const def = WEAPONS[id];
+      const item = this.state.items[id];
+      if (!def) return;
+
+      const currentAtk = def.baseAtk + (item.level - 1) * def.atkPerLevel;
+      const isEquipped = id === this.state.equippedId;
+
+      const li = document.createElement('li');
+      li.className = `weapon-item ${isEquipped ? 'equipped' : ''}`;
+      li.innerHTML = `
+        <div class="weapon-icon">${def.emoji}</div>
+        <div class="weapon-info">
+          <div class="weapon-name">
+             ${def.name} <span style="font-size:0.8em; color:#666">Lv.${item.level}</span>
+             ${isEquipped ? '<span class="equip-status">装備中</span>' : ''}
+          </div>
+          <div class="weapon-meta">レア度 ${'★'.repeat(def.rarity)}</div>
+        </div>
+        <div class="weapon-stats">+${currentAtk}</div>
+      `;
+
+      li.addEventListener('click', () => {
+        if (!isEquipped) {
+          this.equipWeapon(id);
+        }
+      });
+
+      listEl.appendChild(li);
+    });
+  }
+};
+
+// Expose for testing
+if (typeof window !== 'undefined') {
+  window.InventoryManager = InventoryManager;
+}
+
 const RpgSystem = {
   calculateLevel(totalReps) {
     if (typeof totalReps !== 'number' || totalReps < 0) return 1;
@@ -278,6 +477,8 @@ const BossBattle = {
       this.state.loopCount += 1;
     }
 
+    this.rollDrop();
+
     this.saveState();
     this.render();
 
@@ -288,6 +489,42 @@ const BossBattle = {
     setTimeout(() => {
       this.spawnMonster(true);
     }, 1000);
+  },
+
+  rollDrop() {
+    // 30% drop chance
+    if (Math.random() > 0.3) return;
+
+    // Weighted random selection
+    const pool = Object.values(WEAPONS).filter(w => w.id !== 'unarmed');
+    const totalWeight = pool.reduce((sum, w) => sum + w.weight, 0);
+    let random = Math.random() * totalWeight;
+    let selected = null;
+
+    for (const w of pool) {
+      random -= w.weight;
+      if (random <= 0) {
+        selected = w;
+        break;
+      }
+    }
+
+    if (selected && typeof InventoryManager !== 'undefined') {
+      const result = InventoryManager.addWeapon(selected.id);
+      if (result) {
+        const title = result.result === 'NEW' ? '武器GET!' : '武器レベルUP!';
+        const message = result.result === 'MAX'
+          ? `${selected.name} (最大Lv)`
+          : `${selected.name} (Lv.${result.level})`;
+
+        showToast({
+          emoji: selected.emoji,
+          title: title,
+          message: message,
+          sound: true
+        });
+      }
+    }
   },
 
   render() {
@@ -1429,6 +1666,43 @@ const initializeHistory = () => {
 
 const ACHIEVEMENTS_KEY = 'squat-tracker-achievements';
 
+const showToast = ({ emoji, title, message, sound = true }) => {
+  const existing = document.querySelectorAll('.achievement-toast');
+  const offset = existing.length * 90; // Approx height + gap
+
+  const toast = document.createElement('div');
+  toast.className = 'achievement-toast';
+  toast.style.top = `${20 + offset}px`;
+  toast.innerHTML = `
+    <div class="toast-icon">${emoji}</div>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  if (sound) {
+    if (typeof playCelebration === 'function') {
+      setTimeout(() => playCelebration(), 300);
+    }
+    if (typeof VoiceCoach !== 'undefined') {
+      VoiceCoach.speak(`${title}。${message}`);
+    }
+  }
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    toast.style.transition = 'all 0.5s ease-in';
+    setTimeout(() => toast.remove(), 500);
+  }, 4000);
+};
+
+if (typeof window !== 'undefined') {
+  window.showToast = showToast;
+}
+
 const AchievementSystem = {
   badges: [],
   unlocked: {},
@@ -1563,36 +1837,12 @@ const AchievementSystem = {
   },
 
   showNotification(badge) {
-    const existing = document.querySelectorAll('.achievement-toast');
-    const offset = existing.length * 90; // Approx height + gap
-
-    const toast = document.createElement('div');
-    toast.className = 'achievement-toast';
-    toast.style.top = `${20 + offset}px`;
-    toast.innerHTML = `
-      <div class="toast-icon">${badge.emoji}</div>
-      <div class="toast-content">
-        <div class="toast-title">実績解除！</div>
-        <div class="toast-message">${badge.name}</div>
-      </div>
-    `;
-    document.body.appendChild(toast);
-
-    // Play sound if context allows
-    if (typeof playCelebration === 'function') {
-      // Small delay to separate from other sounds
-      setTimeout(() => playCelebration(), 300);
-    }
-    if (typeof VoiceCoach !== 'undefined') {
-      VoiceCoach.speak(`実績解除。${badge.name}`);
-    }
-
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateX(100%)';
-      toast.style.transition = 'all 0.5s ease-in';
-      setTimeout(() => toast.remove(), 500);
-    }, 4000);
+    showToast({
+      emoji: badge.emoji,
+      title: '実績解除！',
+      message: badge.name,
+      sound: true
+    });
   },
 
   unlock(badgeId) {
@@ -1648,7 +1898,8 @@ const performAttack = () => {
   const stats = computeStats(historyEntries);
   const level = RpgSystem.calculateLevel(stats.totalRepsAllTime);
   const baseAp = RpgSystem.calculateAttackPower(level);
-  const damage = RpgSystem.calculateDamage(baseAp);
+  const weaponBonus = typeof InventoryManager !== 'undefined' ? InventoryManager.getAttackBonus() : 0;
+  const damage = RpgSystem.calculateDamage(baseAp + weaponBonus);
   BossBattle.damage(damage.amount, damage.isCritical);
 };
 
@@ -2117,6 +2368,7 @@ initializePresets();
 initializeHistory();
 AchievementSystem.init();
 DataManager.init();
+InventoryManager.init(); // Initialize Inventory
 // BossBattle.init(); // Moved to DOMContentLoaded
 updateDisplays();
 updateActionButtonStates();
