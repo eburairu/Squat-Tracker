@@ -2,7 +2,7 @@
 
 ## Description
 要件定義から設計・実装までを一気に実行する高速開発モード（小〜中規模な機能修正向け）。
-Trigger examples: "一気に実装", "高速モード", "highway mode", "implement fast"
+Trigger examples: "一気に実装", "高速開発", "highway mode", "implement fast"
 
 ## 準備
 以下のファイルが揃っていることを前提とします：
@@ -17,6 +17,21 @@ Trigger examples: "一気に実装", "高速モード", "highway mode", "impleme
 2. **実装**: テスト先行開発（TDD）で実装を行う。
    - 既存コードの変更、新規ファイルの作成。
 3. **記録**: 実装内容のサマリを `.sdd/specs/[spec名]/highway-summary.md` に記録する。
+
+## 出力フォーマット (highway-summary.md)
+```markdown
+# Highway 実装サマリ
+
+## 設計方針
+- <簡易設計メモ>
+
+## 実装内容
+- <変更点1>
+- <変更点2>
+
+## テスト結果
+- <実施したテスト>
+```
 
 ## 完了報告
 「Highway実装完了。詳細は highway-summary.md を参照してください。

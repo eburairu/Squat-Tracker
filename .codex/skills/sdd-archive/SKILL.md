@@ -2,12 +2,13 @@
 
 ## Description
 完了した仕様（spec）をアーカイブし、開発サイクルをクローズする。
-Trigger examples: "開発完了", "アーカイブして", "archive spec", "close feature"
+Trigger examples: "開発完了", "タスク完了", "クローズ", "archive spec", "close feature"
 
 ## ステップ1：対象specの確認
 1. `.sdd/target-spec.txt` からspec名を取得する。
 2. `.sdd/specs/[spec名]/tasks.md` を確認し、全タスクが完了 `[x]` しているか確認する。
    - 未完了タスクがある場合はユーザーに警告し、強制アーカイブするか確認を求める。
+   - `highway-summary.md` がある場合（Highwayモード）は、タスク完了チェックはスキップ可能。
 
 ## ステップ2：アーカイブ実行
 1. ディレクトリ `.sdd/specs/archives/` が存在することを確認する（なければ作成）。
