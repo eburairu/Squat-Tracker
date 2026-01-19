@@ -19,6 +19,14 @@ test.describe('Boss Battle Progression', () => {
     const hpText = await page.locator('#boss-hp-text').textContent();
     const [initialHp] = hpText.split(' / ').map(Number);
 
+    // Mock RpgSystem.calculateDamage to prevent critical hits causing flaky tests
+    await page.evaluate(() => {
+      window.RpgSystem.calculateDamage = (baseAttackPower) => ({
+        amount: baseAttackPower,
+        isCritical: false
+      });
+    });
+
     // Fast forward phases to complete 1 rep
     // Phase 1: Countdown (5s) -> Down (2s) -> Hold (1s) -> Up (1s) -> Damage applied
 
