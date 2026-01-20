@@ -573,8 +573,7 @@ const BossBattle = {
   },
 
   rollDrop() {
-    // 30% drop chance
-    if (Math.random() > 0.3) return;
+    // 100% drop chance
 
     // 1. Select Rarity
     const rarityPool = Object.values(RARITY_SETTINGS);
