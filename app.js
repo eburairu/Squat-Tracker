@@ -446,7 +446,7 @@ const BossBattle = {
     }
   },
 
-  regenerateHp() {
+  regenerateHp(skipSave = false) {
     if (!this.state.currentMonster) return;
 
     const now = Date.now();
@@ -463,7 +463,9 @@ const BossBattle = {
     }
 
     this.state.lastInteraction = now;
-    this.saveState();
+    if (!skipSave) {
+      this.saveState();
+    }
   },
 
   spawnMonster(animate = true) {
@@ -499,7 +501,7 @@ const BossBattle = {
   damage(amount, isCritical = false) {
     if (this.isRespawning) return;
 
-    this.regenerateHp();
+    this.regenerateHp(true);
 
     if (!this.state.currentMonster) return;
 
