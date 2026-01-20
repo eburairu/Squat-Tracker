@@ -973,6 +973,8 @@ let workoutStarted = false;
 let workoutSaved = false;
 let lastCountdownSecond = null;
 let currentQuiz = null;
+let userLevel = 1;
+let userBaseAp = 1;
 
 let sensorMode = false;
 let sensorActive = false;
@@ -1765,9 +1767,9 @@ const renderStats = () => {
   statsLastDate.textContent = stats.lastWorkoutDate ? formatDate(stats.lastWorkoutDate) : '--';
 
   // Use Level and AP instead of Rank
-  const level = RpgSystem.calculateLevel(stats.totalRepsAllTime);
-  const ap = RpgSystem.calculateAttackPower(level);
-  statsRank.textContent = `Lv.${level} (AP:${ap})`;
+  userLevel = RpgSystem.calculateLevel(stats.totalRepsAllTime);
+  userBaseAp = RpgSystem.calculateAttackPower(userLevel);
+  statsRank.textContent = `Lv.${userLevel} (AP:${userBaseAp})`;
 };
 
 const renderHistory = () => {
@@ -2257,15 +2259,12 @@ if (typeof window !== 'undefined') {
 }
 
 const performAttack = () => {
-  const stats = computeStats(historyEntries);
-  const level = RpgSystem.calculateLevel(stats.totalRepsAllTime);
-  const baseAp = RpgSystem.calculateAttackPower(level);
   const weaponBonus = typeof InventoryManager !== 'undefined' ? InventoryManager.getAttackBonus() : 0;
 
   // Use critical flag from current quiz if available
   const forceCritical = currentQuiz && currentQuiz.isCritical;
 
-  const damage = RpgSystem.calculateDamage(baseAp + weaponBonus, forceCritical);
+  const damage = RpgSystem.calculateDamage(userBaseAp + weaponBonus, forceCritical);
   BossBattle.damage(damage.amount, damage.isCritical);
 };
 
