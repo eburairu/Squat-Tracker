@@ -1681,31 +1681,50 @@ const renderHeatmap = () => {
     cell.dataset.date = key || '';
     cell.dataset.count = count;
 
-    const showTooltip = () => {
-      if (!key) return;
-      const rect = cell.getBoundingClientRect();
-      const dateStr = formatDate(date.toISOString());
-      heatmapTooltip.textContent = `${dateStr}: ${count}回`;
-      heatmapTooltip.classList.add('visible');
-
-      const tooltipWidth = heatmapTooltip.offsetWidth;
-      heatmapTooltip.style.top = `${rect.top - 34 + window.scrollY}px`;
-      heatmapTooltip.style.left = `${rect.left + rect.width / 2 - tooltipWidth / 2 + window.scrollX}px`;
-    };
-
-    const hideTooltip = () => {
-      heatmapTooltip.classList.remove('visible');
-    };
-
-    cell.addEventListener('mouseenter', showTooltip);
-    cell.addEventListener('mouseleave', hideTooltip);
-    cell.addEventListener('touchstart', () => {
-      showTooltip();
-      setTimeout(hideTooltip, 2500);
-    }, { passive: true });
-
     grid.appendChild(cell);
   });
+
+  const showTooltip = (cell) => {
+    const { date, count } = cell.dataset;
+    if (!date) return;
+
+    const rect = cell.getBoundingClientRect();
+    // Create date object from 'YYYY-MM-DD' string, replacing hyphens with slashes
+    // to ensure it's parsed in the user's local timezone, not UTC.
+    const dateObj = new Date(date.replace(/-/g, '/'));
+    const dateStr = formatDate(dateObj.toISOString());
+
+    heatmapTooltip.textContent = `${dateStr}: ${count}回`;
+    heatmapTooltip.classList.add('visible');
+
+    const tooltipWidth = heatmapTooltip.offsetWidth;
+    heatmapTooltip.style.top = `${rect.top - 34 + window.scrollY}px`;
+    heatmapTooltip.style.left = `${rect.left + rect.width / 2 - tooltipWidth / 2 + window.scrollX}px`;
+  };
+
+  const hideTooltip = () => {
+    heatmapTooltip.classList.remove('visible');
+  };
+
+  grid.addEventListener('mouseover', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      showTooltip(e.target);
+    }
+  });
+
+  grid.addEventListener('mouseout', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      hideTooltip();
+    }
+  });
+
+  grid.addEventListener('touchstart', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      showTooltip(e.target);
+      setTimeout(hideTooltip, 2500);
+    }
+  }, { passive: true });
+
 
   heatmapContainer.appendChild(grid);
   requestAnimationFrame(() => {
