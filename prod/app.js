@@ -361,8 +361,8 @@ const RpgSystem = {
     return 1 + Math.floor((level - 1) * 0.5);
   },
 
-  calculateDamage(baseAttackPower) {
-    const isCritical = Math.random() < 0.1; // 10% chance
+  calculateDamage(baseAttackPower, forceCritical = false) {
+    const isCritical = forceCritical || Math.random() < 0.1; // 10% chance or forced
     const multiplier = isCritical ? 2 : 1;
     return {
       amount: baseAttackPower * multiplier,
@@ -573,8 +573,7 @@ const BossBattle = {
   },
 
   rollDrop() {
-    // 30% drop chance
-    if (Math.random() > 0.3) return;
+    // 100% drop chance
 
     // 1. Select Rarity
     const rarityPool = Object.values(RARITY_SETTINGS);
@@ -654,6 +653,259 @@ const BossBattle = {
 
 if (typeof window !== 'undefined') {
   window.BossBattle = BossBattle;
+}
+
+const MISSIONS_KEY = 'squat-tracker-missions';
+
+const MISSION_TYPES = [
+  { type: 'login', description: 'アプリを起動してログイン', target: 1, unit: '回' },
+  { type: 'finish_workout', description: 'トレーニングを完了する', target: 1, unit: '回' },
+  { type: 'total_reps', description: '合計スクワット回数', target: 30, unit: '回', variants: [30, 50, 80] },
+  { type: 'total_sets', description: '合計セット数', target: 3, unit: 'セット', variants: [3, 5, 10] },
+  // Future: Add 'consistency' or 'no_pause' types
+];
+
+const DailyMissionSystem = {
+  state: {
+    lastUpdated: null,
+    missions: []
+  },
+
+  init() {
+    this.load();
+    this.checkDailyReset();
+    // Check login mission
+    this.check({ type: 'login' });
+    this.render();
+  },
+
+  load() {
+    if (!isStorageAvailable) return;
+    try {
+      const raw = localStorage.getItem(MISSIONS_KEY);
+      if (raw) {
+        this.state = JSON.parse(raw);
+      }
+    } catch (e) {
+      console.error('Failed to load missions', e);
+    }
+  },
+
+  save() {
+    if (!isStorageAvailable) return;
+    try {
+      localStorage.setItem(MISSIONS_KEY, JSON.stringify(this.state));
+    } catch (e) {
+      // Ignore
+    }
+  },
+
+  checkDailyReset() {
+    const today = getLocalDateKey(new Date());
+    if (this.state.lastUpdated !== today) {
+      this.generateMissions(today);
+    }
+  },
+
+  generateMissions(dateKey) {
+    this.state.lastUpdated = dateKey;
+    this.state.missions = [];
+
+    // Shuffle and pick 3 unique types
+    const pool = [...MISSION_TYPES].sort(() => 0.5 - Math.random());
+    const selected = pool.slice(0, 3);
+
+    selected.forEach((def, index) => {
+      let target = def.target;
+      // If variants exist, pick one
+      if (def.variants) {
+        target = def.variants[getRandomInt(0, def.variants.length - 1)];
+      }
+
+      this.state.missions.push({
+        id: `mission_${dateKey}_${index}`,
+        type: def.type,
+        description: def.description === '合計スクワット回数' ? `スクワットを${target}回行う` :
+                     def.description === '合計セット数' ? `合計${target}セット行う` :
+                     def.description,
+        target: target,
+        current: 0,
+        unit: def.unit,
+        completed: false,
+        claimed: false
+      });
+    });
+
+    this.save();
+  },
+
+  check(context = {}) {
+    let changed = false;
+
+    this.state.missions.forEach(mission => {
+      if (mission.completed) return;
+
+      let progress = 0;
+
+      if (mission.type === 'login' && context.type === 'login') {
+        progress = 1;
+      } else if (mission.type === 'finish_workout' && context.type === 'finish') {
+        progress = 1;
+      } else if (mission.type === 'total_reps' && context.type === 'finish' && context.totalReps) {
+        progress = context.totalReps;
+      } else if (mission.type === 'total_sets' && context.type === 'finish' && context.totalSets) {
+        progress = context.totalSets;
+      }
+
+      if (progress > 0) {
+        mission.current += progress;
+        changed = true;
+
+        if (mission.current >= mission.target && !mission.completed) {
+          mission.completed = true;
+          this.notifyCompletion(mission);
+        }
+      }
+    });
+
+    if (changed) {
+      this.save();
+      this.render();
+    }
+  },
+
+  notifyCompletion(mission) {
+    showToast({
+      emoji: '🎯',
+      title: 'ミッション達成！',
+      message: mission.description,
+      sound: true
+    });
+  },
+
+  claimReward(missionId) {
+    const mission = this.state.missions.find(m => m.id === missionId);
+    if (!mission || !mission.completed || mission.claimed) return;
+
+    // 100% Drop Logic
+    const reward = this.lotteryWeapon();
+
+    if (reward) {
+      mission.claimed = true;
+      this.save();
+      this.render();
+
+      // Notify reward
+      let title = reward.result === 'NEW' ? '報酬GET!' : '武器レベルUP!';
+      if (reward.weapon.rarity >= 4 && reward.result === 'NEW') {
+        title = `✨${RARITY_SETTINGS[reward.weapon.rarity].name.toUpperCase()} GET!✨`;
+      }
+
+      const rarityStars = '★'.repeat(reward.weapon.rarity);
+      const message = reward.result === 'MAX'
+        ? `${reward.weapon.name} ${rarityStars} (最大Lv)`
+        : `${reward.weapon.name} ${rarityStars} (Lv.${reward.level})`;
+
+      showToast({
+        emoji: reward.weapon.emoji,
+        title: title,
+        message: message,
+        sound: true
+      });
+    }
+  },
+
+  lotteryWeapon() {
+    // 1. Select Rarity
+    const rarityPool = Object.values(RARITY_SETTINGS);
+    const totalRarityWeight = rarityPool.reduce((sum, r) => sum + r.weight, 0);
+    let rRandom = Math.random() * totalRarityWeight;
+    let selectedRarity = 1;
+
+    for (let r = 1; r <= 5; r++) {
+      rRandom -= RARITY_SETTINGS[r].weight;
+      if (rRandom <= 0) {
+        selectedRarity = r;
+        break;
+      }
+    }
+
+    // 2. Select Base Weapon
+    const totalBaseWeight = BASE_WEAPONS.reduce((sum, w) => sum + w.weight, 0);
+    let bRandom = Math.random() * totalBaseWeight;
+    let selectedBase = BASE_WEAPONS[0];
+
+    for (const w of BASE_WEAPONS) {
+      bRandom -= w.weight;
+      if (bRandom <= 0) {
+        selectedBase = w;
+        break;
+      }
+    }
+
+    const weaponId = `${selectedBase.id}_r${selectedRarity}`;
+    const weapon = WEAPONS[weaponId];
+
+    if (weapon && typeof InventoryManager !== 'undefined') {
+      return InventoryManager.addWeapon(weaponId);
+    }
+    return null;
+  },
+
+  render() {
+    const listEl = document.getElementById('mission-list');
+    if (!listEl) return;
+
+    listEl.innerHTML = '';
+    this.state.missions.forEach(mission => {
+      const li = document.createElement('li');
+      li.className = `mission-item ${mission.completed ? 'completed' : ''} ${mission.claimed ? 'claimed' : ''}`;
+
+      const content = document.createElement('div');
+      content.className = 'mission-content';
+
+      const title = document.createElement('div');
+      title.className = 'mission-title';
+      title.textContent = mission.description;
+
+      const progressText = document.createElement('div');
+      progressText.className = 'mission-progress-text';
+      const progressVal = Math.min(mission.current, mission.target);
+      progressText.innerHTML = `<span>進捗: ${progressVal} / ${mission.target} ${mission.unit}</span>`;
+
+      const progressBarBg = document.createElement('div');
+      progressBarBg.className = 'mission-progress-bar-bg';
+      const progressBarFill = document.createElement('div');
+      progressBarFill.className = 'mission-progress-bar-fill';
+      const pct = Math.min(100, (mission.current / mission.target) * 100);
+      progressBarFill.style.width = `${pct}%`;
+      progressBarBg.appendChild(progressBarFill);
+
+      content.append(title, progressText, progressBarBg);
+
+      const action = document.createElement('div');
+      action.className = 'mission-action';
+
+      if (mission.claimed) {
+        action.innerHTML = '<span class="mission-status-icon">✅</span>';
+      } else if (mission.completed) {
+        const btn = document.createElement('button');
+        btn.className = 'mission-btn claim';
+        btn.textContent = '報酬を受取る';
+        btn.addEventListener('click', () => this.claimReward(mission.id));
+        action.appendChild(btn);
+      } else {
+        action.innerHTML = '<span class="mission-status-icon" style="opacity:0.3">🔒</span>';
+      }
+
+      li.append(content, action);
+      listEl.appendChild(li);
+    });
+  }
+};
+
+if (typeof window !== 'undefined') {
+  window.DailyMissionSystem = DailyMissionSystem;
 }
 
 class WorkoutTimer {
@@ -754,46 +1006,67 @@ const timesTableRange = { min: 1, max: 9 };
 const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const generateQuiz = () => {
-  const types = ['+', '-', '×', '÷'];
-  const type = types[getRandomInt(0, 3)];
-  const range = timesTableRange; // { min: 1, max: 9 }
+  const operators = ['+', '-', '×', '÷'];
+  const operator = operators[getRandomInt(0, 3)];
+  const isCritical = Math.random() < 0.1;
 
-  if (type === '+') {
-    const a = getRandomInt(range.min, range.max);
-    const b = getRandomInt(range.min, range.max);
-    return {
-      expression: `${a} + ${b}`,
-      answer: a + b,
-    };
+  // 30% chance for fill-in-the-blank
+  const isFillIn = Math.random() < 0.3;
+  // 0: Normal, 1: Missing Left, 2: Missing Right
+  const quizMode = isFillIn ? getRandomInt(1, 2) : 0;
+
+  const getOperand = (allowTwoDigits) => {
+    // 30% chance for 2 digits (10-99) if allowed
+    if (allowTwoDigits && Math.random() < 0.3) {
+      return getRandomInt(10, 99);
+    }
+    // Standard: 3-9 (exclude 1, 2)
+    return getRandomInt(3, 9);
+  };
+
+  let a, b, result;
+
+  if (operator === '+') {
+    a = getOperand(true);
+    b = getOperand(true);
+    result = a + b;
+  } else if (operator === '-') {
+    // Ensure result is >= 3 to avoid easy "1" or "2" appearing in fill-in-the-blank
+    do {
+      a = getOperand(true);
+      b = getOperand(true);
+      if (a < b) [a, b] = [b, a];
+      result = a - b;
+    } while (result <= 2);
+  } else if (operator === '×') {
+    a = getOperand(false);
+    b = getOperand(false);
+    result = a * b;
+  } else {
+    // Division
+    b = getOperand(false);
+    result = getOperand(false);
+    a = b * result;
   }
 
-  if (type === '-') {
-    const a = getRandomInt(range.min, range.max);
-    const b = getRandomInt(range.min, range.max);
-    const big = Math.max(a, b);
-    const small = Math.min(a, b);
-    return {
-      expression: `${big} - ${small}`,
-      answer: big - small,
-    };
+  let problemText = '';
+  let answerText = '';
+
+  if (quizMode === 1) { // Missing Left: ? + B = R
+    problemText = `? ${operator} ${b} = ${result}`;
+    answerText = `? = ${a}`;
+  } else if (quizMode === 2) { // Missing Right: A + ? = R
+    problemText = `${a} ${operator} ? = ${result}`;
+    answerText = `? = ${b}`;
+  } else { // Normal: A + B = ?
+    problemText = `${a} ${operator} ${b} = ?`;
+    answerText = `${result}`;
   }
 
-  if (type === '×') {
-    const a = getRandomInt(range.min, range.max);
-    const b = getRandomInt(range.min, range.max);
-    return {
-      expression: `${a} × ${b}`,
-      answer: a * b,
-    };
-  }
-
-  // Division (÷)
-  const divisor = getRandomInt(range.min, range.max);
-  const answer = getRandomInt(range.min, range.max);
-  const dividend = divisor * answer;
   return {
-    expression: `${dividend} ÷ ${divisor}`,
-    answer,
+    problemText,
+    answerText,
+    isCritical
   };
 };
 
@@ -808,16 +1081,31 @@ const updateQuizDisplay = (phaseKey) => {
   if (phaseKey === Phase.DOWN) {
     currentQuiz = generateQuiz();
   }
+
+  // Clear critical style by default
+  quizProblem.classList.remove('critical-quiz');
+
   if (phaseKey === Phase.DOWN || phaseKey === Phase.HOLD) {
     const quiz = currentQuiz ?? generateQuiz();
     currentQuiz = quiz;
-    quizProblem.textContent = `問題: ${quiz.expression} = ?`;
+
+    // Apply critical style if needed
+    if (quiz.isCritical) {
+      quizProblem.classList.add('critical-quiz');
+    }
+
+    quizProblem.textContent = `問題: ${quiz.problemText}`;
     quizAnswer.textContent = '答え: --';
     return;
   }
   if (phaseKey === Phase.UP && currentQuiz) {
-    quizProblem.textContent = `問題: ${currentQuiz.expression} = ?`;
-    quizAnswer.textContent = `答え: ${currentQuiz.answer}`;
+    // Keep critical style visible during answer phase
+    if (currentQuiz && currentQuiz.isCritical) {
+      quizProblem.classList.add('critical-quiz');
+    }
+
+    quizProblem.textContent = `問題: ${currentQuiz ? currentQuiz.problemText : '--'}`;
+    quizAnswer.textContent = `答え: ${currentQuiz ? currentQuiz.answerText : '--'}`;
     return;
   }
   quizProblem.textContent = '問題: --';
@@ -1681,33 +1969,49 @@ const renderHeatmap = () => {
     cell.dataset.date = key || '';
     cell.dataset.count = count;
 
-    const showTooltip = () => {
-      if (!key) return;
-      const rect = cell.getBoundingClientRect();
-      const dateStr = formatDate(date.toISOString());
-      heatmapTooltip.textContent = `${dateStr}: ${count}回`;
-      heatmapTooltip.classList.add('visible');
-
-      const tooltipWidth = heatmapTooltip.offsetWidth;
-      heatmapTooltip.style.top = `${rect.top - 34 + window.scrollY}px`;
-      heatmapTooltip.style.left = `${rect.left + rect.width / 2 - tooltipWidth / 2 + window.scrollX}px`;
-    };
-
-    const hideTooltip = () => {
-      heatmapTooltip.classList.remove('visible');
-    };
-
-    cell.addEventListener('mouseenter', showTooltip);
-    cell.addEventListener('mouseleave', hideTooltip);
-    cell.addEventListener('touchstart', () => {
-      showTooltip();
-      setTimeout(hideTooltip, 2500);
-    }, { passive: true });
-
     grid.appendChild(cell);
   });
 
   heatmapContainer.appendChild(grid);
+
+  const showTooltip = (cell) => {
+    if (!cell) return;
+    const key = cell.dataset.date;
+    const count = cell.dataset.count;
+    if (!key) return;
+
+    const rect = cell.getBoundingClientRect();
+    const dateStr = formatDate(new Date(key.replace(/-/g, '/')).toISOString()); // Fix date parsing for tooltip
+    heatmapTooltip.textContent = `${dateStr}: ${count}回`;
+    heatmapTooltip.classList.add('visible');
+
+    const tooltipWidth = heatmapTooltip.offsetWidth;
+    heatmapTooltip.style.top = `${rect.top - 34 + window.scrollY}px`;
+    heatmapTooltip.style.left = `${rect.left + rect.width / 2 - tooltipWidth / 2 + window.scrollX}px`;
+  };
+
+  const hideTooltip = () => {
+    heatmapTooltip.classList.remove('visible');
+  };
+
+  heatmapContainer.addEventListener('mouseover', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      showTooltip(e.target);
+    }
+  });
+
+  heatmapContainer.addEventListener('mouseout', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      hideTooltip();
+    }
+  });
+
+  heatmapContainer.addEventListener('touchstart', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      showTooltip(e.target);
+      setTimeout(hideTooltip, 2500);
+    }
+  }, { passive: true });
   requestAnimationFrame(() => {
     heatmapContainer.scrollLeft = heatmapContainer.scrollWidth;
   });
@@ -1957,7 +2261,11 @@ const performAttack = () => {
   const level = RpgSystem.calculateLevel(stats.totalRepsAllTime);
   const baseAp = RpgSystem.calculateAttackPower(level);
   const weaponBonus = typeof InventoryManager !== 'undefined' ? InventoryManager.getAttackBonus() : 0;
-  const damage = RpgSystem.calculateDamage(baseAp + weaponBonus);
+
+  // Use critical flag from current quiz if available
+  const forceCritical = currentQuiz && currentQuiz.isCritical;
+
+  const damage = RpgSystem.calculateDamage(baseAp + weaponBonus, forceCritical);
   BossBattle.damage(damage.amount, damage.isCritical);
 };
 
@@ -2058,9 +2366,21 @@ const finishWorkout = () => {
     AchievementSystem.check({ type: 'finish', settings, sensorMode, hasPaused });
   }
 
+  if (typeof DailyMissionSystem !== 'undefined') {
+    DailyMissionSystem.check({
+      type: 'finish',
+      totalReps: totalSets * repsPerSet,
+      totalSets: totalSets
+    });
+  }
+
   launchConfetti();
   updateActionButtonStates();
 };
+
+if (typeof window !== 'undefined') {
+  window.finishWorkout = finishWorkout;
+}
 
 const tick = () => {
   if (!phaseDuration || isPaused) {
@@ -2427,6 +2747,7 @@ initializeHistory();
 AchievementSystem.init();
 DataManager.init();
 InventoryManager.init(); // Initialize Inventory
+DailyMissionSystem.init(); // Initialize Daily Missions
 // BossBattle.init(); // Moved to DOMContentLoaded
 updateDisplays();
 updateActionButtonStates();

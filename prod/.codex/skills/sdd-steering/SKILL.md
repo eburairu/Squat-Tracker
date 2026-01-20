@@ -2,7 +2,7 @@
 
 ## Description
 プロジェクトの全体像を把握し、SDDプロセスのための基本ドキュメント（Product, Tech, Structure）を生成・更新する。
-Trigger examples: "プロジェクト分析", "ステアリング作成", "プロジェクト初期化", "init sdd", "analyze project"
+Trigger examples: "プロジェクト分析", "ステアリング作成", "プロジェクト初期化", "init sdd", "analyze project", "プロジェクト把握"
 
 ## ステップ0：ステアリング情報の確認と読み込み
 以下のステアリングドキュメントを読み込んでください：
@@ -10,7 +10,7 @@ Trigger examples: "プロジェクト分析", "ステアリング作成", "プ�
 2. `.sdd/steering/tech.md`
 3. `.sdd/steering/structure.md`
 
-これらが存在しない場合は「新規作成モード」として扱います。
+※これらが存在しない場合は「新規作成モード」として、ステップ1の分析結果を基に新規作成します。
 
 ## ステップ1：プロジェクト分析
 以下の情報を収集してください：
