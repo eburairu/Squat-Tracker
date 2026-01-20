@@ -2,7 +2,7 @@
 
 ## Description
 Pull Request のレビュー観点を標準化し、見落としを防ぐためのチェックリストを提供する。
-Trigger examples: "レビューして", "PR見て", "コードレビュー", "PRチェック", "code review"
+Trigger examples: "レビューして", "PR見て", "コードレビュー", "PRチェック", "code review", "プルリク確認"
 
 ## 手順
 1. 変更されたファイル一覧を確認する。
