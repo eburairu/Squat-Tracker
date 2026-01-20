@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-test('Verify quiz logic', async ({ page }) => {
+test('Verify new quiz logic with options', async ({ page }) => {
   await page.goto('/');
 
-  // Wait for the script to load and the function to be available
   await page.waitForFunction(() => typeof window.generateQuiz === 'function');
 
-  // Generate multiple quizzes to cover different operations
   const quizzes = await page.evaluate(() => {
+    window.quizMode = 'cooperative'; // Set dummy mode for generateQuiz
     const results = [];
     for (let i = 0; i < 100; i++) {
       results.push(window.generateQuiz());
@@ -15,71 +14,54 @@ test('Verify quiz logic', async ({ page }) => {
     return results;
   });
 
-  // Verify the logic of the generated quizzes
   const types = { '+': 0, '-': 0, '×': 0, '÷': 0 };
 
   for (const quiz of quizzes) {
-    const { problemText, answerText } = quiz;
+    const { problemText, correctAnswer, options } = quiz;
 
-    // Extract operator
+    // 1. Verify options array
+    expect(options).toBeInstanceOf(Array);
+    expect(options.length).toBe(4);
+    expect(options).toContain(correctAnswer);
+    // Check for unique options
+    const uniqueOptions = new Set(options);
+    expect(uniqueOptions.size).toBe(4);
+
+    // 2. Verify calculation logic
     const match = problemText.match(/([\+\-×÷])/);
     expect(match).not.toBeNull();
     const op = match[0];
     types[op]++;
 
     const parts = problemText.split(' ');
-    // Expect format: "A op B = R"
     expect(parts.length).toBe(5);
     const valA = parts[0];
-    const valOp = parts[1];
     const valB = parts[2];
-    const valEq = parts[3];
     const valR = parts[4];
 
-    expect(valOp).toBe(op);
-    expect(valEq).toBe('=');
-
-    // Extract Answer Value
-    let answerVal;
-    if (answerText.startsWith('? = ')) {
-       answerVal = parseInt(answerText.split(' = ')[1], 10);
-    } else {
-       answerVal = parseInt(answerText, 10);
-    }
-
-    // Verify logic
     let a, b, r;
-
-    if (valA === '?') {
-        // Missing Left: ? + B = R
-        a = answerVal;
-        b = parseInt(valB, 10);
-        r = parseInt(valR, 10);
-    } else if (valB === '?') {
-        // Missing Right: A + ? = R
-        a = parseInt(valA, 10);
-        b = answerVal;
-        r = parseInt(valR, 10);
-    } else {
-        // Normal: A + B = ?
-        a = parseInt(valA, 10);
-        b = parseInt(valB, 10);
-        r = answerVal;
-        expect(valR).toBe('?');
+    if (valA === '?') { // Missing Left
+      a = correctAnswer;
+      b = parseInt(valB, 10);
+      r = parseInt(valR, 10);
+    } else if (valB === '?') { // Missing Right
+      a = parseInt(valA, 10);
+      b = correctAnswer;
+      r = parseInt(valR, 10);
+    } else { // Normal
+      a = parseInt(valA, 10);
+      b = parseInt(valB, 10);
+      r = correctAnswer;
+      expect(valR).toBe('?');
     }
 
-    if (op === '+') {
-      expect(a + b).toBe(r);
-    } else if (op === '-') {
-      expect(a - b).toBe(r);
-    } else if (op === '×') {
-      expect(a * b).toBe(r);
-    } else if (op === '÷') {
-      // In app.js: a / b = r (since problem is "a ÷ b")
-      expect(a / b).toBe(r);
-    }
+    if (op === '+') expect(a + b).toBe(r);
+    else if (op === '-') expect(a - b).toBe(r);
+    else if (op === '×') expect(a * b).toBe(r);
+    else if (op === '÷') expect(a).toBe(b * r); // a = b * r for division
   }
 
+  // Ensure all operators are tested
   expect(types['+']).toBeGreaterThan(0);
   expect(types['-']).toBeGreaterThan(0);
   expect(types['×']).toBeGreaterThan(0);

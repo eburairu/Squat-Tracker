@@ -126,6 +126,12 @@
           <div class="timer">
             <div class="quiz-area quiz-area-flipped" aria-live="polite">
               <div id="quiz-problem" class="quiz-problem">問題: --</div>
+              <div id="quiz-options-container" class="quiz-options-container">
+                <button class="quiz-option"></button>
+                <button class="quiz-option"></button>
+                <button class="quiz-option"></button>
+                <button class="quiz-option"></button>
+              </div>
               <div id="quiz-answer" class="quiz-answer">答え: --</div>
             </div>
             <div id="phase-timer" class="timer-value">05</div>
@@ -155,6 +161,14 @@
               <input id="voice-toggle" type="checkbox" />
               <span class="slider"></span>
               <span id="voice-status" class="switch-label">OFF</span>
+            </label>
+          </div>
+          <div class="voice-controls">
+            <span class="label">計算問題モード</span>
+            <label class="switch">
+              <input id="quiz-mode-toggle" type="checkbox" />
+              <span class="slider"></span>
+              <span id="quiz-mode-label" class="switch-label">協力</span>
             </label>
           </div>
           <div class="control-group preset-group">
