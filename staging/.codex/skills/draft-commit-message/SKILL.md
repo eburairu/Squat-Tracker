@@ -2,7 +2,7 @@
 
 ## Description
 ステージングされた変更内容から Conventional Commits に準拠したコミットメッセージ案を生成する。
-Trigger examples: "コミットメッセージ作って", "コミット作成", "commit changes", "commit message draft"
+Trigger examples: "コミットメッセージ作って", "コミット作成", "commit changes", "commit message draft", "コミット案"
 
 ## 手順
 1. `git diff --staged` の結果を確認する（出力がない場合は実行し、何もなければユーザーにその旨を伝えて終了する）。
