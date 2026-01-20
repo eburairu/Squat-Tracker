@@ -15,7 +15,7 @@ import { DailyMissionSystem } from './modules/daily-mission.js';
 import { AchievementSystem } from './modules/achievement-system.js';
 import { DataManager } from './modules/data-manager.js';
 import { PresetManager } from './modules/preset-manager.js';
-import { generateQuiz, updateQuizDisplay, getCurrentQuiz } from './modules/quiz.js';
+import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
 
 // --- Global DOM Elements ---
@@ -26,6 +26,10 @@ const phaseTimer = document.getElementById('phase-timer');
 const phaseHint = document.getElementById('phase-hint');
 const quizProblem = document.getElementById('quiz-problem');
 const quizAnswer = document.getElementById('quiz-answer');
+const quizModeToggle = document.getElementById('quiz-mode-toggle');
+const quizModeLabel = document.getElementById('quiz-mode-label');
+const quizOptionsContainer = document.getElementById('quiz-options-container');
+const quizOptionButtons = document.querySelectorAll('.quiz-option');
 const progressBar = document.getElementById('progress-bar');
 const statsTotalReps = document.getElementById('stats-total-reps');
 const statsTotalWorkouts = document.getElementById('stats-total-workouts');
@@ -70,6 +74,11 @@ const workoutTimer = new WorkoutTimer();
 let phaseStart = null;
 let phaseDuration = null;
 let currentPhase = Phase.IDLE;
+let quizMode = 'cooperative'; // 'cooperative' or 'disruptive'
+let sessionAttackBonus = 0;
+let isQuizAnswered = false;
+let isCurrentQuizCorrect = null;
+let currentQuiz = null;
 let totalSets = 3;
 let repsPerSet = 10;
 let currentSet = 1;
@@ -332,12 +341,15 @@ const updateDisplays = () => {
 const performAttack = () => {
   const weaponBonus = typeof InventoryManager !== 'undefined' ? InventoryManager.getAttackBonus() : 0;
 
-  const currentQuiz = getCurrentQuiz();
   // Use critical flag from current quiz if available
   const forceCritical = currentQuiz && currentQuiz.isCritical;
 
-  const damage = RpgSystem.calculateDamage(userBaseAp + weaponBonus, forceCritical);
+  const totalAttackPower = userBaseAp + weaponBonus + sessionAttackBonus;
+  const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical);
   BossBattle.damage(damage.amount, damage.isCritical);
+
+  // Reset session bonus after attack
+  sessionAttackBonus = 0;
 };
 
 const setPhase = (phaseKey, durationSeconds, hint) => {
@@ -346,7 +358,7 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
   phaseStart = Date.now();
   phaseHint.textContent = hint;
 
-  updateQuizDisplay(phaseKey, { quizProblem, quizAnswer });
+  updateQuizAndTimerDisplay(phaseKey);
 
   updateDisplays();
   updateTimerUI();
@@ -366,6 +378,14 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
 };
 
 const nextRepOrSet = () => {
+  // Disruptive mode penalty: if answered incorrectly, repeat the rep
+  if (quizMode === 'disruptive' && isCurrentQuizCorrect === false) {
+    isCurrentQuizCorrect = null; // Reset for the next attempt
+    showToast('ペナルティ！', '同じ回をやり直します。');
+    startPhaseCycle();
+    return;
+  }
+
   if (currentRep < repsPerSet) {
     currentRep += 1;
     startPhaseCycle();
@@ -452,7 +472,7 @@ const finishWorkout = () => {
   phaseDuration = null;
   isPaused = false;
   phaseHint.textContent = 'お疲れさまでした！';
-  updateQuizDisplay(Phase.FINISHED, { quizProblem, quizAnswer });
+  updateQuizAndTimerDisplay(Phase.FINISHED);
   updateDisplays();
   phaseTimer.textContent = '00';
   progressBar.style.width = '100%';
@@ -594,7 +614,8 @@ const resetWorkout = () => {
   workoutTimer.cancel();
   phaseDuration = null;
   currentPhase = Phase.IDLE;
-  updateQuizDisplay(Phase.IDLE, { quizProblem, quizAnswer });
+  updateQuizAndTimerDisplay(Phase.IDLE);
+  sessionAttackBonus = 0; // リセット時にボーナスもクリア
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
@@ -607,6 +628,7 @@ const resetWorkout = () => {
   updateActionButtonStates();
   phaseTimer.textContent = '05';
   phaseHint.textContent = 'スタートまでカウントダウン';
+  phaseDisplay.textContent = '待機中';
   progressBar.style.width = '0%';
   updateDisplays();
   stopConfetti(confettiCanvas);
@@ -899,9 +921,103 @@ const disableSensor = () => {
 };
 
 
+// --- Quiz Logic ---
+
+const updateQuizAndTimerDisplay = (phaseKey) => {
+  // Hide answer and options by default
+  quizAnswer.textContent = '答え: --';
+  quizOptionsContainer.style.display = 'none';
+  quizOptionButtons.forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove('correct', 'incorrect');
+  });
+
+  if (phaseKey === Phase.DOWN) {
+    currentQuiz = generateQuiz();
+    isQuizAnswered = false;
+    isCurrentQuizCorrect = null;
+
+    quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
+    quizOptionsContainer.style.display = 'flex'; // Show options container
+    quizOptionButtons.forEach((btn, index) => {
+      btn.textContent = currentQuiz.options[index];
+    });
+
+    if (currentQuiz.isCritical) {
+      quizProblem.classList.add('critical-quiz');
+    } else {
+      quizProblem.classList.remove('critical-quiz');
+    }
+  } else if (phaseKey === Phase.HOLD) {
+    // Keep showing the problem and options
+    if (currentQuiz) {
+      quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
+      quizOptionsContainer.style.display = 'flex';
+    }
+  } else if (phaseKey === Phase.UP) {
+    // Show the answer, hide options
+    if (currentQuiz) {
+      quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
+      quizAnswer.textContent = `答え: ${currentQuiz.correctAnswer}`;
+    }
+    quizOptionsContainer.style.display = 'none';
+  } else {
+    // Idle or Finished
+    quizProblem.textContent = '問題: --';
+    quizAnswer.textContent = '答え: --';
+    quizProblem.classList.remove('critical-quiz');
+    quizOptionsContainer.style.display = 'none';
+  }
+};
+
+const handleQuizAnswer = (selectedOption, button) => {
+  if (isQuizAnswered || !currentQuiz) return;
+
+  isQuizAnswered = true;
+  const isCorrect = Number(selectedOption) === currentQuiz.correctAnswer;
+  isCurrentQuizCorrect = isCorrect;
+
+  button.classList.add(isCorrect ? 'correct' : 'incorrect');
+  quizOptionButtons.forEach(btn => btn.disabled = true);
+
+  if (isCorrect) {
+    if (quizMode === 'cooperative') {
+      sessionAttackBonus += 1;
+      showToast('+', `攻撃ボーナス +1 (現在: ${sessionAttackBonus})`);
+    } else { // disruptive mode
+      showToast('正解！', 'Nice!');
+    }
+  } else { // Incorrect
+    if (quizMode === 'disruptive') {
+      showToast('不正解！', '次のスクワットはカウントされません！');
+    } else { // cooperative mode
+      showToast('不正解！', '残念！');
+    }
+  }
+};
+
+
 // --- Event Listeners Setup ---
 
 const timerInterval = setInterval(tick, 100);
+
+if (quizModeToggle) {
+  quizModeToggle.addEventListener('change', (event) => {
+    if (event.target.checked) {
+      quizMode = 'disruptive';
+      quizModeLabel.textContent = 'お邪魔';
+    } else {
+      quizMode = 'cooperative';
+      quizModeLabel.textContent = '協力';
+    }
+  });
+}
+
+quizOptionButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    handleQuizAnswer(button.textContent, button);
+  });
+});
 
 startButton.addEventListener('click', () => {
   if (sensorMode) {
@@ -1033,4 +1149,5 @@ if (typeof window !== 'undefined') {
   window.finishWorkout = finishWorkout;
   window.showToast = showToast;
   window.VoiceCoach = VoiceCoach;
+  window.updateStartButtonAvailability = updateStartButtonAvailability;
 }
