@@ -1697,17 +1697,49 @@ const renderHeatmap = () => {
       heatmapTooltip.classList.remove('visible');
     };
 
-    cell.addEventListener('mouseenter', showTooltip);
-    cell.addEventListener('mouseleave', hideTooltip);
-    cell.addEventListener('touchstart', () => {
-      showTooltip();
-      setTimeout(hideTooltip, 2500);
-    }, { passive: true });
-
     grid.appendChild(cell);
   });
 
   heatmapContainer.appendChild(grid);
+
+  const showTooltip = (cell) => {
+    if (!cell) return;
+    const key = cell.dataset.date;
+    const count = cell.dataset.count;
+    if (!key) return;
+
+    const rect = cell.getBoundingClientRect();
+    const dateStr = formatDate(new Date(key.replace(/-/g, '/')).toISOString()); // Fix date parsing for tooltip
+    heatmapTooltip.textContent = `${dateStr}: ${count}回`;
+    heatmapTooltip.classList.add('visible');
+
+    const tooltipWidth = heatmapTooltip.offsetWidth;
+    heatmapTooltip.style.top = `${rect.top - 34 + window.scrollY}px`;
+    heatmapTooltip.style.left = `${rect.left + rect.width / 2 - tooltipWidth / 2 + window.scrollX}px`;
+  };
+
+  const hideTooltip = () => {
+    heatmapTooltip.classList.remove('visible');
+  };
+
+  heatmapContainer.addEventListener('mouseover', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      showTooltip(e.target);
+    }
+  });
+
+  heatmapContainer.addEventListener('mouseout', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      hideTooltip();
+    }
+  });
+
+  heatmapContainer.addEventListener('touchstart', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      showTooltip(e.target);
+      setTimeout(hideTooltip, 2500);
+    }
+  }, { passive: true });
   requestAnimationFrame(() => {
     heatmapContainer.scrollLeft = heatmapContainer.scrollWidth;
   });
