@@ -47,8 +47,8 @@
 - general-task-playbook: 非開発タスク（調査・ドキュメント作成・運用作業など）を抜け漏れなく進めるための計画・実行テンプレートを提供する。
 - sdd-steering: プロジェクトの全体像を把握し、SDDプロセスのための基本ドキュメント（Product, Tech, Structure）を生成・更新する。
 - sdd-requirements: 実装したい機能の要件と受け入れ基準を定義し、要件定義書（requirements.md）を作成する。
-- sdd-highway: 要件定義から設計・実装までを一気に実行する高速開発モード。
+- sdd-highway: 要件定義書（requirements.md）を基に、詳細設計書やタスクリストの作成を省略し、直接実装と記録を行う高速開発モード。
 - sdd-design: 要件に基づき実装方針や技術設計を固め、設計書（design.md）を作成する。
 - sdd-tasks: 設計書に基づき実装タスクを分解し、タスクリスト（tasks.md）を作成する。
-- sdd-implement: タスクリストに従ってテスト駆動開発（TDD）で実装を行い、機能を完成させる。
+- sdd-implement: 作成済みのタスクリスト（tasks.md）に従い、厳格なテスト駆動開発（TDD）サイクルを回して実装を進める標準モード。
 - sdd-archive: 完了した仕様（spec）をアーカイブし、開発サイクルをクローズする。

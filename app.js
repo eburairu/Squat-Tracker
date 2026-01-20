@@ -1681,24 +1681,23 @@ const renderHeatmap = () => {
     cell.dataset.date = key || '';
     cell.dataset.count = count;
 
-    const showTooltip = () => {
-      if (!key) return;
-      const rect = cell.getBoundingClientRect();
-      const dateStr = formatDate(date.toISOString());
-      heatmapTooltip.textContent = `${dateStr}: ${count}回`;
-      heatmapTooltip.classList.add('visible');
+    grid.appendChild(cell);
+  });
 
-      const tooltipWidth = heatmapTooltip.offsetWidth;
-      heatmapTooltip.style.top = `${rect.top - 34 + window.scrollY}px`;
-      heatmapTooltip.style.left = `${rect.left + rect.width / 2 - tooltipWidth / 2 + window.scrollX}px`;
-    };
-
-    const hideTooltip = () => {
-      heatmapTooltip.classList.remove('visible');
-    };
+  const showTooltip = (cell) => {
+    const { date, count } = cell.dataset;
+    if (!date) return;
 
     grid.appendChild(cell);
   });
+
+  grid.addEventListener('touchstart', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      showTooltip(e.target);
+      setTimeout(hideTooltip, 2500);
+    }
+  }, { passive: true });
+
 
   heatmapContainer.appendChild(grid);
 

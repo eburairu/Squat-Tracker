@@ -2,7 +2,7 @@
 
 ## Description
 変更差分に対する簡易セキュリティ監査を行い、リスクを洗い出す。
-Trigger examples: "脆弱性チェック", "セキュリティ診断", "security audit", "security check"
+Trigger examples: "脆弱性チェック", "セキュリティ診断", "security audit", "security check", "セキュリティチェック"
 
 ## 手順
 1. 変更ファイルと影響範囲を列挙する。
