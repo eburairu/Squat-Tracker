@@ -1,46 +1,21 @@
 import { test, expect } from '@playwright/test';
 
 test('Verify quiz logic', async ({ page }) => {
-  // Mock the quiz generator to return deterministic results
-  await page.addInitScript(() => {
-    const mockQuizzes = [
-      { expression: '5 + 3', answer: 8 },
-      { expression: '9 - 4', answer: 5 },
-      { expression: '6 × 7', answer: 42 },
-      { expression: '81 ÷ 9', answer: 9 },
-    ];
-    let quizIndex = 0;
-    window.generateQuiz = () => {
-      const quiz = mockQuizzes[quizIndex % mockQuizzes.length];
-      quizIndex++;
-      return quiz;
-    };
-  });
-
   await page.goto('/');
 
-  // Wait for the script to load and the mocked function to be available
+  // Wait for the script to load and the function to be available
   await page.waitForFunction(() => typeof window.generateQuiz === 'function');
 
-  // Generate one of each quiz type from the mock
+  // Generate multiple quizzes to cover different operations
   const quizzes = await page.evaluate(() => {
-    return [
-      window.generateQuiz(),
-      window.generateQuiz(),
-      window.generateQuiz(),
-      window.generateQuiz(),
-    ];
+    const results = [];
+    for (let i = 0; i < 20; i++) {
+      results.push(window.generateQuiz());
+    }
+    return results;
   });
 
-  // Verify the generated quizzes match the mock data
-  expect(quizzes).toEqual([
-    { expression: '5 + 3', answer: 8 },
-    { expression: '9 - 4', answer: 5 },
-    { expression: '6 × 7', answer: 42 },
-    { expression: '81 ÷ 9', answer: 9 },
-  ]);
-
-  // Also, perform the original logic verification on the fixed data
+  // Verify the logic of the generated quizzes
   const types = { '+': 0, '-': 0, '×': 0, '÷': 0 };
 
   for (const quiz of quizzes) {
@@ -51,9 +26,11 @@ test('Verify quiz logic', async ({ page }) => {
     const a = parseInt(left, 10);
     const b = parseInt(right, 10);
 
+    // Verify operation type is valid
     expect(types).toHaveProperty(op);
     types[op]++;
 
+    // Verify calculation correctness
     if (op === '+') {
       expect(answer).toBe(a + b);
     } else if (op === '-') {
@@ -61,13 +38,20 @@ test('Verify quiz logic', async ({ page }) => {
     } else if (op === '×') {
       expect(answer).toBe(a * b);
     } else if (op === '÷') {
+      // For division, we verify the inverse multiplication to avoid float issues
+      // app.js logic: dividend = divisor * answer. expression is "dividend ÷ divisor"
+      // So a (dividend) should be b (divisor) * answer
       expect(a).toBe(b * answer);
     }
   }
 
-  // Ensure all types were generated
-  expect(types['+']).toBe(1);
-  expect(types['-']).toBe(1);
-  expect(types['×']).toBe(1);
-  expect(types['÷']).toBe(1);
+  // Ensure we saw at least one of each type (statistically likely with 20 samples)
+  // If this flakes, we might need to increase samples or retry, but 20 samples for 4 types is very safe.
+  // Probability of missing one type in 20 tries is very low (~0.3% per type).
+  // Let's relax it or just log. But for a robust test, we can check > 0.
+  console.log('Quiz types generated:', types);
+  expect(types['+']).toBeGreaterThan(0);
+  expect(types['-']).toBeGreaterThan(0);
+  expect(types['×']).toBeGreaterThan(0);
+  expect(types['÷']).toBeGreaterThan(0);
 });
