@@ -47,7 +47,7 @@ test.describe('Boss Drop Rate Verification', () => {
       // To be safe, let's just check that `addWeapon` returns a result.
       // Or easier: checking toast is a good proxy for "something happened".
 
-      const toast = page.locator('.achievement-toast');
+      const toast = page.locator('.achievement-toast').first();
       await expect(toast).toBeVisible();
       // Wait for toast to disappear or remove it to not interfere with next loop
       await page.evaluate(() => {
