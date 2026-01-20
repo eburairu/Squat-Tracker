@@ -1688,12 +1688,27 @@ const renderHeatmap = () => {
     const { date, count } = cell.dataset;
     if (!date) return;
 
-    const rect = cell.getBoundingClientRect();
-    // Create date object from 'YYYY-MM-DD' string, replacing hyphens with slashes
-    // to ensure it's parsed in the user's local timezone, not UTC.
-    const dateObj = new Date(date.replace(/-/g, '/'));
-    const dateStr = formatDate(dateObj.toISOString());
+    grid.appendChild(cell);
+  });
 
+  grid.addEventListener('touchstart', (e) => {
+    if (e.target.classList.contains('heatmap-cell')) {
+      showTooltip(e.target);
+      setTimeout(hideTooltip, 2500);
+    }
+  }, { passive: true });
+
+
+  heatmapContainer.appendChild(grid);
+
+  const showTooltip = (cell) => {
+    if (!cell) return;
+    const key = cell.dataset.date;
+    const count = cell.dataset.count;
+    if (!key) return;
+
+    const rect = cell.getBoundingClientRect();
+    const dateStr = formatDate(new Date(key.replace(/-/g, '/')).toISOString()); // Fix date parsing for tooltip
     heatmapTooltip.textContent = `${dateStr}: ${count}回`;
     heatmapTooltip.classList.add('visible');
 
@@ -1706,27 +1721,24 @@ const renderHeatmap = () => {
     heatmapTooltip.classList.remove('visible');
   };
 
-  grid.addEventListener('mouseover', (e) => {
+  heatmapContainer.addEventListener('mouseover', (e) => {
     if (e.target.classList.contains('heatmap-cell')) {
       showTooltip(e.target);
     }
   });
 
-  grid.addEventListener('mouseout', (e) => {
+  heatmapContainer.addEventListener('mouseout', (e) => {
     if (e.target.classList.contains('heatmap-cell')) {
       hideTooltip();
     }
   });
 
-  grid.addEventListener('touchstart', (e) => {
+  heatmapContainer.addEventListener('touchstart', (e) => {
     if (e.target.classList.contains('heatmap-cell')) {
       showTooltip(e.target);
       setTimeout(hideTooltip, 2500);
     }
   }, { passive: true });
-
-
-  heatmapContainer.appendChild(grid);
   requestAnimationFrame(() => {
     heatmapContainer.scrollLeft = heatmapContainer.scrollWidth;
   });
