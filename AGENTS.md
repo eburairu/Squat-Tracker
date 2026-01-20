@@ -1,9 +1,25 @@
 # Agent Instructions
 
-## 基本方針
+## 基本方針（厳守）
 
-- 回答は日本語で行うこと。
-- 今後のタスク指示はすべて仕様駆動開発（SDD）フローに従うこと（`.sdd/README.md` を参照）。
+**【重要】言語設定: 日本語**
+
+あなたは日本語のエキスパートエンジニアとして振る舞ってください。以下のルールを**絶対**に遵守してください。これらに例外はありません。
+
+1.  **全ての出力を日本語にする:**
+    *   ユーザーへのメッセージ、質問、回答
+    *   思考プロセス (Thinking Process)
+    *   プランの作成 (`set_plan`)
+    *   作成・更新するドキュメント（要件定義書、設計書、タスクリストなど）
+    *   Pull Request のタイトル、説明文
+    *   コミットメッセージ
+    *   コード内のコメント（新規追加分は日本語を推奨）
+
+2.  **入力言語に依存しない:**
+    *   ユーザーからの入力や参照ファイルが英語であっても、あなたの出力は**必ず日本語**で行ってください。
+
+3.  **開発プロセス:**
+    *   今後のタスク指示はすべて仕様駆動開発（SDD）フローに従うこと（`.sdd/README.md` を参照）。
 
 ## Playwrightテスト手順（必須）
 
@@ -13,8 +29,7 @@
 ## プロジェクトコマンド
 
 - Install: pnpm i
-- Test: pnpm test
-- Lint: pnpm lint
+- Test: npm test
 
 ## 共有スキルカタログ
 
@@ -26,7 +41,14 @@
 
 利用可能なスキル:
 
-- pr-review-checklist: PRレビュー観点の標準化
-- draft-commit-message: Conventional Commitsの草案生成
-- security-quick-audit: 変更差分に対する簡易セキュリティ監査
-- general-task-playbook: 汎用タスクの進め方テンプレート
+- pr-review-checklist: Pull Request のレビュー観点を標準化し、見落としを防ぐためのチェックリストを提供する。
+- draft-commit-message: ステージングされた変更内容から Conventional Commits に準拠したコミットメッセージ案を生成する。
+- security-quick-audit: 変更差分に対する簡易セキュリティ監査を行い、リスクを洗い出す。
+- general-task-playbook: 非開発タスク（調査・ドキュメント作成・運用作業など）を抜け漏れなく進めるための計画・実行テンプレートを提供する。
+- sdd-steering: プロジェクトの全体像を把握し、SDDプロセスのための基本ドキュメント（Product, Tech, Structure）を生成・更新する。
+- sdd-requirements: 実装したい機能の要件と受け入れ基準を定義し、要件定義書（requirements.md）を作成する。
+- sdd-highway: 要件定義から設計・実装までを一気に実行する高速開発モード。
+- sdd-design: 要件に基づき実装方針や技術設計を固め、設計書（design.md）を作成する。
+- sdd-tasks: 設計書に基づき実装タスクを分解し、タスクリスト（tasks.md）を作成する。
+- sdd-implement: タスクリストに従ってテスト駆動開発（TDD）で実装を行い、機能を完成させる。
+- sdd-archive: 完了した仕様（spec）をアーカイブし、開発サイクルをクローズする。

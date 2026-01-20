@@ -79,7 +79,8 @@ test.describe('Audio & Voice Reliability', () => {
 
   test('VoiceCoach should explicitly select a Japanese voice', async ({ page }) => {
     // Enable Voice Coach
-    await page.check('#voice-toggle', { force: true });
+    // Click the label wrapper since the input is visually hidden
+    await page.locator('.switch:has(#voice-toggle)').click();
 
     // Trigger a speech (e.g. by starting workout or just toggling which triggers a test speak)
     // The current implementation speaks "" (empty string) on toggle enable to unlock mobile audio.
