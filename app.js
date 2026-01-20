@@ -974,6 +974,7 @@ let pausedAt = null;
 let workoutStarted = false;
 let workoutSaved = false;
 let lastCountdownSecond = null;
+let lastDisplayedSecond = null;
 let currentQuiz = null;
 
 let sensorMode = false;
@@ -1909,11 +1910,16 @@ const updateTimerUI = () => {
   if (!phaseDuration) {
     phaseTimer.textContent = '--';
     progressBar.style.width = '0%';
+    lastDisplayedSecond = null;
     return;
   }
   const elapsed = Math.min(Date.now() - phaseStart, phaseDuration);
   const remaining = Math.max(phaseDuration - elapsed, 0);
-  phaseTimer.textContent = String(Math.ceil(remaining / 1000)).padStart(2, '0');
+  const remainingSeconds = Math.ceil(remaining / 1000);
+  if (remainingSeconds !== lastDisplayedSecond) {
+    phaseTimer.textContent = String(remainingSeconds).padStart(2, '0');
+    lastDisplayedSecond = remainingSeconds;
+  }
   progressBar.style.width = `${(elapsed / phaseDuration) * 100}%`;
 };
 
