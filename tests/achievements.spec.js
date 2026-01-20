@@ -2,9 +2,6 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Achievement System', () => {
   test.beforeEach(async ({ page }) => {
-    // Enable console logging from browser
-    page.on('console', msg => console.log(`[Browser Console] ${msg.text()}`));
-
     await page.goto('/');
     await page.evaluate(() => {
       localStorage.removeItem('squat-tracker-achievements');
@@ -36,8 +33,6 @@ test.describe('Achievement System', () => {
       // Trigger check manually passing historyEntries explicitly
       // because we cannot update the internal historyEntries variable from here
       window.AchievementSystem.check({ type: 'finish', historyEntries: history });
-
-      console.log('Is unlocked:', window.AchievementSystem.isUnlocked('baby-steps'));
     });
 
     const unlocked = await page.evaluate(() => {
@@ -53,7 +48,6 @@ test.describe('Achievement System', () => {
 
     // Verify localStorage directly
     const storage = await page.evaluate(() => localStorage.getItem('squat-tracker-achievements'));
-    console.log('Storage content:', storage);
     expect(storage).toContain('baby-steps');
 
     await page.reload();
