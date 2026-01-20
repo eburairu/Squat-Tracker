@@ -9,7 +9,7 @@ test('Verify quiz logic', async ({ page }) => {
   // Generate multiple quizzes to cover different operations
   const quizzes = await page.evaluate(() => {
     const results = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 100; i++) {
       results.push(window.generateQuiz());
     }
     return results;
@@ -19,37 +19,67 @@ test('Verify quiz logic', async ({ page }) => {
   const types = { '+': 0, '-': 0, '×': 0, '÷': 0 };
 
   for (const quiz of quizzes) {
-    const { expression, answer } = quiz;
-    const parts = expression.split(' ');
-    expect(parts.length).toBe(3);
-    const [left, op, right] = parts;
-    const a = parseInt(left, 10);
-    const b = parseInt(right, 10);
+    const { problemText, answerText } = quiz;
 
-    // Verify operation type is valid
-    expect(types).toHaveProperty(op);
+    // Extract operator
+    const match = problemText.match(/([\+\-×÷])/);
+    expect(match).not.toBeNull();
+    const op = match[0];
     types[op]++;
 
-    // Verify calculation correctness
+    const parts = problemText.split(' ');
+    // Expect format: "A op B = R"
+    expect(parts.length).toBe(5);
+    const valA = parts[0];
+    const valOp = parts[1];
+    const valB = parts[2];
+    const valEq = parts[3];
+    const valR = parts[4];
+
+    expect(valOp).toBe(op);
+    expect(valEq).toBe('=');
+
+    // Extract Answer Value
+    let answerVal;
+    if (answerText.startsWith('? = ')) {
+       answerVal = parseInt(answerText.split(' = ')[1], 10);
+    } else {
+       answerVal = parseInt(answerText, 10);
+    }
+
+    // Verify logic
+    let a, b, r;
+
+    if (valA === '?') {
+        // Missing Left: ? + B = R
+        a = answerVal;
+        b = parseInt(valB, 10);
+        r = parseInt(valR, 10);
+    } else if (valB === '?') {
+        // Missing Right: A + ? = R
+        a = parseInt(valA, 10);
+        b = answerVal;
+        r = parseInt(valR, 10);
+    } else {
+        // Normal: A + B = ?
+        a = parseInt(valA, 10);
+        b = parseInt(valB, 10);
+        r = answerVal;
+        expect(valR).toBe('?');
+    }
+
     if (op === '+') {
-      expect(answer).toBe(a + b);
+      expect(a + b).toBe(r);
     } else if (op === '-') {
-      expect(answer).toBe(a - b);
+      expect(a - b).toBe(r);
     } else if (op === '×') {
-      expect(answer).toBe(a * b);
+      expect(a * b).toBe(r);
     } else if (op === '÷') {
-      // For division, we verify the inverse multiplication to avoid float issues
-      // app.js logic: dividend = divisor * answer. expression is "dividend ÷ divisor"
-      // So a (dividend) should be b (divisor) * answer
-      expect(a).toBe(b * answer);
+      // In app.js: a / b = r (since problem is "a ÷ b")
+      expect(a / b).toBe(r);
     }
   }
 
-  // Ensure we saw at least one of each type (statistically likely with 20 samples)
-  // If this flakes, we might need to increase samples or retry, but 20 samples for 4 types is very safe.
-  // Probability of missing one type in 20 tries is very low (~0.3% per type).
-  // Let's relax it or just log. But for a robust test, we can check > 0.
-  console.log('Quiz types generated:', types);
   expect(types['+']).toBeGreaterThan(0);
   expect(types['-']).toBeGreaterThan(0);
   expect(types['×']).toBeGreaterThan(0);

@@ -361,8 +361,8 @@ const RpgSystem = {
     return 1 + Math.floor((level - 1) * 0.5);
   },
 
-  calculateDamage(baseAttackPower) {
-    const isCritical = Math.random() < 0.1; // 10% chance
+  calculateDamage(baseAttackPower, forceCritical = false) {
+    const isCritical = forceCritical || Math.random() < 0.1; // 10% chance or forced
     const multiplier = isCritical ? 2 : 1;
     return {
       amount: baseAttackPower * multiplier,
@@ -1006,46 +1006,67 @@ const timesTableRange = { min: 1, max: 9 };
 const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const generateQuiz = () => {
-  const types = ['+', '-', '×', '÷'];
-  const type = types[getRandomInt(0, 3)];
-  const range = timesTableRange; // { min: 1, max: 9 }
+  const operators = ['+', '-', '×', '÷'];
+  const operator = operators[getRandomInt(0, 3)];
+  const isCritical = Math.random() < 0.1;
 
-  if (type === '+') {
-    const a = getRandomInt(range.min, range.max);
-    const b = getRandomInt(range.min, range.max);
-    return {
-      expression: `${a} + ${b}`,
-      answer: a + b,
-    };
+  // 30% chance for fill-in-the-blank
+  const isFillIn = Math.random() < 0.3;
+  // 0: Normal, 1: Missing Left, 2: Missing Right
+  const quizMode = isFillIn ? getRandomInt(1, 2) : 0;
+
+  const getOperand = (allowTwoDigits) => {
+    // 30% chance for 2 digits (10-99) if allowed
+    if (allowTwoDigits && Math.random() < 0.3) {
+      return getRandomInt(10, 99);
+    }
+    // Standard: 3-9 (exclude 1, 2)
+    return getRandomInt(3, 9);
+  };
+
+  let a, b, result;
+
+  if (operator === '+') {
+    a = getOperand(true);
+    b = getOperand(true);
+    result = a + b;
+  } else if (operator === '-') {
+    // Ensure result is >= 3 to avoid easy "1" or "2" appearing in fill-in-the-blank
+    do {
+      a = getOperand(true);
+      b = getOperand(true);
+      if (a < b) [a, b] = [b, a];
+      result = a - b;
+    } while (result <= 2);
+  } else if (operator === '×') {
+    a = getOperand(false);
+    b = getOperand(false);
+    result = a * b;
+  } else {
+    // Division
+    b = getOperand(false);
+    result = getOperand(false);
+    a = b * result;
   }
 
-  if (type === '-') {
-    const a = getRandomInt(range.min, range.max);
-    const b = getRandomInt(range.min, range.max);
-    const big = Math.max(a, b);
-    const small = Math.min(a, b);
-    return {
-      expression: `${big} - ${small}`,
-      answer: big - small,
-    };
+  let problemText = '';
+  let answerText = '';
+
+  if (quizMode === 1) { // Missing Left: ? + B = R
+    problemText = `? ${operator} ${b} = ${result}`;
+    answerText = `? = ${a}`;
+  } else if (quizMode === 2) { // Missing Right: A + ? = R
+    problemText = `${a} ${operator} ? = ${result}`;
+    answerText = `? = ${b}`;
+  } else { // Normal: A + B = ?
+    problemText = `${a} ${operator} ${b} = ?`;
+    answerText = `${result}`;
   }
 
-  if (type === '×') {
-    const a = getRandomInt(range.min, range.max);
-    const b = getRandomInt(range.min, range.max);
-    return {
-      expression: `${a} × ${b}`,
-      answer: a * b,
-    };
-  }
-
-  // Division (÷)
-  const divisor = getRandomInt(range.min, range.max);
-  const answer = getRandomInt(range.min, range.max);
-  const dividend = divisor * answer;
   return {
-    expression: `${dividend} ÷ ${divisor}`,
-    answer,
+    problemText,
+    answerText,
+    isCritical
   };
 };
 
@@ -1060,16 +1081,31 @@ const updateQuizDisplay = (phaseKey) => {
   if (phaseKey === Phase.DOWN) {
     currentQuiz = generateQuiz();
   }
+
+  // Clear critical style by default
+  quizProblem.classList.remove('critical-quiz');
+
   if (phaseKey === Phase.DOWN || phaseKey === Phase.HOLD) {
     const quiz = currentQuiz ?? generateQuiz();
     currentQuiz = quiz;
-    quizProblem.textContent = `問題: ${quiz.expression} = ?`;
+
+    // Apply critical style if needed
+    if (quiz.isCritical) {
+      quizProblem.classList.add('critical-quiz');
+    }
+
+    quizProblem.textContent = `問題: ${quiz.problemText}`;
     quizAnswer.textContent = '答え: --';
     return;
   }
   if (phaseKey === Phase.UP && currentQuiz) {
-    quizProblem.textContent = `問題: ${currentQuiz.expression} = ?`;
-    quizAnswer.textContent = `答え: ${currentQuiz.answer}`;
+    // Keep critical style visible during answer phase
+    if (currentQuiz && currentQuiz.isCritical) {
+      quizProblem.classList.add('critical-quiz');
+    }
+
+    quizProblem.textContent = `問題: ${currentQuiz ? currentQuiz.problemText : '--'}`;
+    quizAnswer.textContent = `答え: ${currentQuiz ? currentQuiz.answerText : '--'}`;
     return;
   }
   quizProblem.textContent = '問題: --';
@@ -2225,7 +2261,11 @@ const performAttack = () => {
   const level = RpgSystem.calculateLevel(stats.totalRepsAllTime);
   const baseAp = RpgSystem.calculateAttackPower(level);
   const weaponBonus = typeof InventoryManager !== 'undefined' ? InventoryManager.getAttackBonus() : 0;
-  const damage = RpgSystem.calculateDamage(baseAp + weaponBonus);
+
+  // Use critical flag from current quiz if available
+  const forceCritical = currentQuiz && currentQuiz.isCritical;
+
+  const damage = RpgSystem.calculateDamage(baseAp + weaponBonus, forceCritical);
   BossBattle.damage(damage.amount, damage.isCritical);
 };
 
