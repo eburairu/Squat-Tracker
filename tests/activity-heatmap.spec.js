@@ -52,7 +52,6 @@ test('Activity Heatmap Verification', async ({ page }) => {
       const tooltip = page.locator('.heatmap-tooltip');
       await expect(tooltip).toBeVisible();
       const text = await tooltip.textContent();
-      console.log('Tooltip text:', text);
       expect(text).toMatch(/\d{4}\/\d{2}\/\d{2}: \d+回/);
   }
 });
