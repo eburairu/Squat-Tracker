@@ -1,6 +1,7 @@
 # Project Structure
 ## ルート構成
-- `app.js`: アプリケーションの全ロジック（モジュール定義、イベントハンドリング）
+- `js/app.js`: アプリケーションのエントリーポイント（モジュール統合、UIイベント、センサーロジック）
+- `js/modules/`: 機能ごとのモジュールファイル（BossBattle, AchievementSystem等）
 - `index.html`: メインUI構造
 - `styles.css`: スタイル定義
 - `tests/`: PlaywrightによるE2Eテスト
