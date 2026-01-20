@@ -68,4 +68,33 @@ test.describe('Data Management', () => {
       }
     }
   });
+
+  test('should handle object values in import data correctly', async ({ page }) => {
+    // This simulates a manually edited JSON where values are objects, not strings
+    const backupData = {
+      'squat-tracker-complex-data': { level: 5, items: ['sword'] }
+    };
+
+    const tempFile = path.join('tests', 'temp-backup-complex.json');
+    fs.writeFileSync(tempFile, JSON.stringify(backupData));
+
+    try {
+      page.on('dialog', dialog => dialog.accept());
+
+      const fileChooserPromise = page.waitForEvent('filechooser');
+      await page.locator('#import-data-button').click();
+      const fileChooser = await fileChooserPromise;
+      await fileChooser.setFiles(tempFile);
+
+      await page.waitForTimeout(1000);
+
+      const storedValue = await page.evaluate(() => localStorage.getItem('squat-tracker-complex-data'));
+      // The stored value should be a stringified JSON, not "[object Object]"
+      expect(storedValue).toBe(JSON.stringify(backupData['squat-tracker-complex-data']));
+    } finally {
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
+      }
+    }
+  });
 });

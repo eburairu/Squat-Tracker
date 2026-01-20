@@ -76,13 +76,17 @@ export const DataManager = {
     let count = 0;
     Object.keys(data).forEach(key => {
       if (key.startsWith('squat-tracker-')) {
-        localStorage.setItem(key, data[key]);
+        let value = data[key];
+        if (typeof value === 'object') {
+          value = JSON.stringify(value);
+        }
+        localStorage.setItem(key, value);
         count++;
       }
     });
 
     if (count > 0) {
-      alert('復元が完了しました。ページを再読み込みします。');
+      alert(`復元が完了しました（${count}件）。ページを再読み込みします。`);
       window.location.reload();
     } else {
       alert('有効なデータが見つかりませんでした。');
