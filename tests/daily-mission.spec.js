@@ -113,9 +113,6 @@ test.describe('Daily Mission System', () => {
 
     // Claim reward
     await page.evaluate(() => {
-        // Debugging logs
-        console.log('DailyMissionSystem keys:', Object.keys(DailyMissionSystem));
-        console.log('claimReward type:', typeof DailyMissionSystem.claimReward);
         DailyMissionSystem.claimReward('m1')
     });
 
