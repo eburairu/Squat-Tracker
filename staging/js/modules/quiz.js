@@ -47,21 +47,46 @@ export const generateQuiz = () => {
 
   let problemText = '';
   let answerText = '';
+  let correctAnswer = 0;
 
-  if (quizMode === 1) { // Missing Left: ? + B = R
+  // 0: Normal, 1: Missing Left, 2: Missing Right
+  const questionType = getRandomInt(0, 2);
+
+  if (questionType === 1) { // Missing Left: ? + B = R
     problemText = `? ${operator} ${b} = ${result}`;
     answerText = `? = ${a}`;
-  } else if (quizMode === 2) { // Missing Right: A + ? = R
+    correctAnswer = a;
+  } else if (questionType === 2) { // Missing Right: A + ? = R
     problemText = `${a} ${operator} ? = ${result}`;
     answerText = `? = ${b}`;
+    correctAnswer = b;
   } else { // Normal: A + B = ?
     problemText = `${a} ${operator} ${b} = ?`;
     answerText = `${result}`;
+    correctAnswer = result;
+  }
+
+  // Generate Options
+  const options = new Set([correctAnswer]);
+  while (options.size < 4) {
+    const offset = getRandomInt(-10, 10);
+    const val = correctAnswer + offset;
+    if (val >= 0 && val !== correctAnswer) {
+      options.add(val);
+    }
+  }
+  const optionsArray = Array.from(options);
+  // Simple shuffle
+  for (let i = optionsArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [optionsArray[i], optionsArray[j]] = [optionsArray[j], optionsArray[i]];
   }
 
   return {
     problemText,
     answerText,
+    correctAnswer,
+    options: optionsArray,
     isCritical
   };
 };
