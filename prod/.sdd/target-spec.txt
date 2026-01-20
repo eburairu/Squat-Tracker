@@ -1,1 +1,1 @@
-.sdd/specs/20250318_agents-md-refactor
+equipment-system

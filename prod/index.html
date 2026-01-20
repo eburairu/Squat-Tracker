@@ -41,15 +41,47 @@
               <span class="stat-unit">last</span>
             </div>
             <div class="stat-card">
-              <span class="stat-label">直近の回数</span>
-              <span id="stats-last-reps" class="stat-value">--</span>
-              <span class="stat-unit">reps</span>
+              <span class="stat-label">現在のレベル</span>
+              <span id="stats-rank" class="stat-value">--</span>
+              <span class="stat-unit">level / ap</span>
             </div>
           </div>
         </div>
       </header>
 
       <section class="grid primary-grid">
+        <div class="card boss-card reveal delay-2" id="boss-card">
+          <div class="card-head">
+            <div>
+              <p class="card-eyebrow">Battle</p>
+              <h2>ボスバトル</h2>
+            </div>
+            <div class="boss-kills">
+              <span class="label">討伐数</span>
+              <span id="boss-kill-count">0</span>
+            </div>
+          </div>
+          <div class="boss-display">
+            <div class="boss-avatar-wrapper">
+               <div id="boss-avatar" class="boss-avatar"></div>
+            </div>
+            <div class="boss-info">
+              <div class="boss-name-row">
+                <span id="boss-name">Loading...</span>
+                <span id="boss-hp-text">-- / --</span>
+              </div>
+              <div class="progress boss-progress">
+                <div id="boss-hp-bar" class="progress-bar" style="width: 100%"></div>
+              </div>
+              <div class="boss-actions">
+                <button id="equipment-button" class="ghost small" aria-label="装備を変更">
+                  <span style="margin-right: 4px;">⚔️</span> 装備
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card workout-card reveal delay-2">
           <div class="card-head">
             <div>
@@ -109,6 +141,18 @@
               <input id="voice-toggle" type="checkbox" />
               <span class="slider"></span>
               <span id="voice-status" class="switch-label">OFF</span>
+            </label>
+          </div>
+          <div class="control-group preset-group">
+            <label class="preset-label">
+              マイ・メニュー
+              <div class="preset-actions">
+                <select id="preset-select" aria-label="プリセット選択">
+                  <option value="">-- 選択してください --</option>
+                </select>
+                <button id="save-preset-button" class="ghost small" title="現在の設定を保存">保存</button>
+                <button id="delete-preset-button" class="ghost small delete-btn" title="選択中のプリセットを削除">削除</button>
+              </div>
             </label>
           </div>
           <div class="control-group">
@@ -182,27 +226,19 @@
           </ol>
         </div>
 
-        <div class="card daily-support reveal delay-6" id="daily-support">
+
+        <div class="card data-card reveal delay-7" id="data-management-card">
           <div class="card-head">
             <div>
-              <p class="card-eyebrow">Daily</p>
-              <h2>継続サポート</h2>
+              <p class="card-eyebrow">Data</p>
+              <h2>データ管理</h2>
             </div>
           </div>
-          <p class="card-copy">続ける理由を短く思い出せるよう、今日のヒントを表示します。</p>
-          <div class="support-grid">
-            <div class="support-item">
-              <span class="support-label">今日のひとこと</span>
-              <span id="daily-message" class="support-value">---</span>
-            </div>
-            <div class="support-item">
-              <span class="support-label">ミニ目標</span>
-              <span id="daily-goal" class="support-value">---</span>
-            </div>
-            <div class="support-item">
-              <span class="support-label">連続日数</span>
-              <span id="daily-streak" class="support-value">0日</span>
-            </div>
+          <p class="card-copy">データのバックアップと復元ができます。</p>
+          <div class="data-controls">
+            <button id="export-data-button" class="primary small">保存</button>
+            <button id="import-data-button" class="ghost small">復元</button>
+            <input type="file" id="import-file-input" accept=".json" style="display: none;" />
           </div>
         </div>
       </section>
@@ -215,13 +251,47 @@
           </div>
           <p id="history-note" class="history-note"></p>
         </div>
-        <ul id="history-list" class="history-list">
-          <li class="history-empty">まだ記録がありません</li>
-        </ul>
+
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="history">記録</button>
+          <button class="tab-btn" data-tab="achievements">実績</button>
+        </div>
+
+        <div id="tab-history" class="tab-content active">
+          <div id="activity-heatmap" class="heatmap-container"></div>
+          <ul id="history-list" class="history-list">
+            <li class="history-empty">まだ記録がありません</li>
+          </ul>
+        </div>
+
+        <div id="tab-achievements" class="tab-content">
+          <div id="badge-grid" class="badge-grid">
+            <!-- Badges will be rendered here -->
+          </div>
+        </div>
       </section>
     </main>
 
     <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+
+    <div id="equipment-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" tabindex="-1" data-close></div>
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-header">
+          <h2 id="modal-title">装備一覧</h2>
+          <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="equipment-summary">
+            <span class="summary-label">現在の攻撃力ボーナス</span>
+            <span id="equipment-total-bonus" class="summary-value">+0</span>
+          </div>
+          <ul id="weapon-list" class="weapon-list">
+            <!-- Items injected by JS -->
+          </ul>
+        </div>
+      </div>
+    </div>
 
     <script src="app.js"></script>
   </body>
