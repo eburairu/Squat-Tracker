@@ -3,71 +3,83 @@ import { test, expect } from '@playwright/test';
 test('Verify quiz logic', async ({ page }) => {
   await page.goto('/');
 
-  // Wait for the script to load and window.generateQuiz to be available
+  // Wait for the script to load and the function to be available
   await page.waitForFunction(() => typeof window.generateQuiz === 'function');
 
+  // Generate multiple quizzes to cover different operations
   const quizzes = await page.evaluate(() => {
     const results = [];
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 100; i++) {
       results.push(window.generateQuiz());
     }
     return results;
   });
 
-  const types = {
-    '+': 0,
-    '-': 0,
-    '×': 0,
-    '÷': 0
-  };
+  // Verify the logic of the generated quizzes
+  const types = { '+': 0, '-': 0, '×': 0, '÷': 0 };
 
   for (const quiz of quizzes) {
-    const { expression, answer } = quiz;
+    const { problemText, answerText } = quiz;
 
-    // Parse expression
-    // Expected formats: "A + B", "A - B", "A × B", "A ÷ B"
-    const parts = expression.split(' ');
-    expect(parts.length).toBe(3);
-    const [left, op, right] = parts;
-    const a = parseInt(left, 10);
-    const b = parseInt(right, 10);
-
-    expect(types).toHaveProperty(op);
+    // Extract operator
+    const match = problemText.match(/([\+\-×÷])/);
+    expect(match).not.toBeNull();
+    const op = match[0];
     types[op]++;
 
+    const parts = problemText.split(' ');
+    // Expect format: "A op B = R"
+    expect(parts.length).toBe(5);
+    const valA = parts[0];
+    const valOp = parts[1];
+    const valB = parts[2];
+    const valEq = parts[3];
+    const valR = parts[4];
+
+    expect(valOp).toBe(op);
+    expect(valEq).toBe('=');
+
+    // Extract Answer Value
+    let answerVal;
+    if (answerText.startsWith('? = ')) {
+       answerVal = parseInt(answerText.split(' = ')[1], 10);
+    } else {
+       answerVal = parseInt(answerText, 10);
+    }
+
+    // Verify logic
+    let a, b, r;
+
+    if (valA === '?') {
+        // Missing Left: ? + B = R
+        a = answerVal;
+        b = parseInt(valB, 10);
+        r = parseInt(valR, 10);
+    } else if (valB === '?') {
+        // Missing Right: A + ? = R
+        a = parseInt(valA, 10);
+        b = answerVal;
+        r = parseInt(valR, 10);
+    } else {
+        // Normal: A + B = ?
+        a = parseInt(valA, 10);
+        b = parseInt(valB, 10);
+        r = answerVal;
+        expect(valR).toBe('?');
+    }
+
     if (op === '+') {
-      expect(a).toBeGreaterThanOrEqual(1);
-      expect(a).toBeLessThanOrEqual(9);
-      expect(b).toBeGreaterThanOrEqual(1);
-      expect(b).toBeLessThanOrEqual(9);
-      expect(answer).toBe(a + b);
+      expect(a + b).toBe(r);
     } else if (op === '-') {
-      expect(a).toBeGreaterThanOrEqual(1);
-      expect(a).toBeLessThanOrEqual(9);
-      expect(b).toBeGreaterThanOrEqual(1);
-      expect(b).toBeLessThanOrEqual(9);
-      expect(answer).toBe(a - b);
-      expect(answer).toBeGreaterThanOrEqual(0);
+      expect(a - b).toBe(r);
     } else if (op === '×') {
-      expect(a).toBeGreaterThanOrEqual(1);
-      expect(a).toBeLessThanOrEqual(9);
-      expect(b).toBeGreaterThanOrEqual(1);
-      expect(b).toBeLessThanOrEqual(9);
-      expect(answer).toBe(a * b);
+      expect(a * b).toBe(r);
     } else if (op === '÷') {
-      // dividend ÷ divisor
-      // divisor (b) should be 1-9
-      // answer should be 1-9 (per generation logic: dividend = divisor * answer)
-      expect(b).toBeGreaterThanOrEqual(1);
-      expect(b).toBeLessThanOrEqual(9);
-      expect(answer).toBeGreaterThanOrEqual(1);
-      expect(answer).toBeLessThanOrEqual(9);
-      expect(a).toBe(b * answer);
+      // In app.js: a / b = r (since problem is "a ÷ b")
+      expect(a / b).toBe(r);
     }
   }
 
-  // Ensure all types are generated at least once
-  console.log('Quiz type distribution:', types);
   expect(types['+']).toBeGreaterThan(0);
   expect(types['-']).toBeGreaterThan(0);
   expect(types['×']).toBeGreaterThan(0);

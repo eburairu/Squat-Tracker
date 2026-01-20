@@ -8,7 +8,7 @@ test('Activity Heatmap Verification', async ({ page }) => {
     for (let i = 0; i < 180; i++) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
-        if (Math.random() < 0.3) continue;
+        if (i % 4 === 0) continue;
         entries.push({
             id: `${Date.now()}-${i}`,
             date: date.toISOString(),

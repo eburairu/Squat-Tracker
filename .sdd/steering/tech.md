@@ -1,32 +1,19 @@
 # Technology Stack
-
 ## アーキテクチャ
-
-ブラウザで完結するシングルページの静的Webアプリ。
+- **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
+- **Design Pattern**: Singleton-based Modular Architecture (app.js内にモジュールを集約)
+- **State Management**: 各モジュール内での状態管理 + `localStorage` による永続化
 
 ## 使用技術
-
-### 言語とフレームワーク
-
-- HTML：UI構造
-- CSS：スタイル
-- JavaScript：タイマー制御、センサー処理、アニメーション
-
-### 依存関係
-
-- @playwright/test：E2Eテスト
+- **Language**: JavaScript, HTML, CSS
+- **Testing**: Playwright
+- **Build**: なし (Static HTML)
+- **Deployment**: GitHub Pages
 
 ## 開発環境
-
-### 必要なツール
-
-- 任意のローカルHTTPサーバー
-
-### よく使うコマンド
-
-- 起動：`python -m http.server 8000`
-- テスト：`npm test`
+- **起動**: `python -m http.server 8000` (または任意の静的サーバー)
+- **テスト**: `npm test`
+- **依存管理**: `pnpm` (ただしテスト実行は `npm` スクリプト経由を推奨)
 
 ## 環境変数
-
-- なし
+- 特になし (クライアントサイドのみで動作)
