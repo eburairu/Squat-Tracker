@@ -2,7 +2,7 @@
 
 ## Description
 設計書に基づき実装タスクを分解し、タスクリスト（tasks.md）を作成する。
-Trigger examples: "タスク分解", "タスク出し", "実装計画", "break down tasks", "create task list"
+Trigger examples: "タスク分解", "タスク出し", "実装計画", "break down tasks", "create task list", "タスクリスト作成"
 
 ## 前提確認とspec特定
 1. `.sdd/target-spec.txt` からspec名を取得し、`.sdd/specs/[spec名]/` の存在を確認する。
@@ -36,4 +36,4 @@ Trigger examples: "タスク分解", "タスク出し", "実装計画", "break d
 ## 完了確認
 「タスクリスト完了。
 実装を開始するには `/sdd-implement` を実行してください。
-すべてのタスクは順番に実装されるため、特定のタスクのみを選択するオプションはありません。」
+※すべてのタスクは順番に実装されるため、特定のタスクのみを選択するオプションはありません。」
