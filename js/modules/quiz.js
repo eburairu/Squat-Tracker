@@ -1,26 +1,22 @@
-import { Phase } from '../constants.js';
 import { getRandomInt } from '../utils.js';
 
-let currentQuiz = null;
+// クイズの状態は app.js で管理するため、このモジュールでは不要
+// let currentQuiz = null;
+// export const getCurrentQuiz = () => currentQuiz;
 
-export const getCurrentQuiz = () => currentQuiz;
-
+/**
+ * 新しい計算問題を生成する
+ * @returns {object} クイズオブジェクト { problemText, correctAnswer, options, isCritical }
+ */
 export const generateQuiz = () => {
   const operators = ['+', '-', '×', '÷'];
   const operator = operators[getRandomInt(0, 3)];
   const isCritical = Math.random() < 0.1;
 
-  // 30% chance for fill-in-the-blank
-  const isFillIn = Math.random() < 0.3;
-  // 0: Normal, 1: Missing Left, 2: Missing Right
-  const quizMode = isFillIn ? getRandomInt(1, 2) : 0;
-
   const getOperand = (allowTwoDigits) => {
-    // 30% chance for 2 digits (10-99) if allowed
     if (allowTwoDigits && Math.random() < 0.3) {
       return getRandomInt(10, 99);
     }
-    // Standard: 3-9 (exclude 1, 2)
     return getRandomInt(3, 9);
   };
 

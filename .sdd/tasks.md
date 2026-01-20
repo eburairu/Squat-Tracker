@@ -1,7 +1,8 @@
-- [ ] Create unit/integration tests in `tests/boss_battle.test.js` covering logic (load, save, damage, spawn).
-- [ ] Add `BossBattle` class structure and logic to `app.js`.
-- [ ] Add HTML markup for Boss Battle card in `index.html`.
-- [ ] Add styles for Boss Battle card and animations in `styles.css`.
-- [ ] Integrate `BossBattle.damage(1)` calls into `app.js` workflow (timer & sensor).
-- [ ] Verify UI update and animations manually.
-- [ ] Run full test suite.
+- [ ] **UI:** `index.html` にモード切替スイッチと回答選択肢ボタンのHTMLを追加する。
+- [ ] **UI:** `styles.css` に、モード切替スイッチ、回答コンテナ（上下反転）、選択肢ボタンのスタイルを追加する。
+- [ ] **Quiz Logic:** `js/modules/quiz.js` の `generateQuiz` を拡張し、正解と3つの不正解な選択肢を含む配列を返すようにする。
+- [ ] **Core Logic:** `js/app.js` で、クイズのモード（協力/お邪魔）を管理する状態変数を追加する。
+- [ ] **Core Logic:** `js/app.js` で、回答ボタンのクリックイベントを処理し、正解/不正解を判定してUIにフィードバック（色変更）するロジックを実装する。
+- [ ] **Mode Effect:** `js/app.js` と `js/modules/boss-battle.js` を連携させ、協力モードで正解した場合の攻撃力ボーナスを実装する。
+- [ ] **Mode Effect:** `js/app.js` と `js/modules/workout-timer.js` を連携させ、お邪魔モードで不正解だった場合にスクワットカウントをスキップする機能を実装する。
+- [ ] **Testing:** `tests/` に、新しいクイズ生成ロジックと、モード切替による動作の変更を検証するテストを追加・更新する。
