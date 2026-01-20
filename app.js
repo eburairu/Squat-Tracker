@@ -1683,21 +1683,6 @@ const renderHeatmap = () => {
     grid.appendChild(cell);
   });
 
-  const showTooltip = (cell) => {
-    const { date, count } = cell.dataset;
-    if (!date) return;
-
-    grid.appendChild(cell);
-  });
-
-  grid.addEventListener('touchstart', (e) => {
-    if (e.target.classList.contains('heatmap-cell')) {
-      showTooltip(e.target);
-      setTimeout(hideTooltip, 2500);
-    }
-  }, { passive: true });
-
-
   heatmapContainer.appendChild(grid);
 
   const showTooltip = (cell) => {
