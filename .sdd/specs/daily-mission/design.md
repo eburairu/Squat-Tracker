@@ -1,7 +1,7 @@
 # 技術設計書: デイリーミッション機能
 
 ## アーキテクチャ概要
-既存の「Singleton-based Modular Architecture」に従い、`DailyMissionSystem` という新しいシングルトンオブジェクトを `app.js` に追加する。
+既存の「Singleton-based Modular Architecture」に従い、`DailyMissionSystem` という新しいシングルトンオブジェクトを `js/modules/daily-mission.js` に実装し、`app.js` でインポート・初期化する。
 UIコンポーネントは `index.html` に新しいカードを追加し、CSSでスタイリングを行う。
 
 ## 主要コンポーネント
@@ -79,7 +79,8 @@ UIコンポーネントは `index.html` に新しいカードを追加し、CSS�
 
 ## 変更計画
 - **変更ファイル**:
-    - `app.js`: `DailyMissionSystem` の追加、`BossBattle`, `AchievementSystem` 等のイベントフックへの呼び出し追加。
+    - `app.js`: `DailyMissionSystem` のインポートと初期化、`BossBattle`, `AchievementSystem` 等のイベントフックへの呼び出し追加。
     - `index.html`: 新規カード用HTML追加。
     - `styles.css`: ミッションリスト等のスタイル追加。
-- **新規ファイル**: なし（既存ファイルへ追記）
+- **新規ファイル**:
+    - `js/modules/daily-mission.js`: ミッションロジックの実装。
