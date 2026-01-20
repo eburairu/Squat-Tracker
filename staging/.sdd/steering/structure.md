@@ -1,34 +1,19 @@
 # Project Structure
-
-## ルートディレクトリ構成
-
-```
-/
-├── .github/             # GitHub設定
-├── .sdd/                # SDD関連ファイル
-├── tests/               # Playwrightテスト
-├── app.js               # アプリの主要ロジック
-├── index.html           # エントリHTML
-├── styles.css           # スタイルシート
-├── package.json         # npm設定
-├── package-lock.json    # npmロック
-├── playwright.config.js # Playwright設定
-├── README.md            # プロジェクト概要
-└── AGENTS.md            # エージェント指示
-```
-
-## コード構成パターン
-
-HTMLでUIを定義し、CSSで見た目を整え、JavaScriptでタイマー/センサー/演出のロジックを集中管理。
+## ルート構成
+- `app.js`: アプリケーションの全ロジック（モジュール定義、イベントハンドリング）
+- `index.html`: メインUI構造
+- `styles.css`: スタイル定義
+- `tests/`: PlaywrightによるE2Eテスト
+- `.sdd/`: 仕様駆動開発用ドキュメント
+- `.codex/`: エージェントスキル定義
 
 ## ファイル命名規則
-
-- HTML：`index.html`
-- JavaScript：`app.js`
-- CSS：`styles.css`
-- Markdown：`README.md` / `AGENTS.md` / `.sdd/steering/*.md`
+- JS変数・関数: camelCase
+- HTML ID/Class: kebab-case
+- テストファイル: kebab-case (`tests/quiz-logic.spec.js` 等)
 
 ## 主要な設計原則
-
-- クライアントのみで動作する静的構成
-- 単一ファイルにロジックを集約し、操作性と可読性を重視
+- **Singleton Modules**: `BossBattle`, `AchievementSystem` などの主要機能はシングルトンオブジェクトとして実装。
+- **Global Access**: モジュールは `window` オブジェクトに公開し、テストやコンソールからのアクセスを可能にする。
+- **No Build Step**: 複雑なビルドツールを避け、ブラウザで直接実行可能な構成を維持する。
+- **Offline First**: すべてのデータは `localStorage` に保存され、オフラインでも動作可能。
