@@ -4,9 +4,9 @@
 The application uses a **Singleton-based Modular Architecture** implemented via **ES Modules** to ensure separation of concerns and maintainability.
 
 ### Core Modules (Singletons)
+- **`app.js`**: Entry point. Orchestrates the application lifecycle, DOM events, and sensor logic.
 - **`WorkoutTimer`**: Manages the workout state machine (Countdown -> Down -> Hold -> Up -> Rest).
 - **`VoiceCoach`**: Handles text-to-speech synthesis.
-- **`SensorManager`**: Manages DeviceOrientation events for squat detection.
 - **`BossBattle`**: Manages RPG logic (Monster state, HP, Damage).
 - **`RpgSystem`**: Handles core RPG calculations (Level, Attack Power, Damage).
 - **`InventoryManager`**: Manages weapon collection, upgrades, and equipment.
@@ -14,6 +14,7 @@ The application uses a **Singleton-based Modular Architecture** implemented via 
 - **`AchievementSystem`**: Monitors events and awards badges based on history/stats.
 - **`DataManager`**: Handles import/export of `localStorage` data.
 - **`PresetManager`**: Manages CRUD operations for workout settings.
+- **`Quiz`**: Manages quiz generation and display logic.
 - **`Heatmap`**: Renders the GitHub-style activity graph.
 
 ## 2. Data Persistence Model

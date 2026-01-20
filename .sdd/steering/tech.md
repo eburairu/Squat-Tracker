@@ -1,7 +1,7 @@
 # Technology Stack
 ## アーキテクチャ
 - **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3
-- **Design Pattern**: Singleton-based Modular Architecture (app.js内にモジュールを集約)
+- **Design Pattern**: Singleton-based Modular Architecture (ES Modulesによる分割)
 - **State Management**: 各モジュール内での状態管理 + `localStorage` による永続化
 
 ## 使用技術
