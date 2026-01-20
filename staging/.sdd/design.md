@@ -1,7 +1,7 @@
 # Design Specification: Squat-Tracker
 
 ## 1. Architecture Strategy
-The application uses a **Singleton-based Modular Architecture** within a single `app.js` file to maintain simplicity while ensuring separation of concerns.
+The application uses a **Singleton-based Modular Architecture** implemented via **ES Modules** to ensure separation of concerns and maintainability.
 
 ### Core Modules (Singletons)
 - **`WorkoutTimer`**: Manages the workout state machine (Countdown -> Down -> Hold -> Up -> Rest).
