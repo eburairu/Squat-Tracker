@@ -321,6 +321,25 @@
       </div>
     </div>
 
+    <div id="share-card-modal" class="modal" aria-hidden="true">
+      <div class="modal-overlay" tabindex="-1" data-close-share></div>
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
+        <div class="modal-header">
+          <h2 id="share-modal-title">戦績カード</h2>
+          <button class="ghost small close-modal" aria-label="閉じる" data-close-share>✕</button>
+        </div>
+        <div class="modal-body share-card-body">
+          <div class="share-card-preview">
+            <img id="share-card-image" alt="戦績カードプレビュー" />
+          </div>
+          <div class="share-card-actions">
+            <button id="share-card-download" class="primary">画像を保存</button>
+            <p class="share-note">※画像を長押しして保存することもできます</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="js/app.js"></script>
   </body>
 </html>

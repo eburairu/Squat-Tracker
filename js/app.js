@@ -17,6 +17,7 @@ import { DataManager } from './modules/data-manager.js';
 import { PresetManager } from './modules/preset-manager.js';
 import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
+import { ShareCard } from './modules/share-card.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -1146,6 +1147,7 @@ AchievementSystem.init({
     requestAnimationFrame(() => renderHeatmap(historyEntries, heatmapContainer));
   }
 });
+ShareCard.init();
 DataManager.init();
 InventoryManager.init();
 DailyMissionSystem.init();

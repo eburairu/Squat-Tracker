@@ -1124,3 +1124,51 @@ input:checked + .slider:before {
 .mission-status-icon {
   font-size: 1.25rem;
 }
+
+/* Share Card Styles */
+.share-card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.share-card-preview {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background-color: #0f172a; /* Dark background for preview context */
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+#share-card-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.share-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.share-note {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+#create-share-card-btn {
+  width: 100%;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
