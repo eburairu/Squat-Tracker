@@ -1,8 +1,8 @@
-# 仕様駆動開発：タスク分解
+# sdd-tasks
 
 ## Description
 設計書に基づき実装タスクを分解し、タスクリスト（tasks.md）を作成する。
-Trigger examples: "タスク分解", "タスク出し", "実装計画", "break down tasks", "create task list", "タスクリスト作成"
+Trigger examples: "タスク分解", "タスク出し", "実装計画", "break down tasks", "create task list", "タスクリスト作成", "TODO作成"
 
 ## 前提確認とspec特定
 1. `.sdd/target-spec.txt` からspec名を取得し、`.sdd/specs/[spec名]/` の存在を確認する。

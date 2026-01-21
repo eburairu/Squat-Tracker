@@ -2,10 +2,10 @@
 
 ## Description
 変更差分に対する簡易セキュリティ監査を行い、リスクを洗い出す。
-Trigger examples: "脆弱性チェック", "セキュリティ診断", "security audit", "security check", "セキュリティチェック"
+Trigger examples: "脆弱性チェック", "セキュリティ診断", "security audit", "security check", "セキュリティチェック", "リスク評価"
 
 ## 手順
-1. 変更ファイルと影響範囲を列挙する。
+1. `git diff` 等を使用して変更ファイルと影響範囲を列挙する。
 2. 入力値の取り扱い（検証/サニタイズ）を確認する。
    - XSS対策（HTMLエスケープ等）
    - SQL/Command インジェクション対策

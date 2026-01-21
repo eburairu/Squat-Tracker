@@ -2,7 +2,7 @@
 
 ## Description
 要件定義書 (`requirements.md`) を基に、詳細設計書 (`design.md`) やタスクリスト (`tasks.md`) の作成手順を省略し、直接実装と記録を行う高速開発モード。小規模な機能追加、バグ修正、プロトタイピングに適している。
-Trigger examples: "一気に実装", "高速開発", "highway mode", "implement fast", "急ぎで実装", "サクッと修正"
+Trigger examples: "一気に実装", "高速開発", "highway mode", "implement fast", "急ぎで実装", "サクッと修正", "fast track"
 
 ## ステップ1：前提確認
 以下のファイルが揃っていることを確認する：
@@ -13,7 +13,7 @@ Trigger examples: "一気に実装", "高速開発", "highway mode", "implement 
 ## ステップ2：実装実行
 要件定義書とステアリング情報を基に、以下の手順を一気に実行する。
 
-1. **設計**: メモリ上で簡易設計を行う（必要に応じてメモを残すが、`design.md` は必須ではない）。
+1. **設計**: 思考プロセス内（Thinking Process）で簡易設計を行う（必要に応じてメモを残すが、`design.md` は必須ではない）。
 2. **実装**: テスト先行開発（TDD）で実装を行う。
    - 既存コードの変更、新規ファイルの作成。
    - `npm test` による検証。
