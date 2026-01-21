@@ -976,14 +976,16 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
           sessionAttackBonus += 1;
           showToast({ emoji: '⚔️', title: 'Bonus', message: `攻撃ボーナス +1 (現在: ${sessionAttackBonus})` });
         } else {
-          showToast({ emoji: '⭕', title: '正解！', message: 'Nice!' });
+          // Disruptive Mode: Correct answer means successful block
+          showToast({ emoji: '🛡️', title: 'ブロック成功！', message: 'プレイヤーの進行を阻止しました！' });
         }
       } else {
         if (userSelectedOption === null) {
           showToast({ emoji: '❌', title: '不正解！', message: '回答が選択されませんでした。' });
         } else {
           if (quizMode === 'disruptive') {
-            showToast({ emoji: '❌', title: '不正解！', message: '次のスクワットはカウントされません！' });
+            // Disruptive Mode: Incorrect answer means failed block
+            showToast({ emoji: '😅', title: 'ブロック失敗...', message: '進行を許してしまいました。' });
           } else {
             showToast({ emoji: '❌', title: '不正解！', message: '残念！' });
           }
@@ -1171,4 +1173,18 @@ if (typeof window !== 'undefined') {
   window.showToast = showToast;
   window.VoiceCoach = VoiceCoach;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
+
+  // Expose internal state for testing
+  Object.defineProperty(window, 'currentQuiz', {
+    get: () => currentQuiz,
+    configurable: true
+  });
+  Object.defineProperty(window, 'sessionAttackBonus', {
+    get: () => sessionAttackBonus,
+    configurable: true
+  });
+  Object.defineProperty(window, 'userBaseAp', {
+    get: () => userBaseAp,
+    configurable: true
+  });
 }
