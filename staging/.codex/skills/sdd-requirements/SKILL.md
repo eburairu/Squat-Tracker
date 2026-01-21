@@ -1,8 +1,8 @@
-# 仕様駆動開発：要件定義
+# sdd-requirements
 
 ## Description
 実装したい機能の要件と受け入れ基準を定義し、要件定義書（requirements.md）を作成する。
-Trigger examples: "要件定義", "要件定義書作成", "仕様作りたい", "define requirements", "create spec"
+Trigger examples: "要件定義", "要件定義書作成", "仕様作りたい", "define requirements", "create spec", "仕様策定"
 
 ## ステップ1：前提確認
 1. `.sdd/description.md` (機能説明) が存在することを確認する。
