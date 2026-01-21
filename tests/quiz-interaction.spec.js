@@ -13,7 +13,7 @@ test.describe('Quiz Interaction', () => {
       ['#down-duration', '1'],
       ['#hold-duration', '1'],
       ['#up-duration', '1'],
-      ['#rest-duration', '1'],
+      ['#rest-duration', '10'],
       ['#countdown-duration', '1']
     ]) {
       await page.locator(selector).fill(value);
@@ -30,7 +30,8 @@ test.describe('Quiz Interaction', () => {
     const correctAnswer = await page.evaluate(() => window.currentQuiz.correctAnswer);
     await page.click(`.quiz-option:text-is("${correctAnswer}")`);
 
-    // 3. Verify bonus was applied
+    // 3. Verify bonus was applied (delayed until Phase.UP)
+    await expect(page.locator('#phase-display')).toHaveText('立つ', { timeout: 10000 });
     const bonus = await page.evaluate(() => window.sessionAttackBonus);
     expect(bonus).toBe(1);
 
