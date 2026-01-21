@@ -1,8 +1,8 @@
-# 仕様駆動開発：アーカイブ
+# sdd-archive
 
 ## Description
 完了した仕様（spec）をアーカイブし、開発サイクルをクローズする。
-Trigger examples: "開発完了", "タスク完了", "クローズ", "archive spec", "close feature"
+Trigger examples: "開発完了", "タスク完了", "クローズ", "archive spec", "close feature", "specアーカイブ"
 
 ## ステップ1：対象specの確認
 1. `.sdd/target-spec.txt` からspec名を取得する。

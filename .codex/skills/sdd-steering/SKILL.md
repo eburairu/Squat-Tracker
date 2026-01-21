@@ -1,11 +1,11 @@
-# 仕様駆動開発：ステアリング（プロジェクト理解）
+# sdd-steering
 
 ## Description
 プロジェクトの全体像を把握し、SDDプロセスのための基本ドキュメント（Product, Tech, Structure）を生成・更新する。
-Trigger examples: "プロジェクト分析", "ステアリング作成", "プロジェクト初期化", "init sdd", "analyze project", "プロジェクト把握"
+Trigger examples: "プロジェクト分析", "ステアリング作成", "プロジェクト初期化", "init sdd", "analyze project", "プロジェクト把握", "start sdd"
 
 ## ステップ0：ステアリング情報の確認と読み込み
-以下のステアリングドキュメントを読み込んでください：
+以下のステアリングドキュメントを `read_file` で読み込んでください：
 1. `.sdd/steering/product.md`
 2. `.sdd/steering/tech.md`
 3. `.sdd/steering/structure.md`
@@ -13,7 +13,7 @@ Trigger examples: "プロジェクト分析", "ステアリング作成", "プ�
 ※これらが存在しない場合は「新規作成モード」として、ステップ1の分析結果を基に新規作成します。
 
 ## ステップ1：プロジェクト分析
-以下の情報を収集してください：
+以下の情報を収集してください（`read_file`, `list_files` 等を使用）：
 
 ### 設定ファイル読み込み
 - `package.json`, `requirements.txt`, `Cargo.toml`, `go.mod` 等

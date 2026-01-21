@@ -2,7 +2,7 @@
 
 ## Description
 作成済みのタスクリスト (`tasks.md`) に従い、厳格なテスト駆動開発 (TDD) サイクルを回して実装を進める標準モード。確実性と品質を重視する場合に使用する。
-Trigger examples: "実装開始", "コード書いて", "implement feature", "start coding", "タスク消化", "TDD実行"
+Trigger examples: "実装開始", "コード書いて", "implement feature", "start coding", "タスク消化", "TDD実行", "開発開始"
 
 ## ステップ1：前提確認とspec特定
 1. `.sdd/target-spec.txt` からspec名を取得し、ディレクトリの存在を確認する。
