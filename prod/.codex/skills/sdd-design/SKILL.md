@@ -1,8 +1,8 @@
-# 仕様駆動開発：設計
+# sdd-design
 
 ## Description
 要件に基づき実装方針や技術設計を固め、設計書（design.md）を作成する。
-Trigger examples: "設計して", "設計書作成", "アーキテクチャ設計", "design system", "create design doc"
+Trigger examples: "設計して", "設計書作成", "アーキテクチャ設計", "design system", "create design doc", "技術設計"
 
 ## 前提確認とspec特定
 1. `.sdd/target-spec.txt` からspec名を取得し、`.sdd/specs/[spec名]/` の存在を確認する。

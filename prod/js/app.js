@@ -78,6 +78,7 @@ let quizMode = 'cooperative'; // 'cooperative' or 'disruptive'
 let sessionAttackBonus = 0;
 let isQuizAnswered = false;
 let isCurrentQuizCorrect = null;
+let userSelectedOption = null;
 let currentQuiz = null;
 let totalSets = 3;
 let repsPerSet = 10;
@@ -381,7 +382,7 @@ const nextRepOrSet = () => {
   // Disruptive mode penalty: if answered incorrectly, repeat the rep
   if (quizMode === 'disruptive' && isCurrentQuizCorrect === false) {
     isCurrentQuizCorrect = null; // Reset for the next attempt
-    showToast('ペナルティ！', '同じ回をやり直します。');
+    showToast({ emoji: '⚠️', title: 'ペナルティ！', message: '同じ回をやり直します。' });
     startPhaseCycle();
     return;
   }
@@ -924,23 +925,22 @@ const disableSensor = () => {
 // --- Quiz Logic ---
 
 const updateQuizAndTimerDisplay = (phaseKey) => {
-  // Hide answer and options by default
-  quizAnswer.textContent = '答え: --';
-  quizOptionsContainer.style.display = 'none';
-  quizOptionButtons.forEach(btn => {
-    btn.disabled = false;
-    btn.classList.remove('correct', 'incorrect');
-  });
+  // Common reset for non-active phases if needed, but we handle specific phases below.
 
   if (phaseKey === Phase.DOWN) {
+    // New Quiz Phase
     currentQuiz = generateQuiz();
     isQuizAnswered = false;
     isCurrentQuizCorrect = null;
+    userSelectedOption = null;
 
     quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
-    quizOptionsContainer.style.display = 'flex'; // Show options container
+
+    // Enable buttons and show options
     quizOptionButtons.forEach((btn, index) => {
       btn.textContent = currentQuiz.options[index];
+      btn.disabled = false;
+      btn.classList.remove('correct', 'incorrect', 'selected');
     });
 
     if (currentQuiz.isCritical) {
@@ -950,50 +950,70 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
     }
   } else if (phaseKey === Phase.HOLD) {
     // Keep showing the problem and options
-    if (currentQuiz) {
-      quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
-      quizOptionsContainer.style.display = 'flex';
-    }
+    // Nothing to change, maintain state
   } else if (phaseKey === Phase.UP) {
-    // Show the answer, hide options
+    // Answer Reveal Phase
     if (currentQuiz) {
       quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
       quizAnswer.textContent = `答え: ${currentQuiz.correctAnswer}`;
+
+      // Grading Logic
+      const isCorrect = userSelectedOption !== null && Number(userSelectedOption) === currentQuiz.correctAnswer;
+      isCurrentQuizCorrect = isCorrect;
+
+      quizOptionButtons.forEach(btn => {
+        const val = Number(btn.textContent);
+        if (val === currentQuiz.correctAnswer) {
+          btn.classList.add('correct');
+        } else if (btn.classList.contains('selected')) {
+          btn.classList.add('incorrect');
+        }
+        btn.disabled = true;
+      });
+
+      if (isCorrect) {
+        if (quizMode === 'cooperative') {
+          sessionAttackBonus += 1;
+          showToast({ emoji: '⚔️', title: 'Bonus', message: `攻撃ボーナス +1 (現在: ${sessionAttackBonus})` });
+        } else {
+          showToast({ emoji: '⭕', title: '正解！', message: 'Nice!' });
+        }
+      } else {
+        if (userSelectedOption === null) {
+          showToast({ emoji: '❌', title: '不正解！', message: '回答が選択されませんでした。' });
+        } else {
+          if (quizMode === 'disruptive') {
+            showToast({ emoji: '❌', title: '不正解！', message: '次のスクワットはカウントされません！' });
+          } else {
+            showToast({ emoji: '❌', title: '不正解！', message: '残念！' });
+          }
+        }
+      }
     }
-    quizOptionsContainer.style.display = 'none';
   } else {
-    // Idle or Finished
-    quizProblem.textContent = '問題: --';
+    // Idle, Rest, Finished
     quizAnswer.textContent = '答え: --';
+    quizProblem.textContent = '問題: --';
     quizProblem.classList.remove('critical-quiz');
-    quizOptionsContainer.style.display = 'none';
+
+    // Show disabled placeholder buttons
+    quizOptionButtons.forEach(btn => {
+      btn.textContent = '--';
+      btn.disabled = true;
+      btn.classList.remove('correct', 'incorrect', 'selected');
+    });
   }
+  // Ensure container is always visible (controlled by CSS)
+  quizOptionsContainer.style.display = '';
 };
 
 const handleQuizAnswer = (selectedOption, button) => {
-  if (isQuizAnswered || !currentQuiz) return;
+  if (!currentQuiz) return;
 
-  isQuizAnswered = true;
-  const isCorrect = Number(selectedOption) === currentQuiz.correctAnswer;
-  isCurrentQuizCorrect = isCorrect;
+  userSelectedOption = selectedOption;
 
-  button.classList.add(isCorrect ? 'correct' : 'incorrect');
-  quizOptionButtons.forEach(btn => btn.disabled = true);
-
-  if (isCorrect) {
-    if (quizMode === 'cooperative') {
-      sessionAttackBonus += 1;
-      showToast('+', `攻撃ボーナス +1 (現在: ${sessionAttackBonus})`);
-    } else { // disruptive mode
-      showToast('正解！', 'Nice!');
-    }
-  } else { // Incorrect
-    if (quizMode === 'disruptive') {
-      showToast('不正解！', '次のスクワットはカウントされません！');
-    } else { // cooperative mode
-      showToast('不正解！', '残念！');
-    }
-  }
+  quizOptionButtons.forEach(btn => btn.classList.remove('selected'));
+  button.classList.add('selected');
 };
 
 
@@ -1134,6 +1154,7 @@ if (document.readyState === 'loading') {
   BossBattle.init();
 }
 
+updateQuizAndTimerDisplay(Phase.IDLE);
 updateDisplays();
 updateActionButtonStates();
 
