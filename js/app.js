@@ -78,6 +78,7 @@ let quizMode = 'cooperative'; // 'cooperative' or 'disruptive'
 let sessionAttackBonus = 0;
 let isQuizAnswered = false;
 let isCurrentQuizCorrect = null;
+let userSelectedOption = null;
 let currentQuiz = null;
 let totalSets = 3;
 let repsPerSet = 10;
@@ -381,7 +382,7 @@ const nextRepOrSet = () => {
   // Disruptive mode penalty: if answered incorrectly, repeat the rep
   if (quizMode === 'disruptive' && isCurrentQuizCorrect === false) {
     isCurrentQuizCorrect = null; // Reset for the next attempt
-    showToast('ペナルティ！', '同じ回をやり直します。');
+    showToast({ emoji: '⚠️', title: 'ペナルティ！', message: '同じ回をやり直します。' });
     startPhaseCycle();
     return;
   }
@@ -931,6 +932,7 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
     currentQuiz = generateQuiz();
     isQuizAnswered = false;
     isCurrentQuizCorrect = null;
+    userSelectedOption = null;
 
     quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
 
@@ -938,7 +940,7 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
     quizOptionButtons.forEach((btn, index) => {
       btn.textContent = currentQuiz.options[index];
       btn.disabled = false;
-      btn.classList.remove('correct', 'incorrect');
+      btn.classList.remove('correct', 'incorrect', 'selected');
     });
 
     if (currentQuiz.isCritical) {
@@ -954,11 +956,40 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
     if (currentQuiz) {
       quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
       quizAnswer.textContent = `答え: ${currentQuiz.correctAnswer}`;
+
+      // Grading Logic
+      const isCorrect = userSelectedOption !== null && Number(userSelectedOption) === currentQuiz.correctAnswer;
+      isCurrentQuizCorrect = isCorrect;
+
+      quizOptionButtons.forEach(btn => {
+        const val = Number(btn.textContent);
+        if (val === currentQuiz.correctAnswer) {
+          btn.classList.add('correct');
+        } else if (btn.classList.contains('selected')) {
+          btn.classList.add('incorrect');
+        }
+        btn.disabled = true;
+      });
+
+      if (isCorrect) {
+        if (quizMode === 'cooperative') {
+          sessionAttackBonus += 1;
+          showToast({ emoji: '⚔️', title: 'Bonus', message: `攻撃ボーナス +1 (現在: ${sessionAttackBonus})` });
+        } else {
+          showToast({ emoji: '⭕', title: '正解！', message: 'Nice!' });
+        }
+      } else {
+        if (userSelectedOption === null) {
+          showToast({ emoji: '❌', title: '不正解！', message: '回答が選択されませんでした。' });
+        } else {
+          if (quizMode === 'disruptive') {
+            showToast({ emoji: '❌', title: '不正解！', message: '次のスクワットはカウントされません！' });
+          } else {
+            showToast({ emoji: '❌', title: '不正解！', message: '残念！' });
+          }
+        }
+      }
     }
-    // Disable buttons but keep their state (color/text) visible
-    quizOptionButtons.forEach(btn => {
-      btn.disabled = true;
-    });
   } else {
     // Idle, Rest, Finished
     quizAnswer.textContent = '答え: --';
@@ -969,7 +1000,7 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
     quizOptionButtons.forEach(btn => {
       btn.textContent = '--';
       btn.disabled = true;
-      btn.classList.remove('correct', 'incorrect');
+      btn.classList.remove('correct', 'incorrect', 'selected');
     });
   }
   // Ensure container is always visible (controlled by CSS)
@@ -977,39 +1008,12 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
 };
 
 const handleQuizAnswer = (selectedOption, button) => {
-  if (isQuizAnswered || !currentQuiz) return;
+  if (!currentQuiz) return;
 
-  isQuizAnswered = true;
-  const isCorrect = Number(selectedOption) === currentQuiz.correctAnswer;
-  isCurrentQuizCorrect = isCorrect;
+  userSelectedOption = selectedOption;
 
-  button.classList.add(isCorrect ? 'correct' : 'incorrect');
-
-  // If incorrect, also highlight the correct answer in green
-  if (!isCorrect) {
-    quizOptionButtons.forEach(btn => {
-      if (Number(btn.textContent) === currentQuiz.correctAnswer) {
-        btn.classList.add('correct');
-      }
-    });
-  }
-
-  quizOptionButtons.forEach(btn => btn.disabled = true);
-
-  if (isCorrect) {
-    if (quizMode === 'cooperative') {
-      sessionAttackBonus += 1;
-      showToast('+', `攻撃ボーナス +1 (現在: ${sessionAttackBonus})`);
-    } else { // disruptive mode
-      showToast('正解！', 'Nice!');
-    }
-  } else { // Incorrect
-    if (quizMode === 'disruptive') {
-      showToast('不正解！', '次のスクワットはカウントされません！');
-    } else { // cooperative mode
-      showToast('不正解！', '残念！');
-    }
-  }
+  quizOptionButtons.forEach(btn => btn.classList.remove('selected'));
+  button.classList.add('selected');
 };
 
 

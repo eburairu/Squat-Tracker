@@ -313,6 +313,12 @@ h2 {
   border-color: var(--accent-color);
 }
 
+.quiz-option.selected {
+  border-color: var(--accent-color);
+  background-color: rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px var(--accent-color);
+}
+
 .quiz-option.correct {
   background-color: var(--success-color);
   color: white;
