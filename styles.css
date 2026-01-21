@@ -288,8 +288,8 @@ h2 {
 }
 
 .quiz-options-container {
-  display: flex;
-  flex-direction: column-reverse; /* 上下反転 */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
   margin: 0.5rem 0;
   width: 100%;
@@ -311,6 +311,12 @@ h2 {
 .quiz-option:not(:disabled):hover {
   background-color: var(--bg-color);
   border-color: var(--accent-color);
+}
+
+.quiz-option.selected {
+  border-color: var(--accent-color);
+  background-color: rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px var(--accent-color);
 }
 
 .quiz-option.correct {
