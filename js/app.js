@@ -924,23 +924,21 @@ const disableSensor = () => {
 // --- Quiz Logic ---
 
 const updateQuizAndTimerDisplay = (phaseKey) => {
-  // Hide answer and options by default
-  quizAnswer.textContent = '答え: --';
-  quizOptionsContainer.style.display = 'none';
-  quizOptionButtons.forEach(btn => {
-    btn.disabled = false;
-    btn.classList.remove('correct', 'incorrect');
-  });
+  // Common reset for non-active phases if needed, but we handle specific phases below.
 
   if (phaseKey === Phase.DOWN) {
+    // New Quiz Phase
     currentQuiz = generateQuiz();
     isQuizAnswered = false;
     isCurrentQuizCorrect = null;
 
     quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
-    quizOptionsContainer.style.display = 'flex'; // Show options container
+
+    // Enable buttons and show options
     quizOptionButtons.forEach((btn, index) => {
       btn.textContent = currentQuiz.options[index];
+      btn.disabled = false;
+      btn.classList.remove('correct', 'incorrect');
     });
 
     if (currentQuiz.isCritical) {
@@ -950,24 +948,32 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
     }
   } else if (phaseKey === Phase.HOLD) {
     // Keep showing the problem and options
-    if (currentQuiz) {
-      quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
-      quizOptionsContainer.style.display = 'flex';
-    }
+    // Nothing to change, maintain state
   } else if (phaseKey === Phase.UP) {
-    // Show the answer, hide options
+    // Answer Reveal Phase
     if (currentQuiz) {
       quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
       quizAnswer.textContent = `答え: ${currentQuiz.correctAnswer}`;
     }
-    quizOptionsContainer.style.display = 'none';
+    // Disable buttons but keep their state (color/text) visible
+    quizOptionButtons.forEach(btn => {
+      btn.disabled = true;
+    });
   } else {
-    // Idle or Finished
-    quizProblem.textContent = '問題: --';
+    // Idle, Rest, Finished
     quizAnswer.textContent = '答え: --';
+    quizProblem.textContent = '問題: --';
     quizProblem.classList.remove('critical-quiz');
-    quizOptionsContainer.style.display = 'none';
+
+    // Show disabled placeholder buttons
+    quizOptionButtons.forEach(btn => {
+      btn.textContent = '--';
+      btn.disabled = true;
+      btn.classList.remove('correct', 'incorrect');
+    });
   }
+  // Ensure container is always visible (controlled by CSS)
+  quizOptionsContainer.style.display = '';
 };
 
 const handleQuizAnswer = (selectedOption, button) => {
@@ -978,6 +984,16 @@ const handleQuizAnswer = (selectedOption, button) => {
   isCurrentQuizCorrect = isCorrect;
 
   button.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+  // If incorrect, also highlight the correct answer in green
+  if (!isCorrect) {
+    quizOptionButtons.forEach(btn => {
+      if (Number(btn.textContent) === currentQuiz.correctAnswer) {
+        btn.classList.add('correct');
+      }
+    });
+  }
+
   quizOptionButtons.forEach(btn => btn.disabled = true);
 
   if (isCorrect) {
@@ -1134,6 +1150,7 @@ if (document.readyState === 'loading') {
   BossBattle.init();
 }
 
+updateQuizAndTimerDisplay(Phase.IDLE);
 updateDisplays();
 updateActionButtonStates();
 
