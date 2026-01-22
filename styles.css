@@ -1215,3 +1215,22 @@ input:checked + .slider:before {
   z-index: 2;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
 }
+
+/* Quiz Stats */
+.quiz-stats {
+  background-color: var(--bg-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.quiz-stats .label {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  margin-right: 0.25rem;
+}
+
+#quiz-stats-display {
+  font-weight: 700;
+  color: var(--text-primary);
+}
