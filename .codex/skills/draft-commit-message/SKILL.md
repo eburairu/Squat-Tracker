@@ -2,25 +2,24 @@
 
 ## Description
 ステージングされた変更内容から Conventional Commits に準拠したコミットメッセージ案を生成する。
-Trigger examples: "コミットメッセージ作って", "コミット作成", "commit changes", "commit message draft", "コミット案", "generate commit message"
+Trigger examples: "コミット案作成", "コミットメッセージ作って", "コミットログ生成", "draft commit", "commit message"
 
 ## 手順
 1. `git diff --staged` を実行して変更内容を取得する。
-   - 出力がない場合はユーザーに「ステージングされた変更がありません」と伝えて終了する。
+   - 出力が空の場合: ユーザーに「ステージングされた変更がありません。`git add` してから再実行してください」と伝えて終了する。
 2. 変更の性質から type（feat/fix/docs/chore/refactor/test/build/ci/perf/style）を選ぶ。
-3. scope（任意、1〜2語）を決める。
-4. 本文で背景・理由・影響範囲を簡潔に記述する。
-   - 言語はデフォルトで日本語を使用する（ユーザーから英語指定があった場合のみ英語）。
-5. 破壊的変更の有無を確認し、必要なら `!` と BREAKING CHANGE を付与する。
+3. scope（任意、1〜2語）を決める（例: `ui`, `auth`, `api`）。
+4. 本文で「なぜ変更したか」「何が変わったか」を箇条書きで記述する。
+   - デフォルトで日本語を使用する。
+5. 破壊的変更がある場合は `BREAKING CHANGE: ...` をフッターに追加する。
 
 ## 出力フォーマット
 ```text
 draft:
   title: <type>(<scope>): <summary>
   body: |-
-      <detail line 1>
-      <detail line 2>
-      <detail line 3>
+      - <変更点1: 何をどうしたか>
+      - <変更点2: 理由や背景>
 ```
 
 ### コマンド例

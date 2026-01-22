@@ -2,7 +2,7 @@
 
 ## Description
 Vercel Web Interface Guidelines に準拠しているか UI コードをレビューする。
-Trigger examples: "デザインチェックして", "ガイドライン確認", "UIレビュー", "web design check"
+Trigger examples: "デザインチェック", "UIレビュー", "アクセシビリティ確認", "guideline check", "UI check"
 
 ## 手順
 指定されたファイル（またはファイルパターン）を読み込み、以下のルールと照らし合わせる。

@@ -1,41 +1,37 @@
 # sdd-highway
 
 ## Description
-要件定義書 (`requirements.md`) を基に、詳細設計書 (`design.md`) やタスクリスト (`tasks.md`) の作成手順を省略し、直接実装と記録を行う高速開発モード。小規模な機能追加、バグ修正、プロトタイピングに適している。
-Trigger examples: "一気に実装", "高速開発", "highway mode", "implement fast", "急ぎで実装", "サクッと修正", "fast track"
+要件定義書 (`requirements.md`) を基に、設計書やタスクリストの作成を省略し、直接実装と記録を行う高速開発モード。
+**注意**: 小規模な改修やプロトタイピングに限定して使用すること。
+Trigger examples: "高速実装", "一気に実装", "highway mode", "implement fast", "直実装"
 
 ## ステップ1：前提確認
-以下のファイルが揃っていることを確認する：
-1. `.sdd/steering/` 配下のドキュメント（product.md, tech.md, structure.md）
-2. `.sdd/target-spec.txt` （ターゲット指定済）
-3. `.sdd/specs/[spec名]/requirements.md` （要件定義済）
+1. `.sdd/target-spec.txt` から対象specを確認する。
+2. `.sdd/specs/[spec名]/requirements.md` が存在することを確認する。
+3. `.sdd/steering/` 配下の情報を読み込む。
 
-## ステップ2：実装実行
-要件定義書とステアリング情報を基に、以下の手順を一気に実行する。
+## ステップ2：実装サイクル (Thinking & Coding)
+設計書を作成しない代わりに、以下のプロセスで実装する。
+1. **思考内設計**: 実装方針を決定する。
+2. **TDD実行**: テストを作成し、実装を行う (`npm test` で検証)。
+3. **リファクタリング**: コード品質を確保する。
 
-1. **設計**: 思考プロセス内（Thinking Process）で簡易設計を行う（必要に応じてメモを残すが、`design.md` は必須ではない）。
-2. **実装**: テスト先行開発（TDD）で実装を行う。
-   - 既存コードの変更、新規ファイルの作成。
-   - `npm test` による検証。
+## ステップ3：実装サマリの記録
+`.sdd/specs/[spec名]/highway-summary.md` を作成・更新する：
 
-## ステップ3：記録 (Summary)
-実装内容のサマリを `.sdd/specs/[spec名]/highway-summary.md` に記録する。
-
-### 出力フォーマット
 ```markdown
-# Highway 実装サマリ
+# Highway Implementation Summary
 
-## 設計方針
-- <簡易設計メモ>
+## 実装方針
+<採用したアプローチ>
 
-## 実装内容
-- <変更点1>
-- <変更点2>
+## 変更内容
+- <ファイル/機能の変更点>
 
 ## テスト結果
-- <実施したテストコマンドと結果>
+- <実行したテストと結果>
 ```
 
 ## 完了報告
-「Highway実装完了。詳細は highway-summary.md を参照してください。
-問題がなければ `/sdd-archive` でクローズしてください。」
+「Highwayモードでの実装が完了しました。
+`highway-summary.md` を確認し、問題なければ `/sdd-archive` でクローズしてください。」
