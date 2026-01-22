@@ -62,6 +62,9 @@ All data is persisted in `localStorage` with the prefix `squat-tracker-`.
 - **Flow**: Problem displayed during DOWN/HOLD, Answer during UP.
 - **Logic**: 4 operations (+, -, ×, ÷). Operands scaled (3-9 normally, chance for 2-digits).
 - **Criticals**: Randomly flagged "Critical Quiz" guarantees a critical hit for that rep.
+- **Modes**:
+  - **Cooperative**: Correct answers grant temporary Attack Bonus for the session.
+  - **Disruptive**: Incorrect answers invalidate the current rep (no progress), forcing a retry.
 
 ### Achievement System
 - **Trigger**: Checked at `finishWorkout`, `BossBattle.damage` (for kills), and initialization.
