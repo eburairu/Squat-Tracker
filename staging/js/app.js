@@ -31,6 +31,7 @@ const quizModeToggle = document.getElementById('quiz-mode-toggle');
 const quizModeLabel = document.getElementById('quiz-mode-label');
 const quizOptionsContainer = document.getElementById('quiz-options-container');
 const quizOptionButtons = document.querySelectorAll('.quiz-option');
+const quizStatsDisplay = document.getElementById('quiz-stats-display');
 const progressBar = document.getElementById('progress-bar');
 const statsTotalReps = document.getElementById('stats-total-reps');
 const statsTotalWorkouts = document.getElementById('stats-total-workouts');
@@ -81,6 +82,8 @@ let isQuizAnswered = false;
 let isCurrentQuizCorrect = null;
 let userSelectedOption = null;
 let currentQuiz = null;
+let quizSessionCorrect = 0;
+let quizSessionTotal = 0;
 let totalSets = 3;
 let repsPerSet = 10;
 let currentSet = 1;
@@ -313,6 +316,12 @@ const updateSessionStats = () => {
   statsSessionTarget.textContent = getSessionTargetReps().toLocaleString('ja-JP');
 };
 
+const updateQuizStats = () => {
+  if (quizStatsDisplay) {
+    quizStatsDisplay.textContent = `${quizSessionCorrect} / ${quizSessionTotal}`;
+  }
+};
+
 const updateActionButtonStates = () => {
   if (!startButton || !pauseButton) {
     return;
@@ -350,8 +359,7 @@ const performAttack = () => {
   const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical);
   BossBattle.damage(damage.amount, damage.isCritical);
 
-  // Reset session bonus after attack
-  sessionAttackBonus = 0;
+  // Note: sessionAttackBonus is now cumulative and NOT reset here.
 };
 
 const setPhase = (phaseKey, durationSeconds, hint) => {
@@ -380,8 +388,8 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
 };
 
 const nextRepOrSet = () => {
-  // Disruptive mode penalty: if answered incorrectly, repeat the rep
-  if (quizMode === 'disruptive' && isCurrentQuizCorrect === false) {
+  // Disruptive mode penalty: if answered CORRECTLY, repeat the rep (Block progress)
+  if (quizMode === 'disruptive' && isCurrentQuizCorrect === true) {
     isCurrentQuizCorrect = null; // Reset for the next attempt
     showToast({ emoji: '⚠️', title: 'ペナルティ！', message: '同じ回をやり直します。' });
     startPhaseCycle();
@@ -582,6 +590,13 @@ const startWorkout = () => {
   isPaused = false;
   workoutStarted = true;
   workoutSaved = false;
+
+  // Reset Session Stats
+  sessionAttackBonus = 0;
+  quizSessionCorrect = 0;
+  quizSessionTotal = 0;
+  updateQuizStats();
+
   startButton.disabled = true;
   startButton.textContent = '進行中';
   updateActionButtonStates();
@@ -618,6 +633,10 @@ const resetWorkout = () => {
   currentPhase = Phase.IDLE;
   updateQuizAndTimerDisplay(Phase.IDLE);
   sessionAttackBonus = 0; // リセット時にボーナスもクリア
+  quizSessionCorrect = 0;
+  quizSessionTotal = 0;
+  updateQuizStats();
+
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
@@ -750,11 +769,6 @@ const initializePresets = () => {
     presetSelect,
     savePresetButton,
     deletePresetButton,
-    // Note: PresetManager logic listens to presetSelect change and updates DOM directly
-    // OR we should listen here?
-    // In original code, there was a listener in initializePresets.
-    // Let's attach listeners here or delegate to PresetManager completely.
-    // The original code passed values to inputs.
   });
 
   // Re-attach listeners for inputs filling
@@ -805,7 +819,7 @@ const initializePresets = () => {
       const name = presetSelect.value;
       if (!name) return;
       if (confirm(`プリセット「${name}」を削除しますか？`)) {
-        PresetManager.deletePreset(name);
+        PresetManager.deletePreset(name, settings);
       }
     });
   }
@@ -931,11 +945,15 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
   if (phaseKey === Phase.DOWN) {
     // New Quiz Phase
     currentQuiz = generateQuiz();
+    quizSessionTotal++;
+    updateQuizStats();
+
     isQuizAnswered = false;
     isCurrentQuizCorrect = null;
     userSelectedOption = null;
 
     quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
+    quizAnswer.textContent = '答え: --';
 
     // Enable buttons and show options
     quizOptionButtons.forEach((btn, index) => {
@@ -962,6 +980,9 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
       const isCorrect = userSelectedOption !== null && Number(userSelectedOption) === currentQuiz.correctAnswer;
       isCurrentQuizCorrect = isCorrect;
 
+      if (isCorrect) quizSessionCorrect++;
+      updateQuizStats();
+
       quizOptionButtons.forEach(btn => {
         const val = Number(btn.textContent);
         if (val === currentQuiz.correctAnswer) {
@@ -975,7 +996,7 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
       if (isCorrect) {
         if (quizMode === 'cooperative') {
           sessionAttackBonus += 1;
-          showToast({ emoji: '⚔️', title: 'Bonus', message: `攻撃ボーナス +1 (現在: ${sessionAttackBonus})` });
+          showToast({ emoji: '⚔️', title: 'Bonus!', message: '攻撃力UP!' });
         } else {
           // Disruptive Mode: Correct answer means successful block
           showToast({ emoji: '🛡️', title: 'ブロック成功！', message: 'プレイヤーの進行を阻止しました！' });
@@ -1191,6 +1212,14 @@ if (typeof window !== 'undefined') {
   });
   Object.defineProperty(window, 'userBaseAp', {
     get: () => userBaseAp,
+    configurable: true
+  });
+  Object.defineProperty(window, 'quizSessionCorrect', {
+    get: () => quizSessionCorrect,
+    configurable: true
+  });
+  Object.defineProperty(window, 'quizSessionTotal', {
+    get: () => quizSessionTotal,
     configurable: true
   });
 }
