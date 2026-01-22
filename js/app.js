@@ -15,6 +15,7 @@ import { DailyMissionSystem } from './modules/daily-mission.js';
 import { AchievementSystem } from './modules/achievement-system.js';
 import { DataManager } from './modules/data-manager.js';
 import { PresetManager } from './modules/preset-manager.js';
+import { AdventureSystem } from './modules/adventure-system.js';
 import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
 
@@ -1151,9 +1152,13 @@ InventoryManager.init();
 DailyMissionSystem.init();
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => BossBattle.init());
+  document.addEventListener('DOMContentLoaded', () => {
+    BossBattle.init();
+    AdventureSystem.init();
+  });
 } else {
   BossBattle.init();
+  AdventureSystem.init();
 }
 
 updateQuizAndTimerDisplay(Phase.IDLE);
@@ -1167,6 +1172,7 @@ if (typeof window !== 'undefined') {
   window.InventoryManager = InventoryManager;
   window.DailyMissionSystem = DailyMissionSystem;
   window.AchievementSystem = AchievementSystem;
+  window.AdventureSystem = AdventureSystem;
   window.RpgSystem = RpgSystem;
   window.generateQuiz = generateQuiz;
   window.finishWorkout = finishWorkout;

@@ -1,6 +1,7 @@
 import { MONSTERS, RARITY_SETTINGS, BASE_WEAPONS } from '../constants.js';
 import { WEAPONS } from '../data/weapons.js';
 import { InventoryManager } from './inventory-manager.js';
+import { AdventureSystem } from './adventure-system.js';
 import { showToast, getRandomInt } from '../utils.js';
 
 export const BossBattle = {
@@ -176,6 +177,17 @@ export const BossBattle = {
   handleDefeat() {
     if (this.isRespawning) return;
     this.isRespawning = true;
+
+    // Adventure Mode Integration
+    const advResult = AdventureSystem.advance();
+    if (advResult.areaCleared) {
+      showToast({
+        emoji: '🎉',
+        title: 'エリアクリア！',
+        message: `次のエリア: ${advResult.currentArea.name} へ進みます！`,
+        sound: true
+      });
+    }
 
     this.state.totalKills += 1;
     this.state.monsterIndex += 1;
