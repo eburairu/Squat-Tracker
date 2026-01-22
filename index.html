@@ -65,6 +65,29 @@
           </div>
         </div>
 
+        <div class="card quiz-card reveal delay-2" id="quiz-card">
+          <div class="card-head">
+            <div>
+              <p class="card-eyebrow">Brain Training</p>
+              <h2>計算問題</h2>
+            </div>
+            <div class="quiz-stats">
+              <span class="label">正解数</span>
+              <span id="quiz-stats-display">0 / 0</span>
+            </div>
+          </div>
+          <div class="quiz-area" aria-live="polite">
+            <div id="quiz-problem" class="quiz-problem">問題: --</div>
+            <div id="quiz-options-container" class="quiz-options-container">
+              <button class="quiz-option"></button>
+              <button class="quiz-option"></button>
+              <button class="quiz-option"></button>
+              <button class="quiz-option"></button>
+            </div>
+            <div id="quiz-answer" class="quiz-answer">答え: --</div>
+          </div>
+        </div>
+
         <div class="card boss-card reveal delay-2" id="boss-card">
           <div class="card-head">
             <div>
@@ -128,16 +151,6 @@
           </div>
 
           <div class="timer">
-            <div class="quiz-area quiz-area-flipped" aria-live="polite">
-              <div id="quiz-problem" class="quiz-problem">問題: --</div>
-              <div id="quiz-options-container" class="quiz-options-container">
-                <button class="quiz-option"></button>
-                <button class="quiz-option"></button>
-                <button class="quiz-option"></button>
-                <button class="quiz-option"></button>
-              </div>
-              <div id="quiz-answer" class="quiz-answer">答え: --</div>
-            </div>
             <div id="phase-timer" class="timer-value">05</div>
             <div id="phase-hint" class="timer-hint">スタートまでカウントダウン</div>
             <div class="progress">
