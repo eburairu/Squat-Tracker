@@ -9,7 +9,8 @@ export const InventoryManager = {
     equippedId: 'unarmed',
     items: {
       unarmed: { level: 1, acquiredAt: Date.now() }
-    }
+    },
+    consumables: {}
   },
 
   init(weaponsMap) {
@@ -24,6 +25,9 @@ export const InventoryManager = {
     // Ensure initial state validity
     if (!this.state.items.unarmed) {
       this.state.items.unarmed = { level: 1, acquiredAt: Date.now() };
+    }
+    if (!this.state.consumables) {
+      this.state.consumables = {};
     }
     // Check against injected weaponsData
     if (!this.weaponsData[this.state.equippedId]) {
@@ -151,6 +155,32 @@ export const InventoryManager = {
     return this.getEquippedWeapon().bonusAtk;
   },
 
+  addConsumable(id, amount = 1) {
+    if (!this.state.consumables) {
+      this.state.consumables = {};
+    }
+    if (!this.state.consumables[id]) {
+      this.state.consumables[id] = 0;
+    }
+    this.state.consumables[id] += amount;
+    this.save();
+    this.render();
+  },
+
+  useConsumable(id, amount = 1) {
+    if (!this.state.consumables || !this.state.consumables[id] || this.state.consumables[id] < amount) {
+      return false;
+    }
+    this.state.consumables[id] -= amount;
+    this.save();
+    this.render();
+    return true;
+  },
+
+  getConsumableCount(id) {
+    return (this.state.consumables && this.state.consumables[id]) || 0;
+  },
+
   setupUI() {
     const openBtn = document.getElementById('equipment-button');
     const modal = document.getElementById('equipment-modal');
@@ -185,6 +215,38 @@ export const InventoryManager = {
 
     if (!listEl) return;
     listEl.innerHTML = '';
+
+    // Render Consumables
+    const consumables = this.state.consumables || {};
+    Object.keys(consumables).forEach(id => {
+      const count = consumables[id];
+      if (count <= 0) return;
+
+      const li = document.createElement('li');
+      li.className = 'weapon-item consumable-item'; // 既存のスタイルを再利用
+      // streak_shield 用のカスタム表示
+      let name = id;
+      let emoji = '🎒';
+      let desc = '消費アイテム';
+
+      if (id === 'streak_shield') {
+        name = 'ストリーク・シールド';
+        emoji = '🛡️';
+        desc = '連続記録が途切れた時に自動で修復します';
+      }
+
+      li.innerHTML = `
+        <div class="weapon-icon" style="background: #e3f2fd">${emoji}</div>
+        <div class="weapon-info">
+          <div class="weapon-name">
+             ${name} <span style="font-size:0.9em; font-weight:bold; color:#d32f2f">x${count}</span>
+          </div>
+          <div class="weapon-meta">${desc}</div>
+        </div>
+      `;
+      // 現時点ではクリック時のアクションなし
+      listEl.appendChild(li);
+    });
 
     // Sort: Equipped first, then by rarity desc, then by power
     const ownedIds = Object.keys(this.state.items);

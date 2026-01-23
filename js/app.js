@@ -20,6 +20,7 @@ import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
 import { loadJson } from './modules/resource-loader.js';
 import { generateWeapons } from './data/weapons.js';
+import { StreakManager } from './modules/streak-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -506,7 +507,8 @@ const finishWorkout = () => {
     settings,
     sensorMode,
     hasPaused,
-    historyEntries // Pass history entries for checks
+    historyEntries, // Pass history entries for checks
+    shieldHistory: StreakManager.getHistory()
   });
 
   DailyMissionSystem.check({
@@ -1111,6 +1113,10 @@ const initApp = async () => {
 
   AdventureSystem.init();
 
+  StreakManager.init();
+  const lastWorkoutDate = computeStats(historyEntries).lastWorkoutDate;
+  StreakManager.checkAutoUse(lastWorkoutDate);
+
   updateQuizAndTimerDisplay(Phase.IDLE);
   updateDisplays();
   updateActionButtonStates();
@@ -1130,6 +1136,7 @@ if (typeof window !== 'undefined') {
   window.DailyMissionSystem = DailyMissionSystem;
   window.AchievementSystem = AchievementSystem;
   window.AdventureSystem = AdventureSystem;
+  window.StreakManager = StreakManager;
   window.RpgSystem = RpgSystem;
   window.generateQuiz = generateQuiz;
   window.finishWorkout = finishWorkout;

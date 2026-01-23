@@ -1,0 +1,24 @@
+# タスクリスト: ストリーク・シールド実装
+
+- [ ] `js/modules/streak-manager.js` の作成
+  - [ ] クラス構造定義
+  - [ ] `load`/`save` 実装
+  - [ ] `addHistory`, `getHistory` 実装
+  - [ ] `checkAutoUse` ロジック実装
+- [ ] `js/modules/inventory-manager.js` の改修
+  - [ ] `state.consumables` の初期化とマイグレーション
+  - [ ] `addConsumable`, `useConsumable` メソッド実装
+  - [ ] `render` メソッド改修（シールド表示）
+- [ ] `js/utils.js` の改修
+  - [ ] `computeStreak` のシグネチャ変更とロジック修正
+- [ ] `js/app.js` の改修
+  - [ ] `StreakManager` のインポートと初期化
+  - [ ] 起動時の自動消費チェックと通知実装
+  - [ ] `computeStreak` 呼び出し箇所の修正（`AchievementSystem` への注入など）
+- [ ] `js/modules/achievement-system.js` の改修
+  - [ ] `check` メソッドでのストリーク計算にシールド履歴を反映
+- [ ] UI確認とデバッグ
+  - [ ] シールド付与の仕組み（デバッグ用）
+  - [ ] 動作確認（手動）
+- [ ] テスト作成 (`tests/streak-shield.spec.js`)
+  - [ ] Playwright テスト実装

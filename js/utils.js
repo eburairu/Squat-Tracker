@@ -202,15 +202,18 @@ export const computeStats = (entries) => {
   };
 };
 
-export const computeStreak = (entries) => {
-  if (!Array.isArray(entries) || entries.length === 0) {
+export const computeStreak = (entries, shieldDates = []) => {
+  if ((!Array.isArray(entries) || entries.length === 0) && (!Array.isArray(shieldDates) || shieldDates.length === 0)) {
     return 0;
   }
   const dateKeys = new Set(
-    entries
+    (entries || [])
       .map((entry) => getLocalDateKey(new Date(entry.date)))
       .filter((value) => value)
   );
+  if (Array.isArray(shieldDates)) {
+    shieldDates.forEach(d => dateKeys.add(d));
+  }
   let streak = 0;
   const cursor = new Date();
   while (true) {

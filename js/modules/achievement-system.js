@@ -89,7 +89,7 @@ export const AchievementSystem = {
         case 'TOTAL_WORKOUTS': // New support
             return computeStats(ctx.historyEntries).totalWorkouts >= cond.value;
         case 'STREAK':
-          return computeStreak(ctx.historyEntries) >= cond.value;
+          return computeStreak(ctx.historyEntries, ctx.shieldHistory) >= cond.value;
         case 'BOSS_KILLS':
           return ctx.bossState && ctx.bossState.totalKills >= cond.value;
         case 'BOSS_COLLECTION':
