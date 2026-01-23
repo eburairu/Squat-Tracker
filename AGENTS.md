@@ -60,32 +60,114 @@
 
 ## CHANGELOG管理 & バージョニング運用
 
-今後の開発では以下のルールに従ってCHANGELOGとバージョンを管理すること。
+本プロジェクトは `semantic-release` を導入し、mainブランチでの自動リリースを採用している。
 
-### 1. CHANGELOG更新ルール（developブランチ）
+### 1. 基本ルール
 
-- **必ず[Unreleased]セクション**に追記する。
-- バージョン番号は付けない。
-- PR番号がある場合は記載する（例: (#123)）。
-- 以下のカテゴリに分類する:
-  - `### 追加 (Added)`: 新機能
-  - `### 変更 (Changed)`: 既存機能の変更
-  - `### 非推奨 (Deprecated)`: 非推奨化
-  - `### 削除 (Removed)`: 削除（BREAKING CHANGEの可能性）
-  - `### 修正 (Fixed)`: バグ修正
-  - `### セキュリティ (Security)`: セキュリティ修正
+- **CHANGELOG.mdはmainブランチでのみ管理する**。developブランチ等では更新しない。
+- **Conventional Commits**（後述）を遵守する。
+- リリースはmainへのマージ時に自動実行される。
 
-### 2. Breaking Changeの検出
+### 2. Conventional Commits
 
-以下の変更がある場合は、説明文中に「**BREAKING CHANGE**」を明記すること:
-- API の削除や変更
-- 設定ファイル形式の変更
-- 必須パラメータの追加
-- 既存の動作を変更する修正
+全てのコミットメッセージを以下の形式に統一すること。
 
-### 3. リリース前チェック（mainマージ前）
+```
+<type>(<scope>): <subject>
 
-PR作成時に以下の観点で推奨バージョンを提案すること:
-- BREAKING CHANGEあり → **MAJOR**
-- 新機能のみ → **MINOR**
-- バグ修正のみ → **PATCH**
+<body>
+
+<footer>
+```
+
+**主要なtype:**
+- `feat`: 新機能 → MINOR バージョンアップ
+- `fix`: バグ修正 → PATCH バージョンアップ
+- `docs`: ドキュメントのみの変更
+- `chore`: ビルドやツールの変更
+- `refactor`: リファクタリング
+- `test`: テスト追加・修正
+
+**Breaking Change:**
+- フッターに `BREAKING CHANGE:` を記載 → MAJOR バージョンアップ
+
+### 3. Google Jules用プロンプト
+
+#### 開発ブランチ用（毎日実行）
+
+```markdown
+## タスク: 開発ブランチのドキュメント同期
+
+### 対象ファイル
+- README.md
+- .sdd/配下の仕様書
+- **CHANGELOG.mdは更新しない**（mainでのみ管理）
+
+### 重要な注意
+- CHANGELOG.mdは触らないでください
+- リリース情報はmainブランチで自動生成されます
+- developではコードとドキュメントの整合性のみを確保
+
+### 実行内容
+1. 過去24時間のコミットを確認
+2. README.mdを実装に合わせて更新
+3. .sdd/配下の仕様書を更新
+4. レポートを作成
+
+### レポート形式
+```markdown
+## ドキュメント同期レポート - [日付]
+
+### 検出された変更
+- [コミットハッシュ] feat(auth): 認証機能追加
+
+### 更新したドキュメント
+- README.md: 認証セクションを追加
+- .sdd/api-spec.md: 認証エンドポイントを追加
+
+### Conventional Commits状況
+- ✅ 全てのコミットがconventional形式に従っています
+- ⚠️ 以下のコミットが形式に従っていません: [リスト]
+```
+```
+
+#### Conventional Commits検証用（PR作成時）
+
+```markdown
+## タスク: リリース前のコミットメッセージ検証
+
+### 確認内容
+1. developのコミット履歴を確認
+2. 全てがConventional Commits形式か検証
+3. 予想されるバージョン番号を算出
+
+### 出力形式
+```markdown
+## リリース前チェック
+
+### コミット検証結果
+- 総コミット数: 15
+- Conventional形式: 14
+- 非準拠: 1
+
+### 非準拠コミット
+- abc123: "fixed bug" → 推奨: "fix: resolve login timeout issue"
+
+### 予想バージョン
+- 現在: v1.1.0
+- 次回: v1.2.0 (MINOR)
+- 理由: 3件のfeat、5件のfix、Breaking Changeなし
+
+### 予想CHANGELOG
+[Unreleased]
+
+### Features
+- 認証機能の追加
+- ダークモード対応
+- プロフィール編集
+
+### Bug Fixes
+- ログインタイムアウトの修正
+- APIエラーハンドリング
+```
+```
