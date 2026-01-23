@@ -4,12 +4,20 @@
   "private": true,
   "type": "commonjs",
   "devDependencies": {
-    "@playwright/test": "^1.49.0"
+    "@commitlint/cli": "^20.3.1",
+    "@commitlint/config-conventional": "^20.3.1",
+    "@playwright/test": "^1.49.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.2",
+    "husky": "^9.1.7",
+    "semantic-release": "^25.0.2"
   },
   "scripts": {
-    "pretest": "npm ci && npx playwright install --with-deps",
-    "pretest:screenshot": "npm ci && npx playwright install --with-deps",
+    "pretest": "pnpm install && npx playwright install --with-deps",
+    "pretest:screenshot": "pnpm install && npx playwright install --with-deps",
     "test": "playwright test",
-    "test:screenshot": "playwright test tests/theme-toggle.spec.js"
+    "test:screenshot": "playwright test tests/theme-toggle.spec.js",
+    "prepare": "husky"
   }
 }
