@@ -1,9 +1,12 @@
-import { MONSTERS, RARITY_SETTINGS, BASE_WEAPONS } from '../constants.js';
-import { WEAPONS } from '../data/weapons.js';
+import { MONSTERS, RARITY_SETTINGS } from '../constants.js';
+// import { WEAPONS } from '../data/weapons.js'; // REMOVED
 import { InventoryManager } from './inventory-manager.js';
+import { AdventureSystem } from './adventure-system.js';
 import { showToast, getRandomInt } from '../utils.js';
 
 export const BossBattle = {
+  baseWeaponsData: [],
+  weaponsMap: {},
   state: {
     currentMonster: null,
     totalKills: 0,
@@ -14,7 +17,10 @@ export const BossBattle = {
   isRespawning: false,
   elements: {},
 
-  init() {
+  init(options = {}) {
+    if (options.baseWeaponsData) this.baseWeaponsData = options.baseWeaponsData;
+    if (options.weaponsMap) this.weaponsMap = options.weaponsMap;
+
     this.elements = {
       card: document.getElementById('boss-card'),
       avatar: document.getElementById('boss-avatar'),
@@ -177,6 +183,17 @@ export const BossBattle = {
     if (this.isRespawning) return;
     this.isRespawning = true;
 
+    // Adventure Mode Integration
+    const advResult = AdventureSystem.advance();
+    if (advResult.areaCleared) {
+      showToast({
+        emoji: '🎉',
+        title: 'エリアクリア！',
+        message: `次のエリア: ${advResult.currentArea.name} へ進みます！`,
+        sound: true
+      });
+    }
+
     this.state.totalKills += 1;
     this.state.monsterIndex += 1;
     if (this.state.monsterIndex >= MONSTERS.length) {
@@ -200,6 +217,8 @@ export const BossBattle = {
   },
 
   rollDrop() {
+    if (!this.baseWeaponsData || this.baseWeaponsData.length === 0) return;
+
     // 100% drop chance
 
     // 1. Select Rarity
@@ -218,11 +237,11 @@ export const BossBattle = {
     }
 
     // 2. Select Base Weapon
-    const totalBaseWeight = BASE_WEAPONS.reduce((sum, w) => sum + w.weight, 0);
+    const totalBaseWeight = this.baseWeaponsData.reduce((sum, w) => sum + w.weight, 0);
     let bRandom = Math.random() * totalBaseWeight;
-    let selectedBase = BASE_WEAPONS[0];
+    let selectedBase = this.baseWeaponsData[0];
 
-    for (const w of BASE_WEAPONS) {
+    for (const w of this.baseWeaponsData) {
       bRandom -= w.weight;
       if (bRandom <= 0) {
         selectedBase = w;
@@ -231,7 +250,7 @@ export const BossBattle = {
     }
 
     const weaponId = `${selectedBase.id}_r${selectedRarity}`;
-    const weapon = WEAPONS[weaponId];
+    const weapon = this.weaponsMap[weaponId];
 
     if (weapon && typeof InventoryManager !== 'undefined') {
       const result = InventoryManager.addWeapon(weaponId);
