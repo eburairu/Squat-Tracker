@@ -244,6 +244,22 @@ h2 {
   min-height: 1.5rem;
 }
 
+#quiz-card {
+  transform: rotate(180deg);
+}
+
+#quiz-card.reveal {
+  transform: translateY(20px) rotate(180deg);
+  animation-name: reveal-flipped;
+}
+
+@keyframes reveal-flipped {
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(180deg);
+  }
+}
+
 .quiz-area {
   display: flex;
   flex-direction: column;
