@@ -1,11 +1,16 @@
-import { RARITY_SETTINGS, BASE_WEAPONS } from '../constants.js';
+import { RARITY_SETTINGS } from '../constants.js';
 
-export const generateWeapons = () => {
+export const generateWeapons = (baseWeaponsData) => {
   const weapons = {
     unarmed: { id: 'unarmed', name: '素手', emoji: '✊', baseAtk: 0, rarity: 1, maxLevel: 1, atkPerLevel: 0, weight: 0 }
   };
 
-  BASE_WEAPONS.forEach(base => {
+  if (!Array.isArray(baseWeaponsData)) {
+    console.warn('generateWeapons: baseWeaponsData is not an array', baseWeaponsData);
+    return weapons;
+  }
+
+  baseWeaponsData.forEach(base => {
     Object.keys(RARITY_SETTINGS).forEach(rKey => {
       const rarity = parseInt(rKey);
       const setting = RARITY_SETTINGS[rarity];
@@ -31,5 +36,3 @@ export const generateWeapons = () => {
   });
   return weapons;
 };
-
-export const WEAPONS = generateWeapons();

@@ -1,9 +1,10 @@
-import { WEAPONS } from '../data/weapons.js';
+// import { WEAPONS } from '../data/weapons.js'; // REMOVED: Dependency injection used instead
 import { isStorageAvailable } from '../utils.js';
 
 const INVENTORY_KEY = 'squat-tracker-inventory';
 
 export const InventoryManager = {
+  weaponsData: {}, // Injected dynamically
   state: {
     equippedId: 'unarmed',
     items: {
@@ -11,13 +12,21 @@ export const InventoryManager = {
     }
   },
 
-  init() {
+  init(weaponsMap) {
+    if (weaponsMap && typeof weaponsMap === 'object') {
+      this.weaponsData = weaponsMap;
+    } else {
+      console.warn('InventoryManager: No weapons data provided, using empty map.');
+      this.weaponsData = {};
+    }
+
     this.load();
     // Ensure initial state validity
     if (!this.state.items.unarmed) {
       this.state.items.unarmed = { level: 1, acquiredAt: Date.now() };
     }
-    if (!WEAPONS[this.state.equippedId]) {
+    // Check against injected weaponsData
+    if (!this.weaponsData[this.state.equippedId]) {
       this.state.equippedId = 'unarmed';
     }
     // Render UI if elements exist
@@ -47,9 +56,9 @@ export const InventoryManager = {
     const newItems = {};
 
     // Handle equippedId migration
-    if (this.state.equippedId && !WEAPONS[this.state.equippedId]) {
+    if (this.state.equippedId && !this.weaponsData[this.state.equippedId]) {
       const newId = `${this.state.equippedId}_r1`;
-      if (WEAPONS[newId]) {
+      if (this.weaponsData[newId]) {
         this.state.equippedId = newId;
         changed = true;
       } else {
@@ -60,11 +69,11 @@ export const InventoryManager = {
 
     // Handle items migration
     Object.keys(this.state.items).forEach(key => {
-      if (WEAPONS[key]) {
+      if (this.weaponsData[key]) {
         newItems[key] = this.state.items[key];
       } else {
         const newId = `${key}_r1`;
-        if (WEAPONS[newId]) {
+        if (this.weaponsData[newId]) {
           newItems[newId] = this.state.items[key];
           changed = true;
         }
@@ -87,7 +96,7 @@ export const InventoryManager = {
   },
 
   addWeapon(weaponId) {
-    const weaponDef = WEAPONS[weaponId];
+    const weaponDef = this.weaponsData[weaponId];
     if (!weaponDef) return null;
 
     let result = 'NEW'; // NEW, LEVEL_UP, MAX
@@ -114,7 +123,7 @@ export const InventoryManager = {
   },
 
   equipWeapon(weaponId) {
-    if (!this.state.items[weaponId] || !WEAPONS[weaponId]) return false;
+    if (!this.state.items[weaponId] || !this.weaponsData[weaponId]) return false;
     this.state.equippedId = weaponId;
     this.save();
     this.render();
@@ -123,7 +132,9 @@ export const InventoryManager = {
 
   getEquippedWeapon() {
     const id = this.state.equippedId;
-    const def = WEAPONS[id] || WEAPONS.unarmed;
+    const def = this.weaponsData[id] || this.weaponsData.unarmed || {
+      id: 'unarmed', name: '素手', emoji: '✊', baseAtk: 0, rarity: 1, maxLevel: 1, atkPerLevel: 0, weight: 0
+    };
     const item = this.state.items[id] || { level: 1 };
 
     // Calculate attack power: Base + (Level - 1) * Growth
@@ -181,14 +192,18 @@ export const InventoryManager = {
       if (a === this.state.equippedId) return -1;
       if (b === this.state.equippedId) return 1;
 
-      const wa = WEAPONS[a];
-      const wb = WEAPONS[b];
+      const wa = this.weaponsData[a];
+      const wb = this.weaponsData[b];
+
+      // Safety check if data is missing
+      if (!wa || !wb) return 0;
+
       if (wb.rarity !== wa.rarity) return wb.rarity - wa.rarity;
       return wb.baseAtk - wa.baseAtk;
     });
 
     ownedIds.forEach(id => {
-      const def = WEAPONS[id];
+      const def = this.weaponsData[id];
       const item = this.state.items[id];
       if (!def) return;
 
