@@ -13,8 +13,17 @@ export const AchievementSystem = {
 
   init(options = {}) {
     this.callbacks = options;
+
+    // Inject achievements data if provided
+    if (options.achievementsData && Array.isArray(options.achievementsData)) {
+      this.badges = options.achievementsData;
+    } else {
+      // Fallback or empty if no data provided (legacy behavior removed)
+      this.badges = [];
+    }
+
     this.load();
-    this.defineBadges();
+    // this.defineBadges(); // Removed: Badges are now loaded from JSON
     this.setupUI();
     this.render();
   },
@@ -40,57 +49,13 @@ export const AchievementSystem = {
     });
   },
 
-  defineBadges() {
-    // Note: conditions access historyEntries. We will pass context to check().
-    // If we need global historyEntries, we must rely on it being passed in context.
-
-    this.badges = [
-      // Consistency
-      { id: 'baby-steps', name: '初めの一歩', emoji: '🐣', description: '初めてワークアウトを完了する', condition: (ctx) => (ctx.historyEntries).length >= 1 },
-      { id: 'consistency-3', name: '三日坊主回避', emoji: '🌱', description: '3日連続達成', condition: (ctx) => computeStreak(ctx.historyEntries) >= 3 },
-      { id: 'consistency-7', name: '週間チャンピオン', emoji: '🔥', description: '7日連続達成', condition: (ctx) => computeStreak(ctx.historyEntries) >= 7 },
-      { id: 'consistency-30', name: '習慣の達人', emoji: '📅', description: '30日連続達成', condition: (ctx) => computeStreak(ctx.historyEntries) >= 30 },
-      { id: 'consistency-100', name: '百日修業', emoji: '💯', description: '100日連続達成', condition: (ctx) => computeStreak(ctx.historyEntries) >= 100 },
-
-      // Total Reps
-      { id: 'reps-100', name: 'スクワット初心者', emoji: '🥉', description: '累計100回', condition: (ctx) => computeStats(ctx.historyEntries).totalRepsAllTime >= 100 },
-      { id: 'reps-500', name: '見習い戦士', emoji: '🥈', description: '累計500回', condition: (ctx) => computeStats(ctx.historyEntries).totalRepsAllTime >= 500 },
-      { id: 'reps-1000', name: '熟練の騎士', emoji: '🥇', description: '累計1,000回', condition: (ctx) => computeStats(ctx.historyEntries).totalRepsAllTime >= 1000 },
-      { id: 'reps-5000', name: '筋肉の将軍', emoji: '🎖️', description: '累計5,000回', condition: (ctx) => computeStats(ctx.historyEntries).totalRepsAllTime >= 5000 },
-      { id: 'reps-10000', name: '伝説の英雄', emoji: '👑', description: '累計10,000回', condition: (ctx) => computeStats(ctx.historyEntries).totalRepsAllTime >= 10000 },
-
-      // Boss
-      { id: 'boss-first-blood', name: 'モンスターハンター', emoji: '🗡️', description: '初めてボスを倒す', condition: (ctx) => ctx.bossState && ctx.bossState.totalKills >= 1 },
-      { id: 'boss-slayer', name: 'スレイヤー', emoji: '💀', description: 'ボス10体討伐', condition: (ctx) => ctx.bossState && ctx.bossState.totalKills >= 10 },
-      { id: 'boss-collector', name: '図鑑コンプ', emoji: '📚', description: '全種類のボスを討伐', condition: (ctx) => ctx.bossState && ctx.bossState.totalKills >= 10 },
-      { id: 'boss-critical', name: 'クリティカル', emoji: '💥', description: 'クリティカルヒットを出す', condition: () => false },
-      { id: 'boss-limit-break', name: '限界突破', emoji: '🚀', description: 'レベル10到達', condition: (ctx) => RpgSystem.calculateLevel(computeStats(ctx.historyEntries).totalRepsAllTime) >= 10 },
-
-      // Settings & Specials
-      { id: 'tech-user', name: 'センサー使い', emoji: '📱', description: 'センサーモードで完了', condition: (ctx) => ctx.sensorMode },
-      { id: 'stoic', name: 'ストイック', emoji: '⏱️', description: '休憩15秒以下で完了', condition: (ctx) => ctx.settings && parseInt(ctx.settings.restDuration) <= 15 },
-      { id: 'slow-life', name: 'スローライフ', emoji: '🐢', description: '動作3秒以上で完了', condition: (ctx) => ctx.settings && parseInt(ctx.settings.downDuration) >= 3 && parseInt(ctx.settings.upDuration) >= 3 },
-      { id: 'marathon', name: 'マラソンマン', emoji: '🏃', description: '1セット30回以上で完了', condition: (ctx) => ctx.settings && parseInt(ctx.settings.repCount) >= 30 },
-      { id: 'iron-will', name: '鉄の意志', emoji: '🛡️', description: '一時停止なしで完了', condition: (ctx) => ctx.hasPaused === false },
-      { id: 'customizer', name: 'カスタマイザー', emoji: '⚙️', description: 'プリセットを保存する', condition: () => PresetManager.presets.length > 3 },
-      { id: 'backup', name: '復活の呪文', emoji: '💾', description: 'データをエクスポートする', condition: () => false },
-      { id: 'balance', name: 'ハーフ＆ハーフ', emoji: '⚖️', description: 'しゃがむ時間と立つ時間が同じ', condition: (ctx) => ctx.settings && ctx.settings.downDuration == ctx.settings.upDuration },
-      { id: 'good-listener', name: 'フルコンボ', emoji: '🎧', description: '音声ガイドONで完了', condition: () => VoiceCoach.enabled },
-      { id: 'chameleon', name: 'テーマチェンジャー', emoji: '🎨', description: 'テーマを切り替える', condition: () => false },
-
-      // Time & Humor
-      { id: 'early-bird', name: '早起きは三文の徳', emoji: '☀️', description: '午前4時〜8時に完了', condition: () => { const h = new Date().getHours(); return h >= 4 && h < 8; } },
-      { id: 'night-owl', name: '夜更かしの筋トレ', emoji: '🦉', description: '午後10時〜午前2時に完了', condition: () => { const h = new Date().getHours(); return h >= 22 || h < 2; } },
-      { id: 'lunch-break', name: 'ランチタイム', emoji: '🍱', description: '正午〜午後1時に完了', condition: () => { const h = new Date().getHours(); return h === 12; } },
-      { id: 'weekend-warrior', name: '週末の戦士', emoji: '🏖️', description: '土日に完了', condition: () => { const d = new Date().getDay(); return d === 0 || d === 6; } },
-      { id: 'lucky-7', name: 'ラッキーセブン', emoji: '🎰', description: '1セット7回で完了', condition: (ctx) => ctx.settings && parseInt(ctx.settings.repCount) === 7 }
-    ];
-  },
-
   notify(eventName) {
-    if (eventName === 'critical') this.unlock('boss-critical');
-    if (eventName === 'theme_change') this.unlock('chameleon');
-    if (eventName === 'backup') this.unlock('backup');
+    // Notify checks with type 'event' and passing eventName
+    // We reuse check() logic, but we need to pass context that indicates the event
+    // For simplicity, we trigger a check with a special context flag or handle it directly here if needed.
+    // However, the check() function iterates all badges.
+    // Optimization: check() logic handles EVENT type conditions.
+    this.check({ type: 'event', eventName: eventName, forceNotify: true });
   },
 
   load() {
@@ -114,12 +79,84 @@ export const AchievementSystem = {
     }
   },
 
+  evaluateCondition(cond, ctx) {
+    if (!cond || !cond.type) return false;
+
+    try {
+      switch (cond.type) {
+        case 'TOTAL_REPS':
+          return computeStats(ctx.historyEntries).totalRepsAllTime >= cond.value;
+        case 'TOTAL_WORKOUTS': // New support
+            return computeStats(ctx.historyEntries).totalWorkouts >= cond.value;
+        case 'STREAK':
+          return computeStreak(ctx.historyEntries) >= cond.value;
+        case 'BOSS_KILLS':
+          return ctx.bossState && ctx.bossState.totalKills >= cond.value;
+        case 'BOSS_COLLECTION':
+          // Assuming we track unique types in bossState or similar.
+          // Currently BossBattle.state structure might need inspection.
+          // If logic is too complex for simple JSON, we assume totalKills for now or specific logic.
+          // For now, let's map it to totalKills as fallback or specific logic if available.
+          // Note: The original code used totalKills >= 10 for 'boss-collector'.
+          return ctx.bossState && ctx.bossState.totalKills >= cond.value;
+        case 'LEVEL':
+           return RpgSystem.calculateLevel(computeStats(ctx.historyEntries).totalRepsAllTime) >= cond.value;
+        case 'SENSOR_MODE':
+          return !!ctx.sensorMode;
+        case 'NO_PAUSE':
+          return ctx.hasPaused === false;
+        case 'SETTING_VAL': {
+          if (!ctx.settings) return false;
+          const val = parseInt(ctx.settings[cond.key]);
+          const target = cond.value;
+          if (cond.operator === '<=') return val <= target;
+          if (cond.operator === '>=') return val >= target;
+          if (cond.operator === '==') return val === target;
+          return false;
+        }
+        case 'SETTING_MATCH': {
+          if (!ctx.settings) return false;
+          return ctx.settings[cond.key1] == ctx.settings[cond.key2];
+        }
+        case 'SETTING_AND': {
+            if (!Array.isArray(cond.conditions)) return false;
+            return cond.conditions.every(c => this.evaluateCondition(c, ctx));
+        }
+        case 'TIME_RANGE': {
+          const h = new Date().getHours();
+          // startHour <= h < endHour
+          return h >= cond.startHour && h < cond.endHour;
+        }
+        case 'TIME_RANGE_OVERNIGHT': {
+             const h = new Date().getHours();
+             // e.g. 22 to 2: h >= 22 OR h < 2
+             return h >= cond.startHour || h < cond.endHour;
+        }
+        case 'WEEKEND': {
+          const d = new Date().getDay();
+          return d === 0 || d === 6;
+        }
+        case 'VOICE_ENABLED':
+            return !!VoiceCoach.enabled;
+        case 'PRESET_COUNT':
+             // Access PresetManager directly
+             return PresetManager.presets.length > cond.value;
+        case 'EVENT':
+            return ctx.type === 'event' && ctx.eventName === cond.name;
+        default:
+          return false;
+      }
+    } catch (e) {
+      console.warn(`Condition check failed for type ${cond.type}`, e);
+      return false;
+    }
+  },
+
   check(triggerContext = {}) {
     const context = {
       // historyEntries needs to be provided in triggerContext or accessible globally.
-      // We will expect historyEntries to be passed in triggerContext from main app.
       historyEntries: triggerContext.historyEntries || [],
-      bossState: BossBattle.state, // Direct import access to state
+      bossState: BossBattle.state,
       ...triggerContext
     };
 
@@ -128,7 +165,7 @@ export const AchievementSystem = {
       if (this.isUnlocked(badge.id)) return;
 
       try {
-        if (badge.condition(context)) {
+        if (this.evaluateCondition(badge.condition, context)) {
           this.unlocked[badge.id] = Date.now();
           newUnlock = true;
           if (triggerContext.type === 'finish' || triggerContext.forceNotify) {

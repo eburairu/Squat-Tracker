@@ -15,8 +15,11 @@ import { DailyMissionSystem } from './modules/daily-mission.js';
 import { AchievementSystem } from './modules/achievement-system.js';
 import { DataManager } from './modules/data-manager.js';
 import { PresetManager } from './modules/preset-manager.js';
+import { AdventureSystem } from './modules/adventure-system.js';
 import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
+import { loadJson } from './modules/resource-loader.js';
+import { generateWeapons } from './data/weapons.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -30,6 +33,7 @@ const quizModeToggle = document.getElementById('quiz-mode-toggle');
 const quizModeLabel = document.getElementById('quiz-mode-label');
 const quizOptionsContainer = document.getElementById('quiz-options-container');
 const quizOptionButtons = document.querySelectorAll('.quiz-option');
+const quizStatsDisplay = document.getElementById('quiz-stats-display');
 const progressBar = document.getElementById('progress-bar');
 const statsTotalReps = document.getElementById('stats-total-reps');
 const statsTotalWorkouts = document.getElementById('stats-total-workouts');
@@ -80,6 +84,8 @@ let isQuizAnswered = false;
 let isCurrentQuizCorrect = null;
 let userSelectedOption = null;
 let currentQuiz = null;
+let quizSessionCorrect = 0;
+let quizSessionTotal = 0;
 let totalSets = 3;
 let repsPerSet = 10;
 let currentSet = 1;
@@ -312,6 +318,12 @@ const updateSessionStats = () => {
   statsSessionTarget.textContent = getSessionTargetReps().toLocaleString('ja-JP');
 };
 
+const updateQuizStats = () => {
+  if (quizStatsDisplay) {
+    quizStatsDisplay.textContent = `${quizSessionCorrect} / ${quizSessionTotal}`;
+  }
+};
+
 const updateActionButtonStates = () => {
   if (!startButton || !pauseButton) {
     return;
@@ -349,8 +361,7 @@ const performAttack = () => {
   const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical);
   BossBattle.damage(damage.amount, damage.isCritical);
 
-  // Reset session bonus after attack
-  sessionAttackBonus = 0;
+  // Note: sessionAttackBonus is now cumulative and NOT reset here.
 };
 
 const setPhase = (phaseKey, durationSeconds, hint) => {
@@ -379,8 +390,8 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
 };
 
 const nextRepOrSet = () => {
-  // Disruptive mode penalty: if answered incorrectly, repeat the rep
-  if (quizMode === 'disruptive' && isCurrentQuizCorrect === false) {
+  // Disruptive mode penalty: if answered CORRECTLY, repeat the rep (Block progress)
+  if (quizMode === 'disruptive' && isCurrentQuizCorrect === true) {
     isCurrentQuizCorrect = null; // Reset for the next attempt
     showToast({ emoji: '⚠️', title: 'ペナルティ！', message: '同じ回をやり直します。' });
     startPhaseCycle();
@@ -581,6 +592,13 @@ const startWorkout = () => {
   isPaused = false;
   workoutStarted = true;
   workoutSaved = false;
+
+  // Reset Session Stats
+  sessionAttackBonus = 0;
+  quizSessionCorrect = 0;
+  quizSessionTotal = 0;
+  updateQuizStats();
+
   startButton.disabled = true;
   startButton.textContent = '進行中';
   updateActionButtonStates();
@@ -617,6 +635,10 @@ const resetWorkout = () => {
   currentPhase = Phase.IDLE;
   updateQuizAndTimerDisplay(Phase.IDLE);
   sessionAttackBonus = 0; // リセット時にボーナスもクリア
+  quizSessionCorrect = 0;
+  quizSessionTotal = 0;
+  updateQuizStats();
+
   currentSet = 1;
   currentRep = 1;
   isPaused = false;
@@ -749,11 +771,6 @@ const initializePresets = () => {
     presetSelect,
     savePresetButton,
     deletePresetButton,
-    // Note: PresetManager logic listens to presetSelect change and updates DOM directly
-    // OR we should listen here?
-    // In original code, there was a listener in initializePresets.
-    // Let's attach listeners here or delegate to PresetManager completely.
-    // The original code passed values to inputs.
   });
 
   // Re-attach listeners for inputs filling
@@ -804,7 +821,7 @@ const initializePresets = () => {
       const name = presetSelect.value;
       if (!name) return;
       if (confirm(`プリセット「${name}」を削除しますか？`)) {
-        PresetManager.deletePreset(name);
+        PresetManager.deletePreset(name, settings);
       }
     });
   }
@@ -830,98 +847,6 @@ const applyReducedMotionPreference = () => {
 };
 
 
-// --- Initialization ---
-
-const initializeHistory = () => {
-  historyEntries = loadHistoryEntries();
-  renderStats();
-  renderHistory();
-  initHeatmap(heatmapContainer);
-  renderHeatmap(historyEntries, heatmapContainer);
-  updateHistoryNote();
-  updateSessionStats();
-};
-
-const handleOrientation = (event) => {
-  if (!sensorMode || !sensorActive) {
-    return;
-  }
-
-  // Throttle sensor updates to ~20Hz (50ms) to reduce CPU usage and battery drain
-  const now = Date.now();
-  if (now - lastOrientationTime < 50) {
-    return;
-  }
-  lastOrientationTime = now;
-
-  const beta = event.beta;
-  if (beta === null || beta === undefined) {
-    sensorStatus.textContent = '角度データを取得できません。';
-    return;
-  }
-  if (sensorBaseline === null) {
-    sensorBaseline = beta;
-    sensorThreshold = beta - 60;
-    sensorStatus.textContent = `基準角度を記録しました: ${Math.round(beta)}°`;
-  }
-
-  const depthReached = beta <= sensorThreshold;
-  if (depthReached && !lastSensorCounted) {
-    lastSensorCounted = true;
-    currentRep = Math.min(currentRep + 1, repsPerSet);
-    repDisplay.textContent = `${currentRep} / ${repsPerSet}`;
-    updateSessionStats();
-    beep(700, 120);
-    performAttack();
-    if (currentRep >= repsPerSet) {
-      nextRepOrSet();
-      lastSensorCounted = false;
-    }
-  }
-
-  if (!depthReached) {
-    lastSensorCounted = false;
-  }
-};
-
-const enableSensor = async () => {
-  if (typeof DeviceOrientationEvent === 'undefined') {
-    sensorStatus.textContent = 'この端末ではセンサーを利用できません。';
-    sensorToggle.checked = false;
-    sensorMode = false;
-    return;
-  }
-  if (DeviceOrientationEvent.requestPermission) {
-    const permission = await DeviceOrientationEvent.requestPermission();
-    if (permission !== 'granted') {
-      sensorStatus.textContent = 'センサー利用が許可されませんでした。';
-      sensorToggle.checked = false;
-      sensorMode = false;
-      return;
-    }
-  }
-  sensorMode = true;
-  sensorActive = true;
-  sensorBaseline = null;
-  sensorThreshold = null;
-  lastSensorCounted = false;
-  sensorCalibrateButton.disabled = false;
-  sensorStatus.textContent = 'センサー準備完了。逆さまに固定してしゃがむとカウントされます。';
-  window.addEventListener('deviceorientation', handleOrientation);
-};
-
-const disableSensor = () => {
-  sensorMode = false;
-  sensorActive = false;
-  sensorBaseline = null;
-  sensorThreshold = null;
-  lastSensorCounted = false;
-  sensorCalibrateButton.disabled = true;
-  sensorStatus.textContent = '未使用';
-  window.removeEventListener('deviceorientation', handleOrientation);
-};
-
-
 // --- Quiz Logic ---
 
 const updateQuizAndTimerDisplay = (phaseKey) => {
@@ -930,11 +855,15 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
   if (phaseKey === Phase.DOWN) {
     // New Quiz Phase
     currentQuiz = generateQuiz();
+    quizSessionTotal++;
+    updateQuizStats();
+
     isQuizAnswered = false;
     isCurrentQuizCorrect = null;
     userSelectedOption = null;
 
     quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
+    quizAnswer.textContent = '答え: --';
 
     // Enable buttons and show options
     quizOptionButtons.forEach((btn, index) => {
@@ -961,6 +890,9 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
       const isCorrect = userSelectedOption !== null && Number(userSelectedOption) === currentQuiz.correctAnswer;
       isCurrentQuizCorrect = isCorrect;
 
+      if (isCorrect) quizSessionCorrect++;
+      updateQuizStats();
+
       quizOptionButtons.forEach(btn => {
         const val = Number(btn.textContent);
         if (val === currentQuiz.correctAnswer) {
@@ -974,16 +906,18 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
       if (isCorrect) {
         if (quizMode === 'cooperative') {
           sessionAttackBonus += 1;
-          showToast({ emoji: '⚔️', title: 'Bonus', message: `攻撃ボーナス +1 (現在: ${sessionAttackBonus})` });
+          showToast({ emoji: '⚔️', title: 'Bonus!', message: '攻撃力UP!' });
         } else {
-          showToast({ emoji: '⭕', title: '正解！', message: 'Nice!' });
+          // Disruptive Mode: Correct answer means successful block
+          showToast({ emoji: '🛡️', title: 'ブロック成功！', message: 'プレイヤーの進行を阻止しました！' });
         }
       } else {
         if (userSelectedOption === null) {
           showToast({ emoji: '❌', title: '不正解！', message: '回答が選択されませんでした。' });
         } else {
           if (quizMode === 'disruptive') {
-            showToast({ emoji: '❌', title: '不正解！', message: '次のスクワットはカウントされません！' });
+            // Disruptive Mode: Incorrect answer means failed block
+            showToast({ emoji: '😅', title: 'ブロック失敗...', message: '進行を許してしまいました。' });
           } else {
             showToast({ emoji: '❌', title: '不正解！', message: '残念！' });
           }
@@ -1132,31 +1066,61 @@ sensorCalibrateButton.addEventListener('click', () => {
 
 // --- Bootstrap ---
 
-applyReducedMotionPreference();
-initializeTheme();
-initializeVoiceCoach();
-initializeWorkoutSettings();
-initializePresets();
-initializeHistory();
+const initializeHistory = () => {
+  historyEntries = loadHistoryEntries();
+  renderStats();
+  renderHistory();
+  initHeatmap(heatmapContainer);
+  renderHeatmap(historyEntries, heatmapContainer);
+  updateHistoryNote();
+  updateSessionStats();
+};
 
-AchievementSystem.init({
-  onHistoryTabSelected: () => {
-    requestAnimationFrame(() => renderHeatmap(historyEntries, heatmapContainer));
-  }
-});
-DataManager.init();
-InventoryManager.init();
-DailyMissionSystem.init();
+const initApp = async () => {
+  // Load external data first
+  const [achievementsData, baseWeaponsData] = await Promise.all([
+    loadJson('js/data/achievements.json'),
+    loadJson('js/data/base-weapons.json')
+  ]);
+
+  // Apply data to systems
+
+  applyReducedMotionPreference();
+  initializeTheme();
+  initializeVoiceCoach();
+  initializeWorkoutSettings();
+  initializePresets();
+  initializeHistory();
+
+  AchievementSystem.init({
+    achievementsData, // Pass loaded data
+    onHistoryTabSelected: () => {
+      requestAnimationFrame(() => renderHeatmap(historyEntries, heatmapContainer));
+    }
+  });
+
+  DataManager.init();
+
+  // Initialize Weapon System with data
+  const weaponsMap = generateWeapons(baseWeaponsData);
+  InventoryManager.init(weaponsMap); // Inject weapon definitions
+
+  // Initialize systems dependent on weapon data
+  DailyMissionSystem.init({ baseWeaponsData, weaponsMap });
+  BossBattle.init({ baseWeaponsData, weaponsMap });
+
+  AdventureSystem.init();
+
+  updateQuizAndTimerDisplay(Phase.IDLE);
+  updateDisplays();
+  updateActionButtonStates();
+};
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => BossBattle.init());
+  document.addEventListener('DOMContentLoaded', initApp);
 } else {
-  BossBattle.init();
+  initApp();
 }
-
-updateQuizAndTimerDisplay(Phase.IDLE);
-updateDisplays();
-updateActionButtonStates();
 
 
 // --- Expose for Tests (Window) ---
@@ -1165,10 +1129,33 @@ if (typeof window !== 'undefined') {
   window.InventoryManager = InventoryManager;
   window.DailyMissionSystem = DailyMissionSystem;
   window.AchievementSystem = AchievementSystem;
+  window.AdventureSystem = AdventureSystem;
   window.RpgSystem = RpgSystem;
   window.generateQuiz = generateQuiz;
   window.finishWorkout = finishWorkout;
   window.showToast = showToast;
   window.VoiceCoach = VoiceCoach;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
+
+  // Expose internal state for testing
+  Object.defineProperty(window, 'currentQuiz', {
+    get: () => currentQuiz,
+    configurable: true
+  });
+  Object.defineProperty(window, 'sessionAttackBonus', {
+    get: () => sessionAttackBonus,
+    configurable: true
+  });
+  Object.defineProperty(window, 'userBaseAp', {
+    get: () => userBaseAp,
+    configurable: true
+  });
+  Object.defineProperty(window, 'quizSessionCorrect', {
+    get: () => quizSessionCorrect,
+    configurable: true
+  });
+  Object.defineProperty(window, 'quizSessionTotal', {
+    get: () => quizSessionTotal,
+    configurable: true
+  });
 }
