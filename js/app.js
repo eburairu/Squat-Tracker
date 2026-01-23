@@ -18,6 +18,8 @@ import { PresetManager } from './modules/preset-manager.js';
 import { AdventureSystem } from './modules/adventure-system.js';
 import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
+import { loadJson } from './modules/resource-loader.js';
+import { generateWeapons } from './data/weapons.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -845,98 +847,6 @@ const applyReducedMotionPreference = () => {
 };
 
 
-// --- Initialization ---
-
-const initializeHistory = () => {
-  historyEntries = loadHistoryEntries();
-  renderStats();
-  renderHistory();
-  initHeatmap(heatmapContainer);
-  renderHeatmap(historyEntries, heatmapContainer);
-  updateHistoryNote();
-  updateSessionStats();
-};
-
-const handleOrientation = (event) => {
-  if (!sensorMode || !sensorActive) {
-    return;
-  }
-
-  // Throttle sensor updates to ~20Hz (50ms) to reduce CPU usage and battery drain
-  const now = Date.now();
-  if (now - lastOrientationTime < 50) {
-    return;
-  }
-  lastOrientationTime = now;
-
-  const beta = event.beta;
-  if (beta === null || beta === undefined) {
-    sensorStatus.textContent = '角度データを取得できません。';
-    return;
-  }
-  if (sensorBaseline === null) {
-    sensorBaseline = beta;
-    sensorThreshold = beta - 60;
-    sensorStatus.textContent = `基準角度を記録しました: ${Math.round(beta)}°`;
-  }
-
-  const depthReached = beta <= sensorThreshold;
-  if (depthReached && !lastSensorCounted) {
-    lastSensorCounted = true;
-    currentRep = Math.min(currentRep + 1, repsPerSet);
-    repDisplay.textContent = `${currentRep} / ${repsPerSet}`;
-    updateSessionStats();
-    beep(700, 120);
-    performAttack();
-    if (currentRep >= repsPerSet) {
-      nextRepOrSet();
-      lastSensorCounted = false;
-    }
-  }
-
-  if (!depthReached) {
-    lastSensorCounted = false;
-  }
-};
-
-const enableSensor = async () => {
-  if (typeof DeviceOrientationEvent === 'undefined') {
-    sensorStatus.textContent = 'この端末ではセンサーを利用できません。';
-    sensorToggle.checked = false;
-    sensorMode = false;
-    return;
-  }
-  if (DeviceOrientationEvent.requestPermission) {
-    const permission = await DeviceOrientationEvent.requestPermission();
-    if (permission !== 'granted') {
-      sensorStatus.textContent = 'センサー利用が許可されませんでした。';
-      sensorToggle.checked = false;
-      sensorMode = false;
-      return;
-    }
-  }
-  sensorMode = true;
-  sensorActive = true;
-  sensorBaseline = null;
-  sensorThreshold = null;
-  lastSensorCounted = false;
-  sensorCalibrateButton.disabled = false;
-  sensorStatus.textContent = 'センサー準備完了。逆さまに固定してしゃがむとカウントされます。';
-  window.addEventListener('deviceorientation', handleOrientation);
-};
-
-const disableSensor = () => {
-  sensorMode = false;
-  sensorActive = false;
-  sensorBaseline = null;
-  sensorThreshold = null;
-  lastSensorCounted = false;
-  sensorCalibrateButton.disabled = true;
-  sensorStatus.textContent = '未使用';
-  window.removeEventListener('deviceorientation', handleOrientation);
-};
-
-
 // --- Quiz Logic ---
 
 const updateQuizAndTimerDisplay = (phaseKey) => {
@@ -1156,35 +1066,61 @@ sensorCalibrateButton.addEventListener('click', () => {
 
 // --- Bootstrap ---
 
-applyReducedMotionPreference();
-initializeTheme();
-initializeVoiceCoach();
-initializeWorkoutSettings();
-initializePresets();
-initializeHistory();
+const initializeHistory = () => {
+  historyEntries = loadHistoryEntries();
+  renderStats();
+  renderHistory();
+  initHeatmap(heatmapContainer);
+  renderHeatmap(historyEntries, heatmapContainer);
+  updateHistoryNote();
+  updateSessionStats();
+};
 
-AchievementSystem.init({
-  onHistoryTabSelected: () => {
-    requestAnimationFrame(() => renderHeatmap(historyEntries, heatmapContainer));
-  }
-});
-DataManager.init();
-InventoryManager.init();
-DailyMissionSystem.init();
+const initApp = async () => {
+  // Load external data first
+  const [achievementsData, baseWeaponsData] = await Promise.all([
+    loadJson('js/data/achievements.json'),
+    loadJson('js/data/base-weapons.json')
+  ]);
+
+  // Apply data to systems
+
+  applyReducedMotionPreference();
+  initializeTheme();
+  initializeVoiceCoach();
+  initializeWorkoutSettings();
+  initializePresets();
+  initializeHistory();
+
+  AchievementSystem.init({
+    achievementsData, // Pass loaded data
+    onHistoryTabSelected: () => {
+      requestAnimationFrame(() => renderHeatmap(historyEntries, heatmapContainer));
+    }
+  });
+
+  DataManager.init();
+
+  // Initialize Weapon System with data
+  const weaponsMap = generateWeapons(baseWeaponsData);
+  InventoryManager.init(weaponsMap); // Inject weapon definitions
+
+  // Initialize systems dependent on weapon data
+  DailyMissionSystem.init({ baseWeaponsData, weaponsMap });
+  BossBattle.init({ baseWeaponsData, weaponsMap });
+
+  AdventureSystem.init();
+
+  updateQuizAndTimerDisplay(Phase.IDLE);
+  updateDisplays();
+  updateActionButtonStates();
+};
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    BossBattle.init();
-    AdventureSystem.init();
-  });
+  document.addEventListener('DOMContentLoaded', initApp);
 } else {
-  BossBattle.init();
-  AdventureSystem.init();
+  initApp();
 }
-
-updateQuizAndTimerDisplay(Phase.IDLE);
-updateDisplays();
-updateActionButtonStates();
 
 
 // --- Expose for Tests (Window) ---

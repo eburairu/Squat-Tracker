@@ -1,5 +1,5 @@
-import { RARITY_SETTINGS, BASE_WEAPONS } from '../constants.js';
-import { WEAPONS } from '../data/weapons.js';
+import { RARITY_SETTINGS } from '../constants.js';
+// import { WEAPONS } from '../data/weapons.js'; // REMOVED
 import { InventoryManager } from './inventory-manager.js';
 import { isStorageAvailable, getLocalDateKey, getRandomInt, showToast } from '../utils.js';
 
@@ -14,12 +14,17 @@ const MISSION_TYPES = [
 ];
 
 export const DailyMissionSystem = {
+  baseWeaponsData: [],
+  weaponsMap: {},
   state: {
     lastUpdated: null,
     missions: []
   },
 
-  init() {
+  init(options = {}) {
+    if (options.baseWeaponsData) this.baseWeaponsData = options.baseWeaponsData;
+    if (options.weaponsMap) this.weaponsMap = options.weaponsMap;
+
     this.load();
     this.checkDailyReset();
     // Check login mission
@@ -160,10 +165,19 @@ export const DailyMissionSystem = {
         message: message,
         sound: true
       });
+    } else {
+        // Fallback if no weapon (should not happen if data loaded)
+         showToast({
+            emoji: '⚠️',
+            title: '報酬エラー',
+            message: '武器データの読み込みに失敗しました。',
+         });
     }
   },
 
   lotteryWeapon() {
+    if (!this.baseWeaponsData || this.baseWeaponsData.length === 0) return null;
+
     // 1. Select Rarity
     const rarityPool = Object.values(RARITY_SETTINGS);
     const totalRarityWeight = rarityPool.reduce((sum, r) => sum + r.weight, 0);
@@ -179,11 +193,12 @@ export const DailyMissionSystem = {
     }
 
     // 2. Select Base Weapon
-    const totalBaseWeight = BASE_WEAPONS.reduce((sum, w) => sum + w.weight, 0);
+    // Use injected baseWeaponsData
+    const totalBaseWeight = this.baseWeaponsData.reduce((sum, w) => sum + w.weight, 0);
     let bRandom = Math.random() * totalBaseWeight;
-    let selectedBase = BASE_WEAPONS[0];
+    let selectedBase = this.baseWeaponsData[0];
 
-    for (const w of BASE_WEAPONS) {
+    for (const w of this.baseWeaponsData) {
       bRandom -= w.weight;
       if (bRandom <= 0) {
         selectedBase = w;
@@ -192,7 +207,7 @@ export const DailyMissionSystem = {
     }
 
     const weaponId = `${selectedBase.id}_r${selectedRarity}`;
-    const weapon = WEAPONS[weaponId];
+    const weapon = this.weaponsMap[weaponId];
 
     if (weapon && typeof InventoryManager !== 'undefined') {
       return InventoryManager.addWeapon(weaponId);
