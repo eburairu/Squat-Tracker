@@ -29,13 +29,3 @@ export const RARITY_SETTINGS = {
   4: { weight: 45, multiplier: 3.5, name: 'Epic' },
   5: { weight: 5, multiplier: 6.0, name: 'Legendary' }
 };
-
-export const BASE_WEAPONS = [
-  { id: 'wood_sword', name: 'ひのきの棒', emoji: '🪵', baseAtk: 2, weight: 50 },
-  { id: 'club', name: 'こん棒', emoji: '🦴', baseAtk: 3, weight: 40 },
-  { id: 'stone_axe', name: '石の斧', emoji: '🪓', baseAtk: 6, weight: 25 },
-  { id: 'iron_sword', name: '鉄の剣', emoji: '⚔️', baseAtk: 12, weight: 20 },
-  { id: 'steel_hammer', name: '鋼のハンマー', emoji: '🔨', baseAtk: 20, weight: 10 },
-  { id: 'flame_sword', name: '炎の剣', emoji: '🔥', baseAtk: 35, weight: 3 },
-  { id: 'hero_sword', name: '勇者の剣', emoji: '🗡️', baseAtk: 50, weight: 1 },
-];
