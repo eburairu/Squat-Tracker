@@ -1,0 +1,115 @@
+name: Auto Release and Tag
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine Version Bump
+        id: version
+        run: |
+          # [Unreleased]セクションを抽出 (最初の '## [Unreleased]' から次の '## [' まで)
+          # 注意: head -n -1 で最後の行（次のセクションのヘッダー）を取り除く
+          sed -n '/## \[Unreleased\]/,/## \[/p' CHANGELOG.md | head -n -1 > unreleased_diff.txt
+
+          echo "Debug: Content of unreleased_diff.txt:"
+          cat unreleased_diff.txt
+
+          # 変更タイプを判定 (日本語ヘッダー対応)
+          if grep -q "BREAKING CHANGE" unreleased_diff.txt || grep -q "### 削除" unreleased_diff.txt; then
+            echo "bump=major" >> $GITHUB_OUTPUT
+            echo "Debug: Detected MAJOR change"
+          elif grep -q "### 追加" unreleased_diff.txt; then
+            echo "bump=minor" >> $GITHUB_OUTPUT
+            echo "Debug: Detected MINOR change"
+          else
+            echo "bump=patch" >> $GITHUB_OUTPUT
+            echo "Debug: Detected PATCH change"
+          fi
+
+      - name: Get Current Version
+        id: current
+        run: |
+          # 最新タグを取得
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Calculate New Version
+        id: new_version
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          BUMP="${{ steps.version.outputs.bump }}"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          if [ "$BUMP" = "major" ]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [ "$BUMP" = "minor" ]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update CHANGELOG
+        run: |
+          VERSION="${{ steps.new_version.outputs.version }}"
+          DATE=$(date +%Y-%m-%d)
+
+          # [Unreleased]をバージョン番号に置換
+          sed -i "s/## \[Unreleased\]/## [$VERSION] - $DATE/" CHANGELOG.md
+
+          # 新しい[Unreleased]セクションを追加
+          sed -i "/## \[$VERSION\]/i ## [Unreleased]\n" CHANGELOG.md
+
+      - name: Commit CHANGELOG
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore: update CHANGELOG for v${{ steps.new_version.outputs.version }}"
+          git push
+
+      - name: Create Git Tag
+        run: |
+          VERSION="${{ steps.new_version.outputs.version }}"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Extract Release Notes
+        run: |
+          # CHANGELOGから最新バージョンのノートを抽出
+          VERSION="${{ steps.new_version.outputs.version }}"
+          sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | head -n -1 > .github/release-notes.md
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.new_version.outputs.version }}
+          release_name: Release v${{ steps.new_version.outputs.version }}
+          body_path: .github/release-notes.md
+          draft: false
+          prerelease: false
