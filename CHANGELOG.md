@@ -6,6 +6,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-01-23
+
 ### 追加 (Added)
 - 自動リリースとタグ付けを行うGitHub Actionsワークフロー (`release.yml`) を追加。
 - CHANGELOG管理とバージョン運用ガイドラインを制定。
