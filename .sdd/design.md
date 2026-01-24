@@ -7,6 +7,7 @@ The application uses a **Singleton-based Modular Architecture** implemented via 
 - **`app.js`**: Entry point. Orchestrates the application lifecycle, DOM events, and sensor logic.
 - **`WorkoutTimer`**: Manages the workout state machine (Countdown -> Down -> Hold -> Up -> Rest).
 - **`VoiceCoach`**: Handles text-to-speech synthesis.
+- **`AdventureSystem`**: Manages world map progression and integrates background based on current area.
 - **`BossBattle`**: Manages RPG logic (Monster state, HP, Damage).
 - **`RpgSystem`**: Handles core RPG calculations (Level, Attack Power, Damage).
 - **`InventoryManager`**: Manages weapon collection, upgrades, and equipment.
@@ -24,6 +25,7 @@ All data is persisted in `localStorage` with the prefix `squat-tracker-`.
 | :--- | :--- | :--- |
 | `squat-tracker-history-v1` | List of completed sessions | Array of `{ date, totalReps, durations... }` |
 | `squat-tracker-achievements` | Unlocked badges | Object `{ unlocked: [badgeId, ...], ... }` |
+| `squat-tracker-adventure` | Adventure mode state | Object `{ currentAreaIndex, currentNodeIndex }` |
 | `squat-tracker-boss-v1` | Boss battle state | Object `{ currentMonster, totalKills, ... }` |
 | `squat-tracker-inventory` | Weapon inventory | Object `{ equippedId, items: { id: { level } } }` |
 | `squat-tracker-missions` | Daily missions state | Object `{ lastUpdated, missions: [...] }` |
@@ -42,6 +44,16 @@ All data is persisted in `localStorage` with the prefix `squat-tracker-`.
 - **Dark/Light Theme**: CSS variables (`--bg-color`, etc.) controlled by a toggle.
 
 ## 4. Key Feature Designs
+
+### Adventure Mode (World Map)
+- **Concept**: Sugoroku-style progression map where the user advances by defeating bosses.
+- **Structure**: World consists of multiple Areas (e.g., Grassland, Forest), each having multiple Nodes.
+- **Visuals**:
+  - Background changes dynamically based on the current Area theme.
+  - Progress UI shows the avatar moving between nodes.
+- **Progression**:
+  - Defeating a boss triggers `AdventureSystem.advance()`.
+  - Clearing all nodes in an area unlocks the next area.
 
 ### Boss Battle
 - **Logic**: Damage = (Base AP + Weapon Bonus) * (Critical ? 2 : 1).
