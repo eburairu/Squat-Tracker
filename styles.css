@@ -230,7 +230,7 @@ h2 {
 }
 
 .timer-value {
-  font-size: 5rem;
+  font-size: 3rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -372,9 +372,9 @@ button {
   cursor: pointer;
   border: none;
   border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.9rem;
   transition: all 0.2s;
   font-family: inherit;
 }
@@ -1170,9 +1170,9 @@ input:checked + .slider:before {
 }
 
 .adventure-status {
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px dashed var(--border-color);
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
 }
 
 .adventure-info {
