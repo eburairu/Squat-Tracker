@@ -12,3 +12,18 @@
 6. `/sdd-archive` — まとめと振り返りを記録し、成果を共有します。
 
 後からプロンプトや本ガイドを更新したい場合は `npx spec-driven-codex init` を再実行するか、`npx spec-driven-codex upgrade` で最新テンプレートを強制適用してください。
+
+---
+
+## Antigravity対応
+
+スキルファイルはYAMLフロントマター形式に対応しており、Antigravity（Claude/Gemini系AIエージェント）からも利用可能です。
+
+```yaml
+---
+name: sdd-steering
+description: プロジェクトの全体像を把握する
+---
+```
+
+Antigravityでスキルを使用する場合は、`.agent/skills/[skill-name]/SKILL.md` を `view_file` で読み込み、記載された手順に従ってください。

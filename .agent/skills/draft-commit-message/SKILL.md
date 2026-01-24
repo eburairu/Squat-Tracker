@@ -1,7 +1,8 @@
-# draft-commit-message
+---
+name: draft-commit-message
+description: ステージングされた変更内容からConventional Commitsに準拠したコミットメッセージ案を生成する。
+---
 
-## Description
-ステージングされた変更内容から Conventional Commits に準拠したコミットメッセージ案を生成する。
 Trigger examples: "コミットメッセージ作って", "コミット作成", "commit changes", "commit message draft", "コミット案", "generate commit message"
 
 ## 手順

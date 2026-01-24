@@ -1,7 +1,8 @@
-# sdd-highway
+---
+name: sdd-highway
+description: 要件定義書を基に、設計・タスクリストを省略して直接実装と記録を行う高速開発モード。
+---
 
-## Description
-要件定義書 (`requirements.md`) を基に、詳細設計書 (`design.md`) やタスクリスト (`tasks.md`) の作成手順を省略し、直接実装と記録を行う高速開発モード。小規模な機能追加、バグ修正、プロトタイピングに適している。
 Trigger examples: "一気に実装", "高速開発", "highway mode", "implement fast", "急ぎで実装", "サクッと修正", "fast track"
 
 ## ステップ1：前提確認

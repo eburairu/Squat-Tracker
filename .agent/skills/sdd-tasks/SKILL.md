@@ -1,7 +1,8 @@
-# sdd-tasks
+---
+name: sdd-tasks
+description: 設計書に基づき実装タスクを分解し、タスクリスト（tasks.md）を作成する。
+---
 
-## Description
-設計書に基づき実装タスクを分解し、タスクリスト（tasks.md）を作成する。
 Trigger examples: "タスク分解", "タスク出し", "実装計画", "break down tasks", "create task list", "タスクリスト作成", "TODO作成"
 
 ## 前提確認とspec特定

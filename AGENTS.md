@@ -33,11 +33,24 @@
 
 ## 共有スキルカタログ
 
-共有スキルは `.codex/skills/` にある。該当するスキルを使うときは次の手順に従うこと。
+共有スキルは `.agent/skills/` にある。Codex CLIおよびAntigravityの両方で使用可能。
 
-1. 対応する `SKILL.md` を開く。
+### スキルの利用手順
+
+1. 対応する `SKILL.md` を開く（`.agent/skills/[skill-name]/SKILL.md`）。
 2. 記載された手順を厳守する。
 3. 指定された出力形式で回答する。
+
+### スキル形式
+
+各スキルはYAMLフロントマターで始まる:
+
+```yaml
+---
+name: [skill-name]
+description: [説明]
+---
+```
 
 利用可能なスキル:
 

@@ -1,7 +1,8 @@
-# sdd-archive
+---
+name: sdd-archive
+description: 完了した仕様（spec）をアーカイブし、開発サイクルをクローズする。
+---
 
-## Description
-完了した仕様（spec）をアーカイブし、開発サイクルをクローズする。
 Trigger examples: "開発完了", "タスク完了", "クローズ", "archive spec", "close feature", "specアーカイブ"
 
 ## ステップ1：対象specの確認
