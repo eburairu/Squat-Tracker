@@ -1,7 +1,8 @@
-# pr-review-checklist
+---
+name: pr-review-checklist
+description: Pull Requestのレビュー観点を標準化し、見落としを防ぐためのチェックリストを提供する。
+---
 
-## Description
-Pull Request のレビュー観点を標準化し、見落としを防ぐためのチェックリストを提供する。
 Trigger examples: "レビューして", "PR見て", "コードレビュー", "PRチェック", "code review", "プルリク確認", "review changes"
 
 ## 手順

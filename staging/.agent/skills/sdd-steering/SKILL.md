@@ -1,7 +1,8 @@
-# sdd-steering
+---
+name: sdd-steering
+description: プロジェクトの全体像を把握し、SDDプロセスのための基本ドキュメント（Product, Tech, Structure）を生成・更新する。
+---
 
-## Description
-プロジェクトの全体像を把握し、SDDプロセスのための基本ドキュメント（Product, Tech, Structure）を生成・更新する。
 Trigger examples: "プロジェクト分析", "ステアリング作成", "プロジェクト初期化", "init sdd", "analyze project", "プロジェクト把握", "start sdd"
 
 ## ステップ0：ステアリング情報の確認と読み込み

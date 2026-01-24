@@ -1,7 +1,8 @@
-# sdd-design
+---
+name: sdd-design
+description: 要件に基づき実装方針や技術設計を固め、設計書（design.md）を作成する。
+---
 
-## Description
-要件に基づき実装方針や技術設計を固め、設計書（design.md）を作成する。
 Trigger examples: "設計して", "設計書作成", "アーキテクチャ設計", "design system", "create design doc", "技術設計"
 
 ## 前提確認とspec特定

@@ -1,10 +1,12 @@
-# web-design-guidelines
+---
+name: web-design-guidelines
+description: Vercel Web Interface Guidelinesに準拠しているかUIコードをレビューする。
+---
 
-## Description
-Vercel Web Interface Guidelines に準拠しているか UI コードをレビューする。
 Trigger examples: "デザインチェックして", "ガイドライン確認", "UIレビュー", "web design check"
 
 ## 手順
+
 指定されたファイル（またはファイルパターン）を読み込み、以下のルールと照らし合わせる。
 簡潔かつ包括的に指摘すること。文法よりも簡潔さを重視し、ノイズを減らして重要な情報を伝えること。
 

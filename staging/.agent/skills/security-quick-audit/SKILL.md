@@ -1,7 +1,8 @@
-# security-quick-audit
+---
+name: security-quick-audit
+description: 変更差分に対する簡易セキュリティ監査を行い、リスクを洗い出す。
+---
 
-## Description
-変更差分に対する簡易セキュリティ監査を行い、リスクを洗い出す。
 Trigger examples: "脆弱性チェック", "セキュリティ診断", "security audit", "security check", "セキュリティチェック", "リスク評価"
 
 ## 手順
