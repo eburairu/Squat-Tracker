@@ -16,6 +16,7 @@ import { AchievementSystem } from './modules/achievement-system.js';
 import { DataManager } from './modules/data-manager.js';
 import { PresetManager } from './modules/preset-manager.js';
 import { AdventureSystem } from './modules/adventure-system.js';
+import { TitleManager } from './modules/title-manager.js';
 import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
 import { loadJson } from './modules/resource-loader.js';
@@ -1078,9 +1079,10 @@ const initializeHistory = () => {
 
 const initApp = async () => {
   // Load external data first
-  const [achievementsData, baseWeaponsData] = await Promise.all([
+  const [achievementsData, baseWeaponsData, titlesData] = await Promise.all([
     loadJson('js/data/achievements.json'),
-    loadJson('js/data/base-weapons.json')
+    loadJson('js/data/base-weapons.json'),
+    loadJson('js/data/titles.json')
   ]);
 
   // Apply data to systems
@@ -1109,6 +1111,7 @@ const initApp = async () => {
   DailyMissionSystem.init({ baseWeaponsData, weaponsMap });
   BossBattle.init({ baseWeaponsData, weaponsMap });
 
+  TitleManager.init(titlesData);
   AdventureSystem.init();
 
   updateQuizAndTimerDisplay(Phase.IDLE);
@@ -1130,6 +1133,7 @@ if (typeof window !== 'undefined') {
   window.DailyMissionSystem = DailyMissionSystem;
   window.AchievementSystem = AchievementSystem;
   window.AdventureSystem = AdventureSystem;
+  window.TitleManager = TitleManager;
   window.RpgSystem = RpgSystem;
   window.generateQuiz = generateQuiz;
   window.finishWorkout = finishWorkout;

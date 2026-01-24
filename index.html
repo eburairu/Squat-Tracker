@@ -23,7 +23,7 @@
             <span id="theme-status" class="switch-label">ライト</span>
           </label>
         </div>
-        <p class="eyebrow">Squat Tracker</p>
+        <p id="user-title-display" class="eyebrow">Squat Tracker</p>
         <h1>Rhythm. Depth. Flow.</h1>
         <p class="subtitle">スクワットでボスを討伐。毎日のトレーニングをRPGに。</p>
       </div>
@@ -313,6 +313,9 @@
       </div>
 
       <div id="tab-achievements" class="tab-content">
+        <div style="margin-bottom: 1rem; text-align: right;">
+           <button id="open-title-settings" class="ghost small">🏷️ 称号設定</button>
+        </div>
         <div id="badge-grid" class="badge-grid">
           <!-- Badges will be rendered here -->
         </div>
@@ -337,6 +340,35 @@
         <ul id="weapon-list" class="weapon-list">
           <!-- Items injected by JS -->
         </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="title-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="title-modal-title">
+      <div class="modal-header">
+        <h2 id="title-modal-title">称号設定</h2>
+        <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="title-preview-container" style="text-align: center; margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-card); border-radius: var(--radius-md);">
+           <p class="eyebrow" style="margin-bottom: 0.5rem; font-size: 0.75rem;">PREVIEW</p>
+           <h3 id="title-preview-text" style="font-size: 1.5rem; color: var(--text-primary);">Squat Tracker</h3>
+        </div>
+        <div class="title-selectors" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+           <div class="selector-group" style="flex: 1; min-width: 140px;">
+             <label for="prefix-select" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem;">形容詞 (Prefix)</label>
+             <select id="prefix-select" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary);"></select>
+           </div>
+           <div class="selector-group" style="flex: 1; min-width: 140px;">
+             <label for="suffix-select" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem;">名詞 (Suffix)</label>
+             <select id="suffix-select" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary);"></select>
+           </div>
+        </div>
+        <div class="modal-actions" style="margin-top: 1.5rem; text-align: center;">
+           <button id="save-title-button" class="primary">決定</button>
+        </div>
       </div>
     </div>
   </div>

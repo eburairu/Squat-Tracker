@@ -1,0 +1,26 @@
+{
+  "prefixes": [
+    { "id": "p_beginner", "text": "駆け出しの" },
+    { "id": "p_steady", "text": "コツコツ派の" },
+    { "id": "p_strong", "text": "力強い" },
+    { "id": "p_legendary", "text": "伝説の" },
+    { "id": "p_muscle", "text": "筋肉の" },
+    { "id": "p_early_bird", "text": "早起きの" },
+    { "id": "p_night_owl", "text": "夜更かし" },
+    { "id": "p_smart", "text": "知的な" },
+    { "id": "p_stoic", "text": "ストイックな" },
+    { "id": "p_speedy", "text": "光速の" }
+  ],
+  "suffixes": [
+    { "id": "s_trainee", "text": "見習い" },
+    { "id": "s_squatter", "text": "スクワッター" },
+    { "id": "s_adventurer", "text": "冒険者" },
+    { "id": "s_hero", "text": "英雄" },
+    { "id": "s_champion", "text": "チャンピオン" },
+    { "id": "s_master", "text": "マスター" },
+    { "id": "s_warrior", "text": "戦士" },
+    { "id": "s_guardian", "text": "守護者" },
+    { "id": "s_scholar", "text": "学者" },
+    { "id": "s_artist", "text": "アーティスト" }
+  ]
+}

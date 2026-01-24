@@ -7,6 +7,10 @@
     "condition": {
       "type": "TOTAL_WORKOUTS",
       "value": 1
+    },
+    "rewards": {
+      "titlePrefix": "p_beginner",
+      "titleSuffix": "s_trainee"
     }
   },
   {
@@ -17,6 +21,9 @@
     "condition": {
       "type": "STREAK",
       "value": 3
+    },
+    "rewards": {
+      "titlePrefix": "p_steady"
     }
   },
   {
@@ -27,6 +34,9 @@
     "condition": {
       "type": "STREAK",
       "value": 7
+    },
+    "rewards": {
+      "titleSuffix": "s_champion"
     }
   },
   {
@@ -37,6 +47,9 @@
     "condition": {
       "type": "STREAK",
       "value": 30
+    },
+    "rewards": {
+      "titleSuffix": "s_squatter"
     }
   },
   {
@@ -47,6 +60,9 @@
     "condition": {
       "type": "STREAK",
       "value": 100
+    },
+    "rewards": {
+      "titleSuffix": "s_master"
     }
   },
   {
@@ -67,6 +83,9 @@
     "condition": {
       "type": "TOTAL_REPS",
       "value": 500
+    },
+    "rewards": {
+      "titleSuffix": "s_adventurer"
     }
   },
   {
@@ -77,6 +96,9 @@
     "condition": {
       "type": "TOTAL_REPS",
       "value": 1000
+    },
+    "rewards": {
+      "titleSuffix": "s_warrior"
     }
   },
   {
@@ -87,6 +109,9 @@
     "condition": {
       "type": "TOTAL_REPS",
       "value": 5000
+    },
+    "rewards": {
+      "titlePrefix": "p_muscle"
     }
   },
   {
@@ -97,6 +122,10 @@
     "condition": {
       "type": "TOTAL_REPS",
       "value": 10000
+    },
+    "rewards": {
+      "titlePrefix": "p_legendary",
+      "titleSuffix": "s_hero"
     }
   },
   {
@@ -137,6 +166,9 @@
     "condition": {
       "type": "EVENT",
       "name": "critical"
+    },
+    "rewards": {
+      "titlePrefix": "p_smart"
     }
   },
   {
@@ -147,6 +179,9 @@
     "condition": {
       "type": "LEVEL",
       "value": 10
+    },
+    "rewards": {
+      "titlePrefix": "p_strong"
     }
   },
   {
@@ -168,6 +203,9 @@
       "key": "restDuration",
       "operator": "<=",
       "value": 15
+    },
+    "rewards": {
+      "titlePrefix": "p_stoic"
     }
   },
   {
@@ -181,6 +219,9 @@
         { "type": "SETTING_VAL", "key": "downDuration", "operator": ">=", "value": 3 },
         { "type": "SETTING_VAL", "key": "upDuration", "operator": ">=", "value": 3 }
       ]
+    },
+    "rewards": {
+      "titleSuffix": "s_guardian"
     }
   },
   {
@@ -211,6 +252,9 @@
     "condition": {
       "type": "PRESET_COUNT",
       "value": 3
+    },
+    "rewards": {
+      "titleSuffix": "s_artist"
     }
   },
   {
@@ -221,6 +265,9 @@
     "condition": {
       "type": "EVENT",
       "name": "backup"
+    },
+    "rewards": {
+      "titleSuffix": "s_scholar"
     }
   },
   {
@@ -262,6 +309,9 @@
       "type": "TIME_RANGE",
       "startHour": 4,
       "endHour": 8
+    },
+    "rewards": {
+      "titlePrefix": "p_early_bird"
     }
   },
   {
@@ -273,6 +323,9 @@
       "type": "TIME_RANGE_OVERNIGHT",
       "startHour": 22,
       "endHour": 2
+    },
+    "rewards": {
+      "titlePrefix": "p_night_owl"
     }
   },
   {
@@ -305,6 +358,9 @@
       "key": "repCount",
       "operator": "==",
       "value": 7
+    },
+    "rewards": {
+      "titlePrefix": "p_speedy"
     }
   }
 ]
