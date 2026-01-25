@@ -1,0 +1,46 @@
+[
+  {
+    "id": "novice",
+    "name": "冒険者",
+    "description": "基本のクラス。特別な能力はないが、全ての基礎となる。",
+    "emoji": "🌱",
+    "modifiers": {
+      "attackMultiplier": 1.0,
+      "quizMultiplier": 1.0,
+      "criticalRateBonus": 0.0
+    }
+  },
+  {
+    "id": "warrior",
+    "name": "戦士",
+    "description": "鍛え上げられた肉体で強力な一撃を放つ。",
+    "emoji": "⚔️",
+    "modifiers": {
+      "attackMultiplier": 1.2,
+      "quizMultiplier": 1.0,
+      "criticalRateBonus": 0.0
+    }
+  },
+  {
+    "id": "mage",
+    "name": "魔法使い",
+    "description": "知識を魔力に変え、クイズ正解時の力を高める。",
+    "emoji": "杖",
+    "modifiers": {
+      "attackMultiplier": 1.0,
+      "quizMultiplier": 2.0,
+      "criticalRateBonus": 0.0
+    }
+  },
+  {
+    "id": "rogue",
+    "name": "盗賊",
+    "description": "運を味方につけ、クリティカルヒットを狙う。",
+    "emoji": "🎲",
+    "modifiers": {
+      "attackMultiplier": 1.0,
+      "quizMultiplier": 1.0,
+      "criticalRateBonus": 0.2
+    }
+  }
+]
