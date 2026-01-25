@@ -49,6 +49,11 @@
             <span id="stats-rank" class="stat-value">--</span>
             <span class="stat-unit">level / ap</span>
           </div>
+          <div class="stat-card clickable" id="open-class-settings" role="button" tabindex="0" aria-label="クラス変更">
+            <span class="stat-label">クラス</span>
+            <span id="current-class-icon" class="stat-value" style="font-size: 2rem; line-height: 1;">🌱</span>
+            <span class="stat-unit">change</span>
+          </div>
         </div>
         <div id="adventure-status" class="adventure-status">
           <!-- Adventure Progress Rendered Here -->
@@ -368,6 +373,21 @@
         </div>
         <div class="modal-actions" style="margin-top: 1.5rem; text-align: center;">
            <button id="save-title-button" class="primary">決定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="class-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1"></div>
+    <div class="modal-content wide" role="dialog" aria-modal="true" aria-labelledby="class-modal-title">
+      <div class="modal-header">
+        <h2 id="class-modal-title">クラスチェンジ</h2>
+        <button class="ghost small close-modal" id="close-class-modal" aria-label="閉じる">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="class-list" class="class-list">
+          <!-- Class Cards injected by JS -->
         </div>
       </div>
     </div>
