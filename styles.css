@@ -1346,3 +1346,151 @@ input:checked + .slider:before {
   padding: 0.2rem 0.5rem;
   border-radius: 9999px;
 }
+
+/* Share Modal & Card */
+.share-modal-content {
+    max-width: 90%;
+    width: 700px;
+}
+
+.share-preview-wrapper {
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 10px 0;
+    position: relative;
+    transition: height 0.2s;
+}
+
+.share-card {
+    width: 600px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 4px solid #f1c40f; /* Gold border */
+    border-radius: 12px;
+    padding: 24px;
+    box-sizing: border-box;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin: 0 auto;
+}
+
+.sc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+
+.sc-app-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #f1c40f;
+    letter-spacing: 2px;
+}
+
+.sc-date {
+    font-size: 1rem;
+    color: #aaa;
+}
+
+.sc-hero {
+    text-align: center;
+    margin-bottom: 24px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.sc-boss-emoji {
+    font-size: 5rem;
+    margin-bottom: 8px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
+}
+
+.sc-vs {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.sc-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.sc-stat {
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+}
+
+.sc-stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #ccc;
+    margin-bottom: 4px;
+}
+
+.sc-stat-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #e94560;
+}
+
+.sc-equipment {
+    margin-bottom: 24px;
+}
+
+.sc-item {
+    display: flex;
+    align-items: center;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.sc-icon {
+    font-size: 2rem;
+    margin-right: 16px;
+    width: 48px;
+    text-align: center;
+}
+
+.sc-info {
+    flex: 1;
+}
+
+.sc-label {
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+.sc-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.sc-footer {
+    text-align: right;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 12px;
+}
+
+.share-note {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 12px;
+    text-align: center;
+}
