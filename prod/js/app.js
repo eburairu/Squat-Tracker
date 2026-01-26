@@ -16,6 +16,8 @@ import { AchievementSystem } from './modules/achievement-system.js';
 import { DataManager } from './modules/data-manager.js';
 import { PresetManager } from './modules/preset-manager.js';
 import { AdventureSystem } from './modules/adventure-system.js';
+import { TitleManager } from './modules/title-manager.js';
+import { ClassManager } from './modules/class-manager.js';
 import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
 import { loadJson } from './modules/resource-loader.js';
@@ -353,12 +355,15 @@ const updateDisplays = () => {
 
 const performAttack = () => {
   const weaponBonus = typeof InventoryManager !== 'undefined' ? InventoryManager.getAttackBonus() : 0;
+  const classMods = ClassManager.getModifiers();
 
   // Use critical flag from current quiz if available
   const forceCritical = currentQuiz && currentQuiz.isCritical;
 
-  const totalAttackPower = userBaseAp + weaponBonus + sessionAttackBonus;
-  const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical);
+  const rawAttackPower = userBaseAp + weaponBonus + sessionAttackBonus;
+  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier);
+
+  const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical, classMods.criticalRateBonus);
   BossBattle.damage(damage.amount, damage.isCritical);
 
   // Note: sessionAttackBonus is now cumulative and NOT reset here.
@@ -905,7 +910,8 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
 
       if (isCorrect) {
         if (quizMode === 'cooperative') {
-          sessionAttackBonus += 1;
+          const classMods = ClassManager.getModifiers();
+          sessionAttackBonus += 1 * classMods.quizMultiplier;
           showToast({ emoji: '⚔️', title: 'Bonus!', message: '攻撃力UP!' });
         } else {
           // Disruptive Mode: Correct answer means successful block
@@ -1078,9 +1084,11 @@ const initializeHistory = () => {
 
 const initApp = async () => {
   // Load external data first
-  const [achievementsData, baseWeaponsData] = await Promise.all([
+  const [achievementsData, baseWeaponsData, titlesData, classesData] = await Promise.all([
     loadJson('js/data/achievements.json'),
-    loadJson('js/data/base-weapons.json')
+    loadJson('js/data/base-weapons.json'),
+    loadJson('js/data/titles.json'),
+    loadJson('js/data/classes.json')
   ]);
 
   // Apply data to systems
@@ -1109,7 +1117,9 @@ const initApp = async () => {
   DailyMissionSystem.init({ baseWeaponsData, weaponsMap });
   BossBattle.init({ baseWeaponsData, weaponsMap });
 
+  TitleManager.init(titlesData);
   AdventureSystem.init();
+  ClassManager.init(classesData);
 
   updateQuizAndTimerDisplay(Phase.IDLE);
   updateDisplays();
@@ -1130,6 +1140,8 @@ if (typeof window !== 'undefined') {
   window.DailyMissionSystem = DailyMissionSystem;
   window.AchievementSystem = AchievementSystem;
   window.AdventureSystem = AdventureSystem;
+  window.TitleManager = TitleManager;
+  window.ClassManager = ClassManager;
   window.RpgSystem = RpgSystem;
   window.generateQuiz = generateQuiz;
   window.finishWorkout = finishWorkout;

@@ -3,6 +3,7 @@ import { VoiceCoach } from './voice-coach.js';
 import { RpgSystem } from './rpg-system.js';
 import { computeStreak, computeStats, isStorageAvailable, showToast } from '../utils.js';
 import { BossBattle } from './boss-battle.js';
+import { TitleManager } from './title-manager.js';
 
 const ACHIEVEMENTS_KEY = 'squat-tracker-achievements';
 
@@ -26,6 +27,20 @@ export const AchievementSystem = {
     // this.defineBadges(); // Removed: Badges are now loaded from JSON
     this.setupUI();
     this.render();
+    this.checkRetroactiveRewards();
+  },
+
+  checkRetroactiveRewards() {
+      if (!this.badges || !this.unlocked) return;
+
+      Object.keys(this.unlocked).forEach(badgeId => {
+          const badge = this.getBadge(badgeId);
+          if (badge && badge.rewards) {
+              if (typeof TitleManager !== 'undefined') {
+                  TitleManager.unlock(badge.rewards.titlePrefix, badge.rewards.titleSuffix, true);
+              }
+          }
+      });
   },
 
   setupUI() {
@@ -168,6 +183,11 @@ export const AchievementSystem = {
         if (this.evaluateCondition(badge.condition, context)) {
           this.unlocked[badge.id] = Date.now();
           newUnlock = true;
+
+          if (badge.rewards) {
+             TitleManager.unlock(badge.rewards.titlePrefix, badge.rewards.titleSuffix);
+          }
+
           if (triggerContext.type === 'finish' || triggerContext.forceNotify) {
             this.showNotification(badge);
           }
