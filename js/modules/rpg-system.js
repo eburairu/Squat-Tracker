@@ -11,8 +11,8 @@ export const RpgSystem = {
     return 1 + Math.floor((level - 1) * 0.5);
   },
 
-  calculateDamage(baseAttackPower, forceCritical = false) {
-    const isCritical = forceCritical || Math.random() < 0.1; // 10% chance or forced
+  calculateDamage(baseAttackPower, forceCritical = false, criticalChanceBonus = 0) {
+    const isCritical = forceCritical || Math.random() < (0.1 + criticalChanceBonus);
     const multiplier = isCritical ? 2 : 1;
     return {
       amount: baseAttackPower * multiplier,

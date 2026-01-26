@@ -1,343 +1,399 @@
 <!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self';" />
-    <title>Squat Tracker</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div id="adventure-background" class="adventure-background"></div>
-    <main class="app">
-      <header class="hero">
-        <div class="hero-copy">
-          <div class="theme-toggle" aria-label="テーマ切替">
-            <span class="theme-label">Theme</span>
-            <label class="switch">
-              <input id="theme-toggle" type="checkbox" data-theme-toggle />
-              <span class="slider"></span>
-              <span id="theme-status" class="switch-label">ライト</span>
-            </label>
-          </div>
-          <p class="eyebrow">Squat Tracker</p>
-          <h1>Rhythm. Depth. Flow.</h1>
-          <p class="subtitle">毎日のスクワットを、ネイティブアプリのような心地よさで記録。</p>
-        </div>
-        <div class="hero-panel card reveal delay-1">
-          <div class="stat-grid">
-            <div class="stat-card">
-              <span class="stat-label">累計回数</span>
-              <span id="stats-total-reps" class="stat-value">0</span>
-              <span class="stat-unit">reps</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">累計セッション</span>
-              <span id="stats-total-workouts" class="stat-value">0</span>
-              <span class="stat-unit">sessions</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">直近の日付</span>
-              <span id="stats-last-date" class="stat-value">--</span>
-              <span class="stat-unit">last</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">現在のレベル</span>
-              <span id="stats-rank" class="stat-value">--</span>
-              <span class="stat-unit">level / ap</span>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      <section class="grid primary-grid">
-        <div class="card mission-card reveal delay-2" id="mission-card">
-          <div class="card-head">
-            <div>
-              <p class="card-eyebrow">Missions</p>
-              <h2>今日のミッション</h2>
-            </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self';" />
+  <title>Squat Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div id="adventure-background" class="adventure-background"></div>
+  <main class="app">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="theme-toggle" aria-label="テーマ切替">
+          <span class="theme-label">Theme</span>
+          <label class="switch">
+            <input id="theme-toggle" type="checkbox" data-theme-toggle />
+            <span class="slider"></span>
+            <span id="theme-status" class="switch-label">ライト</span>
+          </label>
+        </div>
+        <p id="user-title-display" class="eyebrow">Squat Tracker</p>
+        <h1>Rhythm. Depth. Flow.</h1>
+        <p class="subtitle">スクワットでボスを討伐。毎日のトレーニングをRPGに。</p>
+      </div>
+      <div class="hero-panel card reveal delay-1">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <span class="stat-label">累計回数</span>
+            <span id="stats-total-reps" class="stat-value">0</span>
+            <span class="stat-unit">reps</span>
           </div>
-          <div class="mission-list-container">
-            <ul id="mission-list" class="mission-list">
-              <li class="mission-loading">Loading missions...</li>
-            </ul>
+          <div class="stat-card">
+            <span class="stat-label">累計セッション</span>
+            <span id="stats-total-workouts" class="stat-value">0</span>
+            <span class="stat-unit">sessions</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">直近の日付</span>
+            <span id="stats-last-date" class="stat-value">--</span>
+            <span class="stat-unit">last</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">現在のレベル</span>
+            <span id="stats-rank" class="stat-value">--</span>
+            <span class="stat-unit">level / ap</span>
+          </div>
+          <div class="stat-card clickable" id="open-class-settings" role="button" tabindex="0" aria-label="クラス変更">
+            <span class="stat-label">クラス</span>
+            <span id="current-class-icon" class="stat-value" style="font-size: 2rem; line-height: 1;">🌱</span>
+            <span class="stat-unit">change</span>
           </div>
         </div>
-
-        <div class="card quiz-card reveal delay-2" id="quiz-card">
-          <div class="card-head">
-            <div>
-              <p class="card-eyebrow">Brain Training</p>
-              <h2>計算問題</h2>
-            </div>
-            <div class="quiz-stats">
-              <span class="label">正解数</span>
-              <span id="quiz-stats-display">0 / 0</span>
-            </div>
-          </div>
-          <div class="quiz-area" aria-live="polite">
-            <div id="quiz-problem" class="quiz-problem">問題: --</div>
-            <div id="quiz-options-container" class="quiz-options-container">
-              <button class="quiz-option"></button>
-              <button class="quiz-option"></button>
-              <button class="quiz-option"></button>
-              <button class="quiz-option"></button>
-            </div>
-            <div id="quiz-answer" class="quiz-answer">答え: --</div>
-          </div>
+        <div id="adventure-status" class="adventure-status">
+          <!-- Adventure Progress Rendered Here -->
         </div>
+      </div>
+    </header>
 
-        <div class="card boss-card reveal delay-2" id="boss-card">
-          <div class="card-head">
-            <div>
-              <p class="card-eyebrow">Battle</p>
-              <h2>ボスバトル</h2>
-            </div>
-            <div class="boss-kills">
-              <span class="label">討伐数</span>
-              <span id="boss-kill-count">0</span>
-            </div>
-          </div>
-          <div class="boss-display">
-            <div class="boss-avatar-wrapper">
-               <div id="boss-avatar" class="boss-avatar"></div>
-            </div>
-            <div class="boss-info">
-              <div class="boss-name-row">
-                <span id="boss-name">Loading...</span>
-                <span id="boss-hp-text">-- / --</span>
-              </div>
-              <div class="progress boss-progress">
-                <div id="boss-hp-bar" class="progress-bar" style="width: 100%"></div>
-              </div>
-              <div class="boss-actions">
-                <button id="equipment-button" class="ghost small" aria-label="装備を変更">
-                  <span style="margin-right: 4px;">⚔️</span> 装備
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card workout-card reveal delay-2">
-          <div id="adventure-status" class="adventure-status">
-            <!-- Adventure Progress Rendered Here -->
-          </div>
-          <div class="card-head">
-            <div>
-              <p class="card-eyebrow">Session</p>
-              <h2>セッションガイド</h2>
-            </div>
-            <div class="phase-chip">
-              <span class="phase-label">フェーズ</span>
-              <span id="phase-display" class="phase-value">待機中</span>
-            </div>
-          </div>
-
-          <div class="status-grid">
-            <div class="status-item">
-              <span class="label">セット</span>
-              <span id="set-display" class="value">1 / 3</span>
-            </div>
-            <div class="status-item">
-              <span class="label">回数</span>
-              <span id="rep-display" class="value">1 / 10</span>
-            </div>
-            <div class="status-item">
-              <span class="label">セッション進捗</span>
-              <span class="value"><span id="stats-session-reps">0</span> / <span id="stats-session-target">0</span></span>
-            </div>
-          </div>
-
-          <div class="timer">
-            <div id="phase-timer" class="timer-value">05</div>
-            <div id="phase-hint" class="timer-hint">スタートまでカウントダウン</div>
-            <div class="progress">
-              <div id="progress-bar" class="progress-bar"></div>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button id="start-button" class="primary" aria-label="セッションを開始" aria-pressed="false">スタート</button>
-            <button id="pause-button" aria-label="セッションを一時停止/再開" aria-pressed="false">一時停止</button>
-            <button id="reset-button" class="ghost" aria-label="セッションをリセット">リセット</button>
-          </div>
-        </div>
-
-        <div class="card control-card reveal delay-3">
-          <div class="card-head">
-            <div>
-              <p class="card-eyebrow">Setup</p>
-              <h2>ワークアウト設定</h2>
-            </div>
-          </div>
-          <div class="voice-controls">
-            <span class="label">音声ガイド</span>
-            <label class="switch">
-              <input id="voice-toggle" type="checkbox" />
-              <span class="slider"></span>
-              <span id="voice-status" class="switch-label">OFF</span>
-            </label>
-          </div>
-          <div class="voice-controls">
-            <span class="label">計算問題モード</span>
-            <label class="switch">
-              <input id="quiz-mode-toggle" type="checkbox" />
-              <span class="slider"></span>
-              <span id="quiz-mode-label" class="switch-label">協力</span>
-            </label>
-          </div>
-          <div class="control-group preset-group">
-            <label class="preset-label">
-              マイ・メニュー
-              <div class="preset-actions">
-                <select id="preset-select" aria-label="プリセット選択">
-                  <option value="">-- 選択してください --</option>
-                </select>
-                <button id="save-preset-button" class="ghost small" title="現在の設定を保存">保存</button>
-                <button id="delete-preset-button" class="ghost small delete-btn" title="選択中のプリセットを削除">削除</button>
-              </div>
-            </label>
-          </div>
-          <div class="control-group">
-            <label>
-              セット数
-              <input id="set-count" type="number" min="1" max="10" value="3" />
-            </label>
-            <label>
-              1セットの回数
-              <input id="rep-count" type="number" min="1" max="50" value="10" />
-            </label>
-          </div>
-          <div class="control-group">
-            <label>
-              しゃがむ時間（秒）
-              <input id="down-duration" type="number" min="1" max="5" value="2" />
-            </label>
-            <label>
-              キープ時間（秒）
-              <input id="hold-duration" type="number" min="1" max="5" value="1" />
-            </label>
-            <label>
-              立つ時間（秒）
-              <input id="up-duration" type="number" min="1" max="5" value="1" />
-            </label>
-          </div>
-          <div class="control-group">
-            <label>
-              セット間休憩（秒）
-              <input id="rest-duration" type="number" min="10" max="120" value="30" />
-            </label>
-            <label>
-              カウントダウン（秒）
-              <input id="countdown-duration" type="number" min="3" max="10" value="5" />
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid secondary-grid">
-        <div class="card mode-card reveal delay-4">
-          <div class="card-head">
-            <div>
-              <p class="card-eyebrow">Sensor</p>
-              <h2>センサーモード</h2>
-            </div>
-          </div>
-          <p class="card-copy">スマホを太ももの前面に固定し、深さが十分になったらカウントします。</p>
-          <div class="sensor-controls">
-            <label class="switch">
-              <input id="sensor-toggle" type="checkbox" />
-              <span class="slider"></span>
-              <span class="switch-label">センサーを使う</span>
-            </label>
-            <button id="sensor-calibrate" class="ghost" disabled>角度を再計測</button>
-          </div>
-          <p class="sensor-note" id="sensor-status">未使用</p>
-        </div>
-
-        <div class="card instructions reveal delay-5">
-          <div class="card-head">
-            <div>
-              <p class="card-eyebrow">Guide</p>
-              <h2>使い方</h2>
-            </div>
-          </div>
-          <ol>
-            <li>回数とセット数を設定してスタート。</li>
-            <li>音と表示に合わせてスクワット。</li>
-            <li>センサーモードでは、スタート時にスマホを逆さまに装着してください。</li>
-          </ol>
-        </div>
-
-
-        <div class="card data-card reveal delay-7" id="data-management-card">
-          <div class="card-head">
-            <div>
-              <p class="card-eyebrow">Data</p>
-              <h2>データ管理</h2>
-            </div>
-          </div>
-          <p class="card-copy">データのバックアップと復元ができます。</p>
-          <div class="data-controls">
-            <button id="export-data-button" class="primary small">保存</button>
-            <button id="import-data-button" class="ghost small">復元</button>
-            <input type="file" id="import-file-input" accept=".json" style="display: none;" />
-          </div>
-        </div>
-      </section>
-
-      <section class="card history reveal delay-7">
+    <section class="grid primary-grid">
+      <div class="card mission-card reveal delay-2" id="mission-card">
         <div class="card-head">
           <div>
-            <p class="card-eyebrow">History</p>
-            <h2>過去の実績</h2>
-          </div>
-          <p id="history-note" class="history-note"></p>
-        </div>
-
-        <div class="tab-nav">
-          <button class="tab-btn active" data-tab="history">記録</button>
-          <button class="tab-btn" data-tab="achievements">実績</button>
-        </div>
-
-        <div id="tab-history" class="tab-content active">
-          <div id="activity-heatmap" class="heatmap-container"></div>
-          <ul id="history-list" class="history-list">
-            <li class="history-empty">まだ記録がありません</li>
-          </ul>
-        </div>
-
-        <div id="tab-achievements" class="tab-content">
-          <div id="badge-grid" class="badge-grid">
-            <!-- Badges will be rendered here -->
+            <p class="card-eyebrow">Missions</p>
+            <h2>今日のミッション</h2>
           </div>
         </div>
-      </section>
-    </main>
-
-    <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
-
-    <div id="equipment-modal" class="modal" aria-hidden="true">
-      <div class="modal-overlay" tabindex="-1" data-close></div>
-      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div class="modal-header">
-          <h2 id="modal-title">装備一覧</h2>
-          <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="equipment-summary">
-            <span class="summary-label">現在の攻撃力ボーナス</span>
-            <span id="equipment-total-bonus" class="summary-value">+0</span>
-          </div>
-          <ul id="weapon-list" class="weapon-list">
-            <!-- Items injected by JS -->
+        <div class="mission-list-container">
+          <ul id="mission-list" class="mission-list">
+            <li class="mission-loading">Loading missions...</li>
           </ul>
         </div>
       </div>
-    </div>
 
-    <script type="module" src="js/app.js"></script>
-  </body>
+      <div class="card quiz-card reveal delay-2" id="quiz-card">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Brain Training</p>
+            <h2>計算問題</h2>
+          </div>
+          <div class="quiz-stats">
+            <span class="label">正解数</span>
+            <span id="quiz-stats-display">0 / 0</span>
+          </div>
+        </div>
+        <div class="quiz-area" aria-live="polite">
+          <div id="quiz-problem" class="quiz-problem">問題: --</div>
+          <div id="quiz-options-container" class="quiz-options-container">
+            <button class="quiz-option"></button>
+            <button class="quiz-option"></button>
+            <button class="quiz-option"></button>
+            <button class="quiz-option"></button>
+          </div>
+          <div id="quiz-answer" class="quiz-answer">答え: --</div>
+        </div>
+      </div>
+
+      <div class="card boss-card reveal delay-2" id="boss-card">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Battle</p>
+            <h2>ボスバトル</h2>
+          </div>
+          <div class="boss-kills">
+            <span class="label">討伐数</span>
+            <span id="boss-kill-count">0</span>
+          </div>
+        </div>
+        <div class="boss-display">
+          <div class="boss-avatar-wrapper">
+            <div id="boss-avatar" class="boss-avatar"></div>
+          </div>
+          <div class="boss-info">
+            <div class="boss-name-row">
+              <span id="boss-name">Loading...</span>
+              <span id="boss-hp-text">-- / --</span>
+            </div>
+            <div class="progress boss-progress">
+              <div id="boss-hp-bar" class="progress-bar" style="width: 100%"></div>
+            </div>
+            <div class="boss-actions">
+              <button id="equipment-button" class="ghost small" aria-label="装備を変更">
+                <span style="margin-right: 4px;">⚔️</span> 装備
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card workout-card reveal delay-2">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Session</p>
+            <h2>セッションガイド</h2>
+          </div>
+          <div class="phase-chip">
+            <span class="phase-label">フェーズ</span>
+            <span id="phase-display" class="phase-value">待機中</span>
+          </div>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="label">セット</span>
+            <span id="set-display" class="value">1 / 3</span>
+          </div>
+          <div class="status-item">
+            <span class="label">回数</span>
+            <span id="rep-display" class="value">1 / 10</span>
+          </div>
+          <div class="status-item">
+            <span class="label">セッション進捗</span>
+            <span class="value"><span id="stats-session-reps">0</span> / <span id="stats-session-target">0</span></span>
+          </div>
+        </div>
+
+        <div class="timer">
+          <div id="phase-timer" class="timer-value">05</div>
+          <div id="phase-hint" class="timer-hint">スタートまでカウントダウン</div>
+          <div class="progress">
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="start-button" class="primary" aria-label="セッションを開始" aria-pressed="false">スタート</button>
+          <button id="pause-button" aria-label="セッションを一時停止/再開" aria-pressed="false">一時停止</button>
+          <button id="reset-button" class="ghost" aria-label="セッションをリセット">リセット</button>
+        </div>
+      </div>
+
+      <div class="card control-card reveal delay-3">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Setup</p>
+            <h2>ワークアウト設定</h2>
+          </div>
+        </div>
+        <div class="voice-controls">
+          <span class="label">音声ガイド</span>
+          <label class="switch">
+            <input id="voice-toggle" type="checkbox" />
+            <span class="slider"></span>
+            <span id="voice-status" class="switch-label">OFF</span>
+          </label>
+        </div>
+        <div class="voice-controls">
+          <span class="label">計算問題モード</span>
+          <label class="switch">
+            <input id="quiz-mode-toggle" type="checkbox" />
+            <span class="slider"></span>
+            <span id="quiz-mode-label" class="switch-label">協力</span>
+          </label>
+        </div>
+        <div class="control-group preset-group">
+          <label class="preset-label">
+            マイ・メニュー
+            <div class="preset-actions">
+              <select id="preset-select" aria-label="プリセット選択">
+                <option value="">-- 選択してください --</option>
+              </select>
+              <button id="save-preset-button" class="ghost small" title="現在の設定を保存">保存</button>
+              <button id="delete-preset-button" class="ghost small delete-btn" title="選択中のプリセットを削除">削除</button>
+            </div>
+          </label>
+        </div>
+        <div class="control-group">
+          <label>
+            セット数
+            <input id="set-count" type="number" min="1" max="10" value="3" />
+          </label>
+          <label>
+            1セットの回数
+            <input id="rep-count" type="number" min="1" max="50" value="10" />
+          </label>
+        </div>
+        <div class="control-group">
+          <label>
+            しゃがむ時間（秒）
+            <input id="down-duration" type="number" min="1" max="5" value="2" />
+          </label>
+          <label>
+            キープ時間（秒）
+            <input id="hold-duration" type="number" min="1" max="5" value="1" />
+          </label>
+          <label>
+            立つ時間（秒）
+            <input id="up-duration" type="number" min="1" max="5" value="1" />
+          </label>
+        </div>
+        <div class="control-group">
+          <label>
+            セット間休憩（秒）
+            <input id="rest-duration" type="number" min="10" max="120" value="30" />
+          </label>
+          <label>
+            カウントダウン（秒）
+            <input id="countdown-duration" type="number" min="3" max="10" value="5" />
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid secondary-grid">
+      <div class="card mode-card reveal delay-4">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Sensor</p>
+            <h2>センサーモード</h2>
+          </div>
+        </div>
+        <p class="card-copy">スマホを太ももの前面に固定し、深さが十分になったらカウントします。</p>
+        <div class="sensor-controls">
+          <label class="switch">
+            <input id="sensor-toggle" type="checkbox" />
+            <span class="slider"></span>
+            <span class="switch-label">センサーを使う</span>
+          </label>
+          <button id="sensor-calibrate" class="ghost" disabled>角度を再計測</button>
+        </div>
+        <p class="sensor-note" id="sensor-status">未使用</p>
+      </div>
+
+      <div class="card instructions reveal delay-5">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Guide</p>
+            <h2>使い方</h2>
+          </div>
+        </div>
+        <ol>
+          <li>回数とセット数を設定してスタート。</li>
+          <li>音と表示に合わせてスクワット。</li>
+          <li>センサーモードでは、スタート時にスマホを逆さまに装着してください。</li>
+        </ol>
+      </div>
+
+
+      <div class="card data-card reveal delay-7" id="data-management-card">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Data</p>
+            <h2>データ管理</h2>
+          </div>
+        </div>
+        <p class="card-copy">データのバックアップと復元ができます。</p>
+        <div class="data-controls">
+          <button id="export-data-button" class="primary small">保存</button>
+          <button id="import-data-button" class="ghost small">復元</button>
+          <input type="file" id="import-file-input" accept=".json" style="display: none;" />
+        </div>
+      </div>
+    </section>
+
+    <section class="card history reveal delay-7">
+      <div class="card-head">
+        <div>
+          <p class="card-eyebrow">History</p>
+          <h2>過去の実績</h2>
+        </div>
+        <p id="history-note" class="history-note"></p>
+      </div>
+
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="history">記録</button>
+        <button class="tab-btn" data-tab="achievements">実績</button>
+      </div>
+
+      <div id="tab-history" class="tab-content active">
+        <div id="activity-heatmap" class="heatmap-container"></div>
+        <ul id="history-list" class="history-list">
+          <li class="history-empty">まだ記録がありません</li>
+        </ul>
+      </div>
+
+      <div id="tab-achievements" class="tab-content">
+        <div style="margin-bottom: 1rem; text-align: right;">
+           <button id="open-title-settings" class="ghost small">🏷️ 称号設定</button>
+        </div>
+        <div id="badge-grid" class="badge-grid">
+          <!-- Badges will be rendered here -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+
+  <div id="equipment-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h2 id="modal-title">装備一覧</h2>
+        <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="equipment-summary">
+          <span class="summary-label">現在の攻撃力ボーナス</span>
+          <span id="equipment-total-bonus" class="summary-value">+0</span>
+        </div>
+        <ul id="weapon-list" class="weapon-list">
+          <!-- Items injected by JS -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="title-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="title-modal-title">
+      <div class="modal-header">
+        <h2 id="title-modal-title">称号設定</h2>
+        <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="title-preview-container" style="text-align: center; margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-card); border-radius: var(--radius-md);">
+           <p class="eyebrow" style="margin-bottom: 0.5rem; font-size: 0.75rem;">PREVIEW</p>
+           <h3 id="title-preview-text" style="font-size: 1.5rem; color: var(--text-primary);">Squat Tracker</h3>
+        </div>
+        <div class="title-selectors" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+           <div class="selector-group" style="flex: 1; min-width: 140px;">
+             <label for="prefix-select" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem;">形容詞 (Prefix)</label>
+             <select id="prefix-select" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary);"></select>
+           </div>
+           <div class="selector-group" style="flex: 1; min-width: 140px;">
+             <label for="suffix-select" style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem;">名詞 (Suffix)</label>
+             <select id="suffix-select" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary);"></select>
+           </div>
+        </div>
+        <div class="modal-actions" style="margin-top: 1.5rem; text-align: center;">
+           <button id="save-title-button" class="primary">決定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="class-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1"></div>
+    <div class="modal-content wide" role="dialog" aria-modal="true" aria-labelledby="class-modal-title">
+      <div class="modal-header">
+        <h2 id="class-modal-title">クラスチェンジ</h2>
+        <button class="ghost small close-modal" id="close-class-modal" aria-label="閉じる">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="class-list" class="class-list">
+          <!-- Class Cards injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+
 </html>
