@@ -21,6 +21,7 @@ import { ClassManager } from './modules/class-manager.js';
 import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
 import { loadJson } from './modules/resource-loader.js';
+import { ShareManager } from './modules/share-manager.js';
 import { generateWeapons } from './data/weapons.js';
 
 // --- Global DOM Elements ---
@@ -497,6 +498,29 @@ const finishWorkout = () => {
   VoiceCoach.speak('お疲れ様でした！ナイスファイト');
   recordWorkout();
 
+  // Show Share Button
+  const existingShareBtn = document.getElementById('share-result-button');
+  if (existingShareBtn) existingShareBtn.remove();
+
+  const shareBtn = document.createElement('button');
+  shareBtn.id = 'share-result-button';
+  shareBtn.className = 'btn primary';
+  shareBtn.textContent = '戦績をシェア 📸';
+  shareBtn.style.gridColumn = '1 / -1'; // Full width in grid
+  shareBtn.onclick = () => {
+    const latest = historyEntries[0];
+    const cals = latest ? Math.floor(latest.totalReps * 0.5) : 0; // Approx 0.5 kcal per squat
+    ShareManager.open({
+      totalReps: latest ? latest.totalReps : 0,
+      totalCalories: cals
+    });
+  };
+
+  const actionsContainer = document.querySelector('.actions');
+  if (actionsContainer) {
+    actionsContainer.appendChild(shareBtn);
+  }
+
   const settings = {
     setCount: setCountInput.value,
     repCount: repCountInput.value,
@@ -643,6 +667,9 @@ const resetWorkout = () => {
   quizSessionCorrect = 0;
   quizSessionTotal = 0;
   updateQuizStats();
+
+  const shareBtn = document.getElementById('share-result-button');
+  if (shareBtn) shareBtn.remove();
 
   currentSet = 1;
   currentRep = 1;
@@ -1120,6 +1147,7 @@ const initApp = async () => {
   TitleManager.init(titlesData);
   AdventureSystem.init();
   ClassManager.init(classesData);
+  ShareManager.init();
 
   updateQuizAndTimerDisplay(Phase.IDLE);
   updateDisplays();
@@ -1147,6 +1175,7 @@ if (typeof window !== 'undefined') {
   window.finishWorkout = finishWorkout;
   window.showToast = showToast;
   window.VoiceCoach = VoiceCoach;
+  window.ShareManager = ShareManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
 
   // Expose internal state for testing
