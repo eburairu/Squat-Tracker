@@ -1494,3 +1494,55 @@ input:checked + .slider:before {
     margin-bottom: 12px;
     text-align: center;
 }
+
+/* Tension System */
+.tension-container {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px dotted var(--border-color);
+}
+
+.tension-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.tension-track {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  height: 0.75rem;
+}
+
+.tension-bar {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  transition: width 0.3s ease-out;
+  width: 0%;
+}
+
+/* Boost Active State */
+body.boost-mode .tension-bar {
+  background: linear-gradient(90deg, #ef4444, #ec4899, #8b5cf6);
+  background-size: 200% 100%;
+  animation: boost-pulse 1s infinite linear;
+  box-shadow: 0 0 10px var(--accent-color);
+}
+
+body.boost-mode .tension-label {
+  color: var(--danger-color);
+  text-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  animation: text-pulse 0.5s infinite alternate;
+}
+
+@keyframes boost-pulse {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@keyframes text-pulse {
+  from { opacity: 0.8; }
+  to { opacity: 1; transform: scale(1.05); }
+}
