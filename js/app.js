@@ -23,6 +23,7 @@ import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
 import { loadJson } from './modules/resource-loader.js';
 import { ShareManager } from './modules/share-manager.js';
 import { generateWeapons } from './data/weapons.js';
+import { TensionManager } from './modules/tension-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -362,10 +363,12 @@ const performAttack = () => {
   const forceCritical = currentQuiz && currentQuiz.isCritical;
 
   const rawAttackPower = userBaseAp + weaponBonus + sessionAttackBonus;
-  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier);
+  const tensionMultiplier = TensionManager.getMultiplier();
+  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier * tensionMultiplier);
 
   const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical, classMods.criticalRateBonus);
   BossBattle.damage(damage.amount, damage.isCritical);
+  TensionManager.add(10);
 
   // Note: sessionAttackBonus is now cumulative and NOT reset here.
 };
@@ -486,6 +489,7 @@ const recordWorkout = () => {
 };
 
 const finishWorkout = () => {
+  TensionManager.reset();
   currentPhase = Phase.FINISHED;
   phaseDuration = null;
   isPaused = false;
@@ -659,6 +663,7 @@ const pauseWorkout = () => {
 };
 
 const resetWorkout = () => {
+  TensionManager.reset();
   workoutTimer.cancel();
   phaseDuration = null;
   currentPhase = Phase.IDLE;
@@ -923,6 +928,7 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
       isCurrentQuizCorrect = isCorrect;
 
       if (isCorrect) quizSessionCorrect++;
+      if (isCorrect) TensionManager.add(20);
       updateQuizStats();
 
       quizOptionButtons.forEach(btn => {
@@ -1148,6 +1154,7 @@ const initApp = async () => {
   AdventureSystem.init();
   ClassManager.init(classesData);
   ShareManager.init();
+  TensionManager.init();
 
   updateQuizAndTimerDisplay(Phase.IDLE);
   updateDisplays();
@@ -1176,6 +1183,7 @@ if (typeof window !== 'undefined') {
   window.showToast = showToast;
   window.VoiceCoach = VoiceCoach;
   window.ShareManager = ShareManager;
+  window.TensionManager = TensionManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
 
   // Expose internal state for testing
