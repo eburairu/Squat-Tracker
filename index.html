@@ -135,6 +135,9 @@
               <button id="equipment-button" class="ghost small" aria-label="装備を変更">
                 <span style="margin-right: 4px;">⚔️</span> 装備
               </button>
+              <button id="bestiary-button" class="ghost small" aria-label="図鑑を開く">
+                <span style="margin-right: 4px;">📖</span> 図鑑
+              </button>
             </div>
           </div>
         </div>
@@ -397,6 +400,38 @@
       <div class="modal-body">
         <div id="class-list" class="class-list">
           <!-- Class Cards injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bestiary-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="bestiary-modal-title">
+      <div class="modal-header">
+        <h2 id="bestiary-modal-title">モンスター図鑑</h2>
+        <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="bestiary-grid" class="bestiary-grid">
+          <!-- Items injected by JS -->
+        </div>
+        <div id="bestiary-detail" class="bestiary-detail">
+          <div class="detail-header">
+             <div id="bestiary-detail-icon" class="detail-icon"></div>
+             <div class="detail-title-group">
+               <h3 id="bestiary-detail-name">Name</h3>
+               <p id="bestiary-detail-title" class="detail-subtitle">Title</p>
+             </div>
+          </div>
+          <div class="detail-body">
+             <p id="bestiary-detail-desc" class="detail-desc"></p>
+             <div class="detail-stats-row">
+                <span id="bestiary-detail-stats" class="tag">HP: --</span>
+                <span id="bestiary-detail-kills" class="tag">Kills: 0</span>
+             </div>
+          </div>
+          <button class="ghost small back-to-list" onclick="document.getElementById('bestiary-detail').classList.remove('active')">一覧に戻る</button>
         </div>
       </div>
     </div>
