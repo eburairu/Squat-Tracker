@@ -1546,3 +1546,125 @@ body.boost-mode .tension-label {
   from { opacity: 0.8; }
   to { opacity: 1; transform: scale(1.05); }
 }
+
+/* Bestiary Styles */
+.bestiary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.bestiary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+  min-height: 100px;
+}
+
+.bestiary-item:hover {
+  transform: translateY(-2px);
+  background-color: var(--card-bg);
+  border-color: var(--accent-color);
+}
+
+.bestiary-item.locked {
+  opacity: 0.6;
+  filter: grayscale(1);
+  background-color: var(--bg-color);
+}
+
+.bestiary-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.bestiary-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.bestiary-detail {
+  display: none;
+  background-color: var(--bg-color);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  border: 1px solid var(--border-color);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  flex-direction: column;
+}
+
+.bestiary-detail.active {
+  display: flex;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-icon {
+  font-size: 4rem;
+  margin-right: 1.5rem;
+}
+
+.detail-title-group h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.detail-subtitle {
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.detail-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.detail-desc {
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+.detail-stats-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tag {
+  background-color: var(--card-bg);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.back-to-list {
+  margin-top: 1rem;
+  align-self: center;
+}
