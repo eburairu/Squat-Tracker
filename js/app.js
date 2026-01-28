@@ -18,6 +18,7 @@ import { PresetManager } from './modules/preset-manager.js';
 import { AdventureSystem } from './modules/adventure-system.js';
 import { TitleManager } from './modules/title-manager.js';
 import { ClassManager } from './modules/class-manager.js';
+import { BestiaryManager } from './modules/bestiary-manager.js';
 import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
 import { loadJson } from './modules/resource-loader.js';
@@ -1155,6 +1156,21 @@ const initApp = async () => {
   ClassManager.init(classesData);
   ShareManager.init();
   TensionManager.init();
+  await BestiaryManager.init();
+
+  const bestiaryBtn = document.getElementById('bestiary-button');
+  if (bestiaryBtn) {
+    bestiaryBtn.addEventListener('click', () => BestiaryManager.open());
+  }
+
+  const bestiaryModal = document.getElementById('bestiary-modal');
+  if (bestiaryModal) {
+    bestiaryModal.addEventListener('click', (e) => {
+      if (e.target.hasAttribute('data-close') || e.target.classList.contains('modal-overlay')) {
+        BestiaryManager.close();
+      }
+    });
+  }
 
   updateQuizAndTimerDisplay(Phase.IDLE);
   updateDisplays();
@@ -1184,6 +1200,7 @@ if (typeof window !== 'undefined') {
   window.VoiceCoach = VoiceCoach;
   window.ShareManager = ShareManager;
   window.TensionManager = TensionManager;
+  window.BestiaryManager = BestiaryManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
 
   // Expose internal state for testing
