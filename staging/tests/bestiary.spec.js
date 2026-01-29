@@ -77,4 +77,22 @@ test.describe('Monster Bestiary', () => {
     await gridItems.first().click();
     await expect(page.locator('#bestiary-detail-kills')).toContainText('討伐数: 1体');
   });
+
+  test('should return to list when back button is clicked', async ({ page }) => {
+    await page.locator('#bestiary-button').click();
+
+    // Open detail
+    const firstItem = page.locator('.bestiary-item').first();
+    await firstItem.click();
+
+    const detail = page.locator('#bestiary-detail');
+    await expect(detail).toHaveClass(/active/);
+
+    // Click back button
+    const backBtn = page.locator('#bestiary-detail-back');
+    await backBtn.click();
+
+    // Detail should be hidden
+    await expect(detail).not.toHaveClass(/active/);
+  });
 });
