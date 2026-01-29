@@ -14,6 +14,15 @@ export const BestiaryManager = {
       console.error('Failed to load bestiary data:', error);
       this.data = []; // Fallback empty
     }
+
+    // Attach event listener for back button
+    const backBtn = document.getElementById('bestiary-detail-back');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        const detail = document.getElementById('bestiary-detail');
+        if (detail) detail.classList.remove('active');
+      });
+    }
   },
 
   /**
