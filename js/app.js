@@ -1147,6 +1147,24 @@ const initApp = async () => {
   const weaponsMap = generateWeapons(baseWeaponsData);
   InventoryManager.init(weaponsMap); // Inject weapon definitions
 
+  // Initial Shield Logic (One-time gift)
+  if (isStorageAvailable) {
+    const SHIELD_GIFT_KEY = 'squat-tracker-shield-gift-v1';
+    if (!localStorage.getItem(SHIELD_GIFT_KEY)) {
+      InventoryManager.addConsumable('shield', 1);
+      localStorage.setItem(SHIELD_GIFT_KEY, 'true');
+    }
+  }
+
+  // Check Streak Protection
+  InventoryManager.checkStreakProtection(historyEntries, (newHistory) => {
+    historyEntries = newHistory;
+    saveHistoryEntries(historyEntries);
+    renderStats();
+    renderHistory();
+    renderHeatmap(historyEntries, heatmapContainer);
+  });
+
   // Initialize systems dependent on weapon data
   DailyMissionSystem.init({ baseWeaponsData, weaponsMap });
   BossBattle.init({ baseWeaponsData, weaponsMap });

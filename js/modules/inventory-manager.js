@@ -1,5 +1,5 @@
 // import { WEAPONS } from '../data/weapons.js'; // REMOVED: Dependency injection used instead
-import { isStorageAvailable } from '../utils.js';
+import { isStorageAvailable, getLocalDateKey, showToast } from '../utils.js';
 
 const INVENTORY_KEY = 'squat-tracker-inventory';
 
@@ -9,7 +9,8 @@ export const InventoryManager = {
     equippedId: 'unarmed',
     items: {
       unarmed: { level: 1, acquiredAt: Date.now() }
-    }
+    },
+    consumables: {}
   },
 
   init(weaponsMap) {
@@ -25,12 +26,17 @@ export const InventoryManager = {
     if (!this.state.items.unarmed) {
       this.state.items.unarmed = { level: 1, acquiredAt: Date.now() };
     }
+    // Ensure consumables state validity
+    if (!this.state.consumables) {
+      this.state.consumables = {};
+    }
     // Check against injected weaponsData
     if (!this.weaponsData[this.state.equippedId]) {
       this.state.equippedId = 'unarmed';
     }
     // Render UI if elements exist
     this.render();
+    this.renderShieldStatus();
     this.setupUI();
   },
 
@@ -42,6 +48,9 @@ export const InventoryManager = {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object' && parsed.items) {
           this.state = parsed;
+          if (!this.state.consumables) {
+            this.state.consumables = {};
+          }
           this.migrate();
         }
       }
@@ -122,6 +131,107 @@ export const InventoryManager = {
     return { result, weapon: weaponDef, level: this.state.items[weaponId].level };
   },
 
+  addConsumable(id, amount = 1) {
+    if (!this.state.consumables[id]) {
+      this.state.consumables[id] = 0;
+    }
+    this.state.consumables[id] += amount;
+    this.save();
+    this.renderShieldStatus();
+    return this.state.consumables[id];
+  },
+
+  useConsumable(id, amount = 1) {
+    if (!this.state.consumables[id] || this.state.consumables[id] < amount) {
+      return false;
+    }
+    this.state.consumables[id] -= amount;
+    this.save();
+    this.renderShieldStatus();
+    return true;
+  },
+
+  getConsumableCount(id) {
+    return this.state.consumables[id] || 0;
+  },
+
+  checkStreakProtection(historyEntries, saveHistoryCallback) {
+    if (!historyEntries || !Array.isArray(historyEntries) || historyEntries.length === 0) return;
+
+    // Create a set of existing dates
+    const dateKeys = new Set(
+      historyEntries
+        .map((entry) => getLocalDateKey(new Date(entry.date)))
+        .filter((value) => value)
+    );
+
+    let shields = this.getConsumableCount('shield');
+    if (shields <= 0) return;
+
+    let consumed = 0;
+    let addedEntries = [];
+    const cursor = new Date();
+    cursor.setDate(cursor.getDate() - 1); // Start from yesterday
+
+    // Limit check to avoid infinite loops or massive consumption (e.g. 30 days)
+    const MAX_CHECK_DAYS = 30;
+
+    for (let i = 0; i < MAX_CHECK_DAYS; i++) {
+      const key = getLocalDateKey(cursor);
+      if (!key) break; // Safety
+
+      if (!dateKeys.has(key)) {
+        // Missing day found
+        if (shields > 0) {
+          // Use shield logic (simulation)
+          shields--;
+          consumed++;
+
+          // Create shield entry
+          const shieldDate = new Date(cursor);
+          shieldDate.setHours(23, 59, 59); // Set to end of day
+
+          const entry = {
+            date: shieldDate.toISOString(),
+            totalReps: 0,
+            type: 'shield'
+          };
+
+          addedEntries.push(entry);
+        } else {
+          // No more shields, stop filling gaps
+          break;
+        }
+      } else {
+        // Day exists! Streak is connected up to here. Stop checking further back.
+        break;
+      }
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    if (consumed > 0) {
+      // Actually consume shields
+      this.useConsumable('shield', consumed);
+
+      // Add entries to history and save
+      const newHistory = [...historyEntries, ...addedEntries];
+      // Sort history by date desc
+      newHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (saveHistoryCallback) {
+        saveHistoryCallback(newHistory);
+      }
+
+      // Notify user
+      showToast({
+        emoji: '🛡️',
+        title: 'ストリークシールド発動！',
+        message: `${consumed}日分の記録を守りました`,
+        sound: true
+      });
+    }
+  },
+
   equipWeapon(weaponId) {
     if (!this.state.items[weaponId] || !this.weaponsData[weaponId]) return false;
     this.state.equippedId = weaponId;
@@ -172,6 +282,33 @@ export const InventoryManager = {
         modal.setAttribute('aria-hidden', 'true');
       });
     });
+  },
+
+  renderShieldStatus() {
+    let shieldCard = document.getElementById('stat-shield');
+    const shieldCount = this.getConsumableCount('shield');
+
+    if (!shieldCard) {
+      const statGrid = document.querySelector('.stat-grid');
+      if (statGrid) {
+        shieldCard = document.createElement('div');
+        shieldCard.className = 'stat-card';
+        shieldCard.id = 'stat-shield';
+        shieldCard.innerHTML = `
+          <span class="stat-label">シールド</span>
+          <span id="shield-count" class="stat-value">0</span>
+          <span class="stat-unit">shields</span>
+        `;
+        statGrid.appendChild(shieldCard);
+      }
+    }
+
+    if (shieldCard) {
+      const countEl = shieldCard.querySelector('#shield-count');
+      if (countEl) {
+        countEl.textContent = shieldCount;
+      }
+    }
   },
 
   render() {

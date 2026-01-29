@@ -211,10 +211,23 @@ export const computeStreak = (entries) => {
       .map((entry) => getLocalDateKey(new Date(entry.date)))
       .filter((value) => value)
   );
+
   let streak = 0;
   const cursor = new Date();
+  let key = getLocalDateKey(cursor);
+
+  // If today is not recorded, check if yesterday was recorded.
+  // If yesterday is recorded, we consider the streak active (pending for today).
+  if (!dateKeys.has(key)) {
+    cursor.setDate(cursor.getDate() - 1);
+    key = getLocalDateKey(cursor);
+    if (!dateKeys.has(key)) {
+      return 0;
+    }
+  }
+
   while (true) {
-    const key = getLocalDateKey(cursor);
+    key = getLocalDateKey(cursor);
     if (!key || !dateKeys.has(key)) {
       break;
     }
