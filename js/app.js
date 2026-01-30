@@ -16,6 +16,7 @@ import { AchievementSystem } from './modules/achievement-system.js';
 import { DataManager } from './modules/data-manager.js';
 import { PresetManager } from './modules/preset-manager.js';
 import { AdventureSystem } from './modules/adventure-system.js';
+import { WeeklyChallengeSystem } from './modules/weekly-challenge.js';
 import { TitleManager } from './modules/title-manager.js';
 import { ClassManager } from './modules/class-manager.js';
 import { BestiaryManager } from './modules/bestiary-manager.js';
@@ -544,6 +545,12 @@ const finishWorkout = () => {
   });
 
   DailyMissionSystem.check({
+    type: 'finish',
+    totalReps: totalSets * repsPerSet,
+    totalSets: totalSets
+  });
+
+  WeeklyChallengeSystem.check({
     type: 'finish',
     totalReps: totalSets * repsPerSet,
     totalSets: totalSets
@@ -1149,7 +1156,44 @@ const initApp = async () => {
 
   // Initialize systems dependent on weapon data
   DailyMissionSystem.init({ baseWeaponsData, weaponsMap });
+  WeeklyChallengeSystem.init({ baseWeaponsData, weaponsMap });
   BossBattle.init({ baseWeaponsData, weaponsMap });
+
+  // Mission Tabs Logic
+  const missionTabDaily = document.getElementById('mission-tab-daily');
+  const missionTabWeekly = document.getElementById('mission-tab-weekly');
+  const missionListDaily = document.getElementById('mission-list');
+  const missionListWeekly = document.getElementById('mission-list-weekly');
+  const weeklyInfoContainer = document.getElementById('weekly-info-container');
+
+  if (missionTabDaily && missionTabWeekly && missionListDaily && missionListWeekly) {
+    missionTabDaily.addEventListener('click', () => {
+      missionTabDaily.classList.add('active');
+      missionTabWeekly.classList.remove('active');
+      missionListDaily.style.display = '';
+      missionListWeekly.style.display = 'none';
+      if (weeklyInfoContainer) weeklyInfoContainer.style.display = 'none';
+    });
+
+    missionTabWeekly.addEventListener('click', () => {
+      missionTabWeekly.classList.add('active');
+      missionTabDaily.classList.remove('active');
+      missionListDaily.style.display = 'none';
+      missionListWeekly.style.display = '';
+      if (weeklyInfoContainer) weeklyInfoContainer.style.display = '';
+      WeeklyChallengeSystem.render();
+    });
+  }
+
+  // Initial render
+  WeeklyChallengeSystem.render();
+
+  // Hook into BossBattle for weekly challenge tracking
+  const originalHandleDefeat = BossBattle.handleDefeat;
+  BossBattle.handleDefeat = function(...args) {
+    originalHandleDefeat.apply(this, args);
+    WeeklyChallengeSystem.check({ type: 'boss_kill' });
+  };
 
   TitleManager.init(titlesData);
   AdventureSystem.init();
@@ -1189,6 +1233,7 @@ if (typeof window !== 'undefined') {
   window.BossBattle = BossBattle;
   window.InventoryManager = InventoryManager;
   window.DailyMissionSystem = DailyMissionSystem;
+  window.WeeklyChallengeSystem = WeeklyChallengeSystem;
   window.AchievementSystem = AchievementSystem;
   window.AdventureSystem = AdventureSystem;
   window.TitleManager = TitleManager;
