@@ -74,13 +74,23 @@
       <div class="card mission-card reveal delay-2" id="mission-card">
         <div class="card-head">
           <div>
-            <p class="card-eyebrow">Missions</p>
-            <h2>今日のミッション</h2>
+            <p class="card-eyebrow">Challenges</p>
+            <h2 id="mission-heading">ミッション</h2>
           </div>
+        </div>
+        <div class="mission-tabs">
+          <button id="mission-tab-daily" class="mission-tab active">デイリー</button>
+          <button id="mission-tab-weekly" class="mission-tab">ウィークリー</button>
+        </div>
+        <div id="weekly-info-container" style="display: none; text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+          今週の残り: <span id="weekly-remaining-days" style="font-weight: bold; color: var(--accent-color);">--</span>日
         </div>
         <div class="mission-list-container">
           <ul id="mission-list" class="mission-list">
             <li class="mission-loading">Loading missions...</li>
+          </ul>
+          <ul id="mission-list-weekly" class="mission-list" style="display: none;">
+            <li class="mission-loading">Loading challenges...</li>
           </ul>
         </div>
       </div>

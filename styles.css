@@ -1117,6 +1117,53 @@ input:checked + .slider:before {
   white-space: nowrap;
 }
 
+.mission-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.mission-tab {
+  flex: 1;
+  background: transparent;
+  border: 2px solid transparent;
+  color: var(--text-secondary);
+  font-weight: 700;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.mission-tab:hover {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+}
+
+.mission-tab.active {
+  background-color: var(--bg-color);
+  border-color: var(--border-color);
+  color: var(--accent-color);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+}
+
+.weekly-mission {
+  border-left: 4px solid #8b5cf6 !important; /* Purple accent */
+  background-color: rgba(139, 92, 246, 0.05);
+}
+
+.weekly-mission .mission-progress-bar-fill {
+  background-color: #8b5cf6;
+}
+
+.weekly-claim {
+  background-color: #8b5cf6 !important;
+  color: #fff;
+}
+
 .mission-btn.claim {
   background-color: var(--warning-color);
   color: #fff;
