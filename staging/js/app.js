@@ -26,6 +26,7 @@ import { loadJson } from './modules/resource-loader.js';
 import { ShareManager } from './modules/share-manager.js';
 import { generateWeapons } from './data/weapons.js';
 import { TensionManager } from './modules/tension-manager.js';
+import { StreakGuardian } from './modules/streak-guardian.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -543,6 +544,8 @@ const finishWorkout = () => {
     hasPaused,
     historyEntries // Pass history entries for checks
   });
+
+  StreakGuardian.update(historyEntries);
 
   DailyMissionSystem.check({
     type: 'finish',
@@ -1216,6 +1219,12 @@ const initApp = async () => {
     });
   }
 
+  StreakGuardian.init();
+  StreakGuardian.update(historyEntries);
+  setInterval(() => {
+    StreakGuardian.update(historyEntries);
+  }, 60000);
+
   updateQuizAndTimerDisplay(Phase.IDLE);
   updateDisplays();
   updateActionButtonStates();
@@ -1246,6 +1255,7 @@ if (typeof window !== 'undefined') {
   window.ShareManager = ShareManager;
   window.TensionManager = TensionManager;
   window.BestiaryManager = BestiaryManager;
+  window.StreakGuardian = StreakGuardian;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
 
   // Expose internal state for testing
