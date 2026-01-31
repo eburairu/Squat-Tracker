@@ -214,3 +214,24 @@
 
 ### 推奨事項
 - `.sdd-archive/specs/class-system/` の内容を `.specify/specs/` 配下に移行し、Spec Kit形式に合わせることを推奨します。
+
+---
+
+## ドキュメント同期レポート - 2026-01-31
+
+### 検出された変更
+- **ウィークリーチャレンジ機能 (Weekly Challenge)**: 1週間単位で目標（回数、ログイン数、ボス討伐数）を達成するミッション機能が実装されました。
+  - 関連モジュール: `js/modules/weekly-challenge.js`
+  - データ保存: `localStorage` キー `squat-tracker-weekly-challenge`
+  - 報酬: デイリーよりも高確率で高レアリティ武器が排出されるロジックを確認しました。
+
+### 更新したドキュメント
+- **README.md**:
+  - 「主な機能」に「ウィークリーチャレンジ」を追加しました。
+  - 「使い方」にウィークリーミッションの確認方法を追加しました。
+
+### 注意が必要な項目
+- **仕様書ファイル**: `.specify/specs/spec-001-weekly-challenge/` ディレクトリ内に `tasks.md` が存在しません。Spec Kitの標準構造では実装タスクリスト (`tasks.md`) が推奨されますが、現時点では欠落しています。
+
+### 推奨事項
+- 次回のPRまたはドキュメント整備時に `.specify/specs/spec-001-weekly-challenge/tasks.md` を作成し、標準構造に準拠させることを推奨します。
