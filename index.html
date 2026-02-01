@@ -23,6 +23,9 @@
             <span id="theme-status" class="switch-label">ライト</span>
           </label>
         </div>
+        <div id="voice-status-indicator" class="voice-status-indicator hidden" aria-label="音声認識状態">
+          <span class="mic-icon">🎙️</span>
+        </div>
         <p id="user-title-display" class="eyebrow">Squat Tracker</p>
         <h1>Rhythm. Depth. Flow.</h1>
         <p class="subtitle">スクワットでボスを討伐。毎日のトレーニングをRPGに。</p>
@@ -211,6 +214,14 @@
             <input id="voice-toggle" type="checkbox" />
             <span class="slider"></span>
             <span id="voice-status" class="switch-label">OFF</span>
+          </label>
+        </div>
+        <div class="voice-controls" id="voice-command-control-group">
+          <span class="label">音声コマンド</span>
+          <label class="switch">
+            <input id="voice-command-toggle" type="checkbox" />
+            <span class="slider"></span>
+            <span id="voice-command-status-text" class="switch-label">OFF</span>
           </label>
         </div>
         <div class="voice-controls">

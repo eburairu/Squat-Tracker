@@ -27,6 +27,7 @@ import { ShareManager } from './modules/share-manager.js';
 import { generateWeapons } from './data/weapons.js';
 import { TensionManager } from './modules/tension-manager.js';
 import { StreakGuardian } from './modules/streak-guardian.js';
+import { VoiceControl } from './modules/voice-control.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -55,6 +56,8 @@ const themeToggle = document.getElementById('theme-toggle');
 const themeStatus = document.getElementById('theme-status');
 const voiceToggle = document.getElementById('voice-toggle');
 const voiceStatus = document.getElementById('voice-status');
+const voiceCommandToggle = document.getElementById('voice-command-toggle');
+const voiceCommandStatusText = document.getElementById('voice-command-status-text');
 
 const setCountInput = document.getElementById('set-count');
 const repCountInput = document.getElementById('rep-count');
@@ -117,6 +120,7 @@ const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
 const THEME_KEY = 'squat-tracker-theme';
 const VOICE_COACH_KEY = 'squat-tracker-voice';
+const VOICE_COMMAND_KEY = 'squat-tracker-voice-command';
 const WORKOUT_SETTINGS_KEY = 'squat-tracker-workout-settings';
 let historyEntries = [];
 
@@ -1144,6 +1148,50 @@ const initApp = async () => {
   initializePresets();
   initializeHistory();
 
+  // Initialize Voice Command
+  const isVoiceSupported = VoiceControl.init({
+    start: () => {
+      if (!workoutStarted && currentPhase === Phase.IDLE) {
+        startWorkout();
+      }
+    },
+    pause: () => {
+      // Pause or Resume
+      if (workoutStarted && currentPhase !== Phase.FINISHED) {
+        pauseWorkout();
+      }
+    },
+    reset: () => {
+      // Allow reset only if paused or finished to prevent accidental resets
+      if (isPaused || currentPhase === Phase.FINISHED) {
+        resetWorkout();
+      }
+    }
+  });
+
+  const voiceCommandGroup = document.getElementById('voice-command-control-group');
+  if (!isVoiceSupported && voiceCommandGroup) {
+    voiceCommandGroup.style.display = 'none';
+  } else if (voiceCommandToggle) {
+    const stored = isStorageAvailable ? localStorage.getItem(VOICE_COMMAND_KEY) : null;
+    const enabled = stored === 'true';
+    voiceCommandToggle.checked = enabled;
+    if (voiceCommandStatusText) voiceCommandStatusText.textContent = enabled ? 'ON' : 'OFF';
+
+    // Note: Auto-starting speech recognition might be blocked by browsers without user interaction.
+    // If it fails, the user will need to toggle it OFF and ON again.
+    if (enabled) {
+      VoiceControl.setEnabled(true);
+    }
+
+    voiceCommandToggle.addEventListener('change', (e) => {
+      const isChecked = e.target.checked;
+      VoiceControl.setEnabled(isChecked);
+      if (voiceCommandStatusText) voiceCommandStatusText.textContent = isChecked ? 'ON' : 'OFF';
+      if (isStorageAvailable) localStorage.setItem(VOICE_COMMAND_KEY, String(isChecked));
+    });
+  }
+
   AchievementSystem.init({
     achievementsData, // Pass loaded data
     onHistoryTabSelected: () => {
@@ -1256,6 +1304,7 @@ if (typeof window !== 'undefined') {
   window.TensionManager = TensionManager;
   window.BestiaryManager = BestiaryManager;
   window.StreakGuardian = StreakGuardian;
+  window.VoiceControl = VoiceControl;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
 
   // Expose internal state for testing
