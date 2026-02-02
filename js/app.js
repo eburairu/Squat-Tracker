@@ -563,6 +563,11 @@ const finishWorkout = () => {
     totalSets: totalSets
   });
 
+  const currentClass = ClassManager.getCurrentClass();
+  if (currentClass) {
+    ClassManager.addExperience(currentClass.id, totalSets * repsPerSet);
+  }
+
   launchConfetti(confettiCanvas, prefersReducedMotion);
   updateActionButtonStates();
 };
