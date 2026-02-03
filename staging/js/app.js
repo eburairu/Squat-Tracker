@@ -28,6 +28,7 @@ import { generateWeapons } from './data/weapons.js';
 import { TensionManager } from './modules/tension-manager.js';
 import { StreakGuardian } from './modules/streak-guardian.js';
 import { VoiceControl } from './modules/voice-control.js';
+import { CommitmentManager } from './modules/commitment-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -563,8 +564,18 @@ const finishWorkout = () => {
     totalSets: totalSets
   });
 
+  const currentClass = ClassManager.getCurrentClass();
+  if (currentClass) {
+    ClassManager.addExperience(currentClass.id, totalSets * repsPerSet);
+  }
+
   launchConfetti(confettiCanvas, prefersReducedMotion);
   updateActionButtonStates();
+
+  // Show Commitment Modal after a short delay
+  setTimeout(() => {
+    CommitmentManager.showModal();
+  }, 2000);
 };
 
 const tick = () => {
@@ -646,6 +657,27 @@ const startWorkout = () => {
   quizSessionCorrect = 0;
   quizSessionTotal = 0;
   updateQuizStats();
+
+  // Commitment Check
+  const commitmentResult = CommitmentManager.checkAndResolve();
+  if (commitmentResult) {
+    if (commitmentResult.status === 'fulfilled') {
+      // Bonus: +10% of Base AP (min 1)
+      const bonusVal = Math.max(1, Math.floor(userBaseAp * (commitmentResult.bonus - 1.0)));
+      sessionAttackBonus += bonusVal;
+      TensionManager.add(50);
+      showToast({ emoji: '🔥', title: '誓約達成！', message: `ボーナス攻撃力 +${bonusVal} / テンションUP!` });
+      launchConfetti(confettiCanvas, prefersReducedMotion);
+    } else if (commitmentResult.status === 'broken') {
+      // Penalty: Heal Boss 20%
+      if (BossBattle.state.currentMonster) {
+        const healAmount = Math.floor(BossBattle.state.currentMonster.maxHp * commitmentResult.penalty);
+        BossBattle.forceHeal(healAmount);
+        showToast({ emoji: '😈', title: '誓約違反...', message: `ボスのHPが ${healAmount} 回復しました。` });
+      }
+    }
+    CommitmentManager.clear();
+  }
 
   startButton.disabled = true;
   startButton.textContent = '進行中';
@@ -1273,6 +1305,18 @@ const initApp = async () => {
     StreakGuardian.update(historyEntries);
   }, 60000);
 
+  CommitmentManager.init();
+  // Check for expiration on load (e.g. opened app after deadline)
+  const expirationResult = CommitmentManager.checkExpiration();
+  if (expirationResult && expirationResult.status === 'broken') {
+    if (BossBattle.state.currentMonster) {
+      const healAmount = Math.floor(BossBattle.state.currentMonster.maxHp * expirationResult.penalty);
+      BossBattle.forceHeal(healAmount);
+      showToast({ emoji: '😈', title: '誓約期限切れ...', message: '約束を破ったため、ボスが回復しました。' });
+    }
+    CommitmentManager.clear();
+  }
+
   updateQuizAndTimerDisplay(Phase.IDLE);
   updateDisplays();
   updateActionButtonStates();
@@ -1305,6 +1349,7 @@ if (typeof window !== 'undefined') {
   window.BestiaryManager = BestiaryManager;
   window.StreakGuardian = StreakGuardian;
   window.VoiceControl = VoiceControl;
+  window.CommitmentManager = CommitmentManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
 
   // Expose internal state for testing

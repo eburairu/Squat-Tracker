@@ -99,6 +99,29 @@ export const BossBattle = {
     this.saveState();
   },
 
+  forceHeal(amount) {
+    if (!this.state.currentMonster) return;
+
+    const oldHp = this.state.currentMonster.currentHp;
+    this.state.currentMonster.currentHp = Math.min(
+      this.state.currentMonster.maxHp,
+      this.state.currentMonster.currentHp + amount
+    );
+
+    if (this.state.currentMonster.currentHp > oldHp) {
+      this.state.lastInteraction = Date.now();
+      this.saveState();
+      this.render();
+
+      if (this.elements.avatar) {
+        // Simple visual feedback using existing animation
+        this.elements.avatar.classList.remove('boss-spawn');
+        void this.elements.avatar.offsetWidth;
+        this.elements.avatar.classList.add('boss-spawn');
+      }
+    }
+  },
+
   spawnMonster(animate = true) {
     const index = this.state.monsterIndex % MONSTERS.length;
     const template = MONSTERS[index];

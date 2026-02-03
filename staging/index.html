@@ -61,6 +61,9 @@
         <div id="adventure-status" class="adventure-status">
           <!-- Adventure Progress Rendered Here -->
         </div>
+        <div id="commitment-status" class="commitment-status" style="display: none;">
+          <!-- Commitment Status Rendered Here -->
+        </div>
         <div id="streak-guardian" class="streak-guardian" style="display: none;">
           <!-- Streak Guardian Rendered Here -->
         </div>
@@ -381,6 +384,25 @@
         <ul id="weapon-list" class="weapon-list">
           <!-- Items injected by JS -->
         </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="commitment-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="commitment-modal-title">
+      <div class="modal-header">
+        <h2 id="commitment-modal-title">次回の誓い</h2>
+        <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">次回のトレーニング予定を宣言して、自分自身と契約しましょう。<br>約束を守ればボーナス、破ればペナルティが発生します。</p>
+        <div class="commitment-options">
+          <button class="btn secondary commitment-btn" data-type="tomorrow">明日やる</button>
+          <button class="btn secondary commitment-btn" data-type="day-after">明後日やる</button>
+          <button class="btn ghost commitment-btn" data-type="skip">今は約束しない</button>
+        </div>
+        <p class="commitment-note">※ アプリを開くだけでも誓約達成とみなされます。</p>
       </div>
     </div>
   </div>

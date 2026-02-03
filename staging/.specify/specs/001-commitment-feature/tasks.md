@@ -1,0 +1,24 @@
+# タスクリスト: 次回の誓い
+
+- [ ] UI実装: HTML/CSSの追加
+  - [ ] `index.html` に `commitment-modal` を追加
+  - [ ] `index.html` のヒーローエリアに `commitment-status` を追加
+  - [ ] `styles.css` にスタイルを追加
+- [ ] ロジック実装: `js/modules/commitment-manager.js`
+  - [ ] クラス定義とSingletonパターン
+  - [ ] `save` / `load` 処理
+  - [ ] `checkStatus` (判定) ロジック
+  - [ ] `getBonus` / `getPenalty` ロジック
+- [ ] 統合: `js/app.js`
+  - [ ] モジュールのインポートと初期化
+  - [ ] `finishWorkout` 後にモーダルを表示する処理
+  - [ ] アプリ起動時および `startWorkout` 時の誓約チェックと反映
+    - [ ] 成功時: 攻撃ボーナス/テンション付与
+    - [ ] 失敗時: ボスHP回復
+- [ ] テスト
+  - [ ] Playwright テスト作成 (`tests/commitment.spec.js`)
+  - [ ] 正常系（誓約 → 達成）
+  - [ ] 異常系（誓約 → 放置 → 失敗）
+  - [ ] キャンセル/上書きの挙動確認
+- [ ] ドキュメント更新
+  - [ ] `README.md` に機能説明追加
