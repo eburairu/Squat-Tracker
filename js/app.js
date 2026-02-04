@@ -29,6 +29,7 @@ import { TensionManager } from './modules/tension-manager.js';
 import { StreakGuardian } from './modules/streak-guardian.js';
 import { VoiceControl } from './modules/voice-control.js';
 import { CommitmentManager } from './modules/commitment-manager.js';
+import { SkillManager } from './modules/skill-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -368,11 +369,22 @@ const performAttack = () => {
   const classMods = ClassManager.getModifiers();
 
   // Use critical flag from current quiz if available
-  const forceCritical = currentQuiz && currentQuiz.isCritical;
+  let forceCritical = currentQuiz && currentQuiz.isCritical;
+
+  // Skill Check (Rogue: Fortune)
+  if (SkillManager.shouldCritAndDrop()) {
+    forceCritical = true;
+    // Note: Drop rate boost is handled if we hook into BossBattle drop logic,
+    // but for now we settle with critical hit guarantee.
+    // If we want drop boost, we'd need to pass it to BossBattle.damage or handle it elsewhere.
+    // Assuming simple crit for now as per spec MVP.
+    SkillManager.consumeCritDropEffect();
+  }
 
   const rawAttackPower = userBaseAp + weaponBonus + sessionAttackBonus;
   const tensionMultiplier = TensionManager.getMultiplier();
-  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier * tensionMultiplier);
+  const skillMultiplier = SkillManager.getAttackMultiplier();
+  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier * tensionMultiplier * skillMultiplier);
 
   const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical, classMods.criticalRateBonus);
   BossBattle.damage(damage.amount, damage.isCritical);
@@ -423,6 +435,7 @@ const nextRepOrSet = () => {
   if (currentSet < totalSets) {
     currentSet += 1;
     currentRep = 1;
+    SkillManager.onSetFinished();
     startRest();
     return;
   }
@@ -498,6 +511,7 @@ const recordWorkout = () => {
 
 const finishWorkout = () => {
   TensionManager.reset();
+  SkillManager.reset();
   currentPhase = Phase.FINISHED;
   phaseDuration = null;
   isPaused = false;
@@ -652,6 +666,14 @@ const startWorkout = () => {
   workoutStarted = true;
   workoutSaved = false;
 
+  // Load Skill
+  const currentClass = ClassManager.getCurrentClass();
+  if (currentClass && currentClass.skill) {
+    SkillManager.loadSkill(currentClass.skill);
+  } else {
+    SkillManager.reset();
+  }
+
   // Reset Session Stats
   sessionAttackBonus = 0;
   quizSessionCorrect = 0;
@@ -711,6 +733,7 @@ const pauseWorkout = () => {
 
 const resetWorkout = () => {
   TensionManager.reset();
+  SkillManager.reset();
   workoutTimer.cancel();
   phaseDuration = null;
   currentPhase = Phase.IDLE;
@@ -967,11 +990,19 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
   } else if (phaseKey === Phase.UP) {
     // Answer Reveal Phase
     if (currentQuiz) {
+      // Check Auto Win Skill (Mage: Foresight)
+      let autoWin = false;
+      if (SkillManager.shouldAutoWinQuiz()) {
+        autoWin = true;
+        SkillManager.consumeQuizEffect();
+        showToast({ emoji: '🔮', title: '予知発動', message: 'クイズに自動正解しました！' });
+      }
+
       quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
       quizAnswer.textContent = `答え: ${currentQuiz.correctAnswer}`;
 
       // Grading Logic
-      const isCorrect = userSelectedOption !== null && Number(userSelectedOption) === currentQuiz.correctAnswer;
+      const isCorrect = autoWin || (userSelectedOption !== null && Number(userSelectedOption) === currentQuiz.correctAnswer);
       isCurrentQuizCorrect = isCorrect;
 
       if (isCorrect) quizSessionCorrect++;
@@ -1283,6 +1314,7 @@ const initApp = async () => {
   ClassManager.init(classesData);
   ShareManager.init();
   TensionManager.init();
+  SkillManager.init();
   await BestiaryManager.init();
 
   const bestiaryBtn = document.getElementById('bestiary-button');
@@ -1350,11 +1382,14 @@ if (typeof window !== 'undefined') {
   window.StreakGuardian = StreakGuardian;
   window.VoiceControl = VoiceControl;
   window.CommitmentManager = CommitmentManager;
+  window.SkillManager = SkillManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
+  window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
 
   // Expose internal state for testing
   Object.defineProperty(window, 'currentQuiz', {
     get: () => currentQuiz,
+    set: (val) => { currentQuiz = val; },
     configurable: true
   });
   Object.defineProperty(window, 'sessionAttackBonus', {
