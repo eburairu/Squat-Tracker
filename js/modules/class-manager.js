@@ -243,12 +243,21 @@ const ClassManager = {
         `;
       }
 
+      // Skill info
+      const skillHtml = cls.skill ?
+        `<div class="class-skill-info">
+           <span class="skill-label">必殺技:</span>
+           <span class="skill-detail">${cls.skill.emoji} ${cls.skill.name}</span>
+           <div class="skill-desc-small">${cls.skill.description}</div>
+         </div>` : '';
+
       card.innerHTML = `
         <div class="class-emoji">${cls.emoji}</div>
         <div class="class-info">
           <div class="class-name">${cls.name} <span class="class-level-badge">Lv.${level}</span></div>
           <div class="class-desc">${cls.description}</div>
           <div class="class-effects">${effects.join(' / ')}</div>
+          ${skillHtml}
           ${progressHtml}
         </div>
         ${isSelected ? '<div class="class-selected-badge">選択中</div>' : ''}
