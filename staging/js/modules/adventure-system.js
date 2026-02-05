@@ -3,18 +3,50 @@ import { isStorageAvailable } from '../utils.js';
 
 const STORAGE_KEY = 'squat-tracker-adventure';
 
+const ROUTES = {
+  NORMAL: {
+    id: 'normal',
+    name: '王道',
+    emoji: '🛡️',
+    description: 'バランスの取れた標準的なルート。<br>初心者にもおすすめ。',
+    modifiers: { hp: 1.0, exp: 1.0, drop: 1.0 },
+    styleClass: 'route-normal'
+  },
+  HARD: {
+    id: 'hard',
+    name: '修羅の道',
+    emoji: '🔥',
+    description: '敵は手強いが見返りも大きい。<br><span class="modifier-tag">敵HP x1.5 / EXP x1.5</span>',
+    modifiers: { hp: 1.5, exp: 1.5, drop: 1.2 },
+    styleClass: 'route-hard'
+  },
+  EASY: {
+    id: 'easy',
+    name: '裏道',
+    emoji: '🍀',
+    description: '敵は弱いが実入りは少ない。<br><span class="modifier-tag">敵HP x0.8 / EXP x0.8</span>',
+    modifiers: { hp: 0.8, exp: 0.8, drop: 1.0 },
+    styleClass: 'route-easy'
+  }
+};
+
 export const AdventureSystem = (() => {
   let state = {
     currentAreaIndex: 0,
-    currentNodeIndex: 0
+    currentNodeIndex: 0,
+    currentRouteId: 'normal',
+    routeModifiers: { hp: 1.0, exp: 1.0, drop: 1.0 }
   };
 
   const elements = {
     background: null,
-    status: null
+    status: null,
+    modal: null,
+    routeCardsContainer: null
   };
 
   let onStateChangeCallback = null;
+  let onRouteSelectedCallback = null;
 
   const load = () => {
     if (!isStorageAvailable) return;
@@ -24,6 +56,9 @@ export const AdventureSystem = (() => {
         const parsed = JSON.parse(raw);
         state.currentAreaIndex = Number(parsed.currentAreaIndex) || 0;
         state.currentNodeIndex = Number(parsed.currentNodeIndex) || 0;
+        // Migration support
+        state.currentRouteId = parsed.currentRouteId || 'normal';
+        state.routeModifiers = parsed.routeModifiers || { hp: 1.0, exp: 1.0, drop: 1.0 };
       }
     } catch (e) {
       console.error('Failed to load adventure state', e);
@@ -39,13 +74,14 @@ export const AdventureSystem = (() => {
     onStateChangeCallback = options.onStateChange || null;
     elements.background = document.getElementById('adventure-background');
     elements.status = document.getElementById('adventure-status');
+    elements.modal = document.getElementById('route-selection-modal');
+    elements.routeCardsContainer = document.getElementById('route-cards-container');
 
     load();
     render();
   };
 
   const getCurrentArea = () => {
-    // 範囲外の場合はループ（エンドレスモード）
     const index = state.currentAreaIndex % WORLD_MAP.length;
     return WORLD_MAP[index];
   };
@@ -57,8 +93,13 @@ export const AdventureSystem = (() => {
       nodeIndex: state.currentNodeIndex,
       totalNodes: area.totalNodes,
       areaName: area.name,
-      theme: area.theme
+      theme: area.theme,
+      routeId: state.currentRouteId
     };
+  };
+
+  const getRouteModifiers = () => {
+    return state.routeModifiers;
   };
 
   const advance = () => {
@@ -94,18 +135,12 @@ export const AdventureSystem = (() => {
     const progress = getProgress();
 
     if (background) {
-      // 背景
       background.style.background = progress.theme.background;
     }
 
     if (status) {
-      // HTML構造の作成
       const total = progress.totalNodes;
       const current = progress.nodeIndex;
-
-      // アバターの位置（％）を計算
-      // 0で0%、(total-1)で100%になるように計算
-      // ノード数は totalNodes（例: 10個なら index 0..9）
       const safeTotal = total > 1 ? total - 1 : 1;
       const pct = Math.min(100, Math.max(0, (current / safeTotal) * 100));
 
@@ -132,9 +167,65 @@ export const AdventureSystem = (() => {
     }
   };
 
-  // テスト用
+  const showRouteSelection = (callback) => {
+    onRouteSelectedCallback = callback;
+    if (!elements.modal || !elements.routeCardsContainer) {
+      console.warn('Route selection modal elements missing');
+      // UIがない場合はデフォルト挙動としてコールバックを即実行
+      if (callback) callback();
+      return;
+    }
+
+    // Render Cards
+    elements.routeCardsContainer.innerHTML = '';
+    Object.values(ROUTES).forEach(route => {
+      const card = document.createElement('button');
+      card.className = `route-card ${route.styleClass}`;
+      card.innerHTML = `
+        <div class="route-emoji">${route.emoji}</div>
+        <div class="route-name">${route.name}</div>
+        <div class="route-desc">${route.description}</div>
+        <button class="route-btn">この道を行く</button>
+      `;
+      card.onclick = () => selectRoute(route.id);
+      elements.routeCardsContainer.appendChild(card);
+    });
+
+    // Show Modal
+    elements.modal.style.display = 'flex';
+    elements.modal.classList.add('active');
+    elements.modal.setAttribute('aria-hidden', 'false');
+  };
+
+  const selectRoute = (routeId) => {
+    const route = Object.values(ROUTES).find(r => r.id === routeId) || ROUTES.NORMAL;
+
+    state.currentRouteId = route.id;
+    state.routeModifiers = route.modifiers;
+    save();
+
+    // Hide Modal
+    if (elements.modal) {
+      elements.modal.classList.remove('active');
+      elements.modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => {
+        elements.modal.style.display = 'none';
+      }, 300);
+    }
+
+    if (onRouteSelectedCallback) {
+      onRouteSelectedCallback();
+      onRouteSelectedCallback = null;
+    }
+  };
+
   const reset = () => {
-    state = { currentAreaIndex: 0, currentNodeIndex: 0 };
+    state = {
+      currentAreaIndex: 0,
+      currentNodeIndex: 0,
+      currentRouteId: 'normal',
+      routeModifiers: { hp: 1.0, exp: 1.0, drop: 1.0 }
+    };
     save();
     render();
     notifyChange();
@@ -144,9 +235,11 @@ export const AdventureSystem = (() => {
     init,
     getCurrentArea,
     getProgress,
+    getRouteModifiers,
     advance,
+    showRouteSelection,
+    selectRoute, // テスト用に公開
     reset,
-    // 外部から描画が必要な場合のために公開（通常はinitが呼ぶ）
     render
   };
 })();

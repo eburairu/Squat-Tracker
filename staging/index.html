@@ -456,6 +456,21 @@
     </div>
   </div>
 
+  <div id="route-selection-modal" class="modal" aria-hidden="true" style="display: none;">
+    <div class="modal-overlay" tabindex="-1"></div>
+    <div class="modal-container route-selection-container">
+      <div class="modal-header">
+        <h2 class="modal-title">運命の分かれ道</h2>
+      </div>
+      <div class="modal-body">
+        <p class="route-prompt">進む道を選択してください</p>
+        <div id="route-cards-container" class="route-cards">
+          <!-- JSで動的生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="bestiary-modal" class="modal" aria-hidden="true">
     <div class="modal-overlay" tabindex="-1" data-close></div>
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="bestiary-modal-title">
