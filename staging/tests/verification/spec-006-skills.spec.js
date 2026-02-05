@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Class Active Skills Feature', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:8000/index.html');
+    await page.goto('/index.html');
     await page.waitForFunction(() => window.SkillManager && window.ClassManager);
 
     // Setup: Reduce countdown to min to speed up tests
