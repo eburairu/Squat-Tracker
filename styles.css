@@ -2066,3 +2066,139 @@ body.boost-mode .tension-label {
   color: var(--text-secondary);
   margin-top: 0.25rem;
 }
+
+/* Route Selection */
+.route-selection-container {
+  max-width: 800px;
+}
+
+.route-prompt {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.route-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem;
+}
+
+.route-card {
+  background-color: var(--bg-color);
+  border: 2px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.route-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+}
+
+.route-emoji {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  transition: transform 0.3s;
+}
+
+.route-card:hover .route-emoji {
+  transform: scale(1.1);
+}
+
+.route-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.route-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.route-modifiers {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.modifier-tag {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: rgba(0,0,0,0.03);
+}
+
+[data-theme="dark"] .modifier-tag {
+  background-color: rgba(255,255,255,0.05);
+}
+
+.route-btn {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+/* Route Variants */
+.route-normal {
+  border-color: var(--accent-color);
+}
+.route-normal .route-btn {
+  background-color: var(--accent-color);
+  color: white;
+}
+.route-normal:hover {
+  box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.3);
+}
+
+.route-hard {
+  border-color: var(--danger-color);
+}
+.route-hard .route-name {
+  color: var(--danger-color);
+}
+.route-hard .route-btn {
+  background-color: var(--danger-color);
+  color: white;
+}
+.route-hard:hover {
+  box-shadow: 0 10px 20px -5px rgba(239, 68, 68, 0.3);
+}
+
+.route-easy {
+  border-color: var(--success-color);
+}
+.route-easy .route-name {
+  color: var(--success-color);
+}
+.route-easy .route-btn {
+  background-color: var(--success-color);
+  color: white;
+}
+.route-easy:hover {
+  box-shadow: 0 10px 20px -5px rgba(34, 197, 94, 0.3);
+}
