@@ -99,6 +99,29 @@ export const BossBattle = {
     this.saveState();
   },
 
+  forceHeal(amount) {
+    if (!this.state.currentMonster) return;
+
+    const oldHp = this.state.currentMonster.currentHp;
+    this.state.currentMonster.currentHp = Math.min(
+      this.state.currentMonster.maxHp,
+      this.state.currentMonster.currentHp + amount
+    );
+
+    if (this.state.currentMonster.currentHp > oldHp) {
+      this.state.lastInteraction = Date.now();
+      this.saveState();
+      this.render();
+
+      if (this.elements.avatar) {
+        // Simple visual feedback using existing animation
+        this.elements.avatar.classList.remove('boss-spawn');
+        void this.elements.avatar.offsetWidth;
+        this.elements.avatar.classList.add('boss-spawn');
+      }
+    }
+  },
+
   spawnMonster(animate = true) {
     const index = this.state.monsterIndex % MONSTERS.length;
     const template = MONSTERS[index];
@@ -106,8 +129,12 @@ export const BossBattle = {
     // Scaling: 1.0, 1.5, 2.0...
     const scalingFactor = 1 + (this.state.loopCount - 1) * 0.5;
 
-    const minHp = Math.floor(template.hpRange[0] * scalingFactor);
-    const maxHp = Math.floor(template.hpRange[1] * scalingFactor);
+    // Apply Route Modifiers
+    const modifiers = AdventureSystem.getRouteModifiers();
+    const hpModifier = modifiers ? modifiers.hp : 1.0;
+
+    const minHp = Math.floor(template.hpRange[0] * scalingFactor * hpModifier);
+    const maxHp = Math.floor(template.hpRange[1] * scalingFactor * hpModifier);
     const hp = getRandomInt(minHp, maxHp);
 
     this.state.currentMonster = {
@@ -185,6 +212,8 @@ export const BossBattle = {
 
     // Adventure Mode Integration
     const advResult = AdventureSystem.advance();
+
+    // Check if area was cleared and route selection is needed
     if (advResult.areaCleared) {
       showToast({
         emoji: '🎉',
@@ -210,10 +239,22 @@ export const BossBattle = {
       this.elements.avatar.classList.add('boss-defeat');
     }
 
-    setTimeout(() => {
-      this.spawnMonster(true);
-      this.isRespawning = false;
-    }, 1000);
+    // Delay handling based on area clear status
+    if (advResult.areaCleared) {
+      // Wait for defeat animation then show route selection
+      setTimeout(() => {
+        AdventureSystem.showRouteSelection(() => {
+          this.spawnMonster(true);
+          this.isRespawning = false;
+        });
+      }, 1000);
+    } else {
+      // Normal respawn
+      setTimeout(() => {
+        this.spawnMonster(true);
+        this.isRespawning = false;
+      }, 1000);
+    }
   },
 
   rollDrop() {

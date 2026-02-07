@@ -1,16 +1,17 @@
 {
   "name": "squat-tracker",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "private": true,
   "type": "commonjs",
   "devDependencies": {
     "@commitlint/cli": "^20.3.1",
     "@commitlint/config-conventional": "^20.3.1",
-    "@playwright/test": "^1.49.0",
+    "@playwright/test": "^1.58.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^12.0.2",
     "husky": "^9.1.7",
+    "playwright": "^1.58.0",
     "semantic-release": "^25.0.2"
   },
   "scripts": {
