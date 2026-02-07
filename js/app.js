@@ -16,12 +16,20 @@ import { AchievementSystem } from './modules/achievement-system.js';
 import { DataManager } from './modules/data-manager.js';
 import { PresetManager } from './modules/preset-manager.js';
 import { AdventureSystem } from './modules/adventure-system.js';
+import { WeeklyChallengeSystem } from './modules/weekly-challenge.js';
 import { TitleManager } from './modules/title-manager.js';
 import { ClassManager } from './modules/class-manager.js';
+import { BestiaryManager } from './modules/bestiary-manager.js';
 import { generateQuiz } from './modules/quiz.js';
 import { renderHeatmap, initHeatmap } from './modules/heatmap.js';
 import { loadJson } from './modules/resource-loader.js';
+import { ShareManager } from './modules/share-manager.js';
 import { generateWeapons } from './data/weapons.js';
+import { TensionManager } from './modules/tension-manager.js';
+import { StreakGuardian } from './modules/streak-guardian.js';
+import { VoiceControl } from './modules/voice-control.js';
+import { CommitmentManager } from './modules/commitment-manager.js';
+import { SkillManager } from './modules/skill-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -50,6 +58,8 @@ const themeToggle = document.getElementById('theme-toggle');
 const themeStatus = document.getElementById('theme-status');
 const voiceToggle = document.getElementById('voice-toggle');
 const voiceStatus = document.getElementById('voice-status');
+const voiceCommandToggle = document.getElementById('voice-command-toggle');
+const voiceCommandStatusText = document.getElementById('voice-command-status-text');
 
 const setCountInput = document.getElementById('set-count');
 const repCountInput = document.getElementById('rep-count');
@@ -112,6 +122,7 @@ const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
 const THEME_KEY = 'squat-tracker-theme';
 const VOICE_COACH_KEY = 'squat-tracker-voice';
+const VOICE_COMMAND_KEY = 'squat-tracker-voice-command';
 const WORKOUT_SETTINGS_KEY = 'squat-tracker-workout-settings';
 let historyEntries = [];
 
@@ -358,13 +369,26 @@ const performAttack = () => {
   const classMods = ClassManager.getModifiers();
 
   // Use critical flag from current quiz if available
-  const forceCritical = currentQuiz && currentQuiz.isCritical;
+  let forceCritical = currentQuiz && currentQuiz.isCritical;
+
+  // Skill Check (Rogue: Fortune)
+  if (SkillManager.shouldCritAndDrop()) {
+    forceCritical = true;
+    // Note: Drop rate boost is handled if we hook into BossBattle drop logic,
+    // but for now we settle with critical hit guarantee.
+    // If we want drop boost, we'd need to pass it to BossBattle.damage or handle it elsewhere.
+    // Assuming simple crit for now as per spec MVP.
+    SkillManager.consumeCritDropEffect();
+  }
 
   const rawAttackPower = userBaseAp + weaponBonus + sessionAttackBonus;
-  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier);
+  const tensionMultiplier = TensionManager.getMultiplier();
+  const skillMultiplier = SkillManager.getAttackMultiplier();
+  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier * tensionMultiplier * skillMultiplier);
 
   const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical, classMods.criticalRateBonus);
   BossBattle.damage(damage.amount, damage.isCritical);
+  TensionManager.add(10);
 
   // Note: sessionAttackBonus is now cumulative and NOT reset here.
 };
@@ -411,6 +435,7 @@ const nextRepOrSet = () => {
   if (currentSet < totalSets) {
     currentSet += 1;
     currentRep = 1;
+    SkillManager.onSetFinished();
     startRest();
     return;
   }
@@ -485,6 +510,8 @@ const recordWorkout = () => {
 };
 
 const finishWorkout = () => {
+  TensionManager.reset();
+  SkillManager.reset();
   currentPhase = Phase.FINISHED;
   phaseDuration = null;
   isPaused = false;
@@ -496,6 +523,29 @@ const finishWorkout = () => {
   playCelebration();
   VoiceCoach.speak('お疲れ様でした！ナイスファイト');
   recordWorkout();
+
+  // Show Share Button
+  const existingShareBtn = document.getElementById('share-result-button');
+  if (existingShareBtn) existingShareBtn.remove();
+
+  const shareBtn = document.createElement('button');
+  shareBtn.id = 'share-result-button';
+  shareBtn.className = 'btn primary';
+  shareBtn.textContent = '戦績をシェア 📸';
+  shareBtn.style.gridColumn = '1 / -1'; // Full width in grid
+  shareBtn.onclick = () => {
+    const latest = historyEntries[0];
+    const cals = latest ? Math.floor(latest.totalReps * 0.5) : 0; // Approx 0.5 kcal per squat
+    ShareManager.open({
+      totalReps: latest ? latest.totalReps : 0,
+      totalCalories: cals
+    });
+  };
+
+  const actionsContainer = document.querySelector('.actions');
+  if (actionsContainer) {
+    actionsContainer.appendChild(shareBtn);
+  }
 
   const settings = {
     setCount: setCountInput.value,
@@ -514,14 +564,32 @@ const finishWorkout = () => {
     historyEntries // Pass history entries for checks
   });
 
+  StreakGuardian.update(historyEntries);
+
   DailyMissionSystem.check({
     type: 'finish',
     totalReps: totalSets * repsPerSet,
     totalSets: totalSets
   });
 
+  WeeklyChallengeSystem.check({
+    type: 'finish',
+    totalReps: totalSets * repsPerSet,
+    totalSets: totalSets
+  });
+
+  const currentClass = ClassManager.getCurrentClass();
+  if (currentClass) {
+    ClassManager.addExperience(currentClass.id, totalSets * repsPerSet);
+  }
+
   launchConfetti(confettiCanvas, prefersReducedMotion);
   updateActionButtonStates();
+
+  // Show Commitment Modal after a short delay
+  setTimeout(() => {
+    CommitmentManager.showModal();
+  }, 2000);
 };
 
 const tick = () => {
@@ -598,11 +666,40 @@ const startWorkout = () => {
   workoutStarted = true;
   workoutSaved = false;
 
+  // Load Skill
+  const currentClass = ClassManager.getCurrentClass();
+  if (currentClass && currentClass.skill) {
+    SkillManager.loadSkill(currentClass.skill);
+  } else {
+    SkillManager.reset();
+  }
+
   // Reset Session Stats
   sessionAttackBonus = 0;
   quizSessionCorrect = 0;
   quizSessionTotal = 0;
   updateQuizStats();
+
+  // Commitment Check
+  const commitmentResult = CommitmentManager.checkAndResolve();
+  if (commitmentResult) {
+    if (commitmentResult.status === 'fulfilled') {
+      // Bonus: +10% of Base AP (min 1)
+      const bonusVal = Math.max(1, Math.floor(userBaseAp * (commitmentResult.bonus - 1.0)));
+      sessionAttackBonus += bonusVal;
+      TensionManager.add(50);
+      showToast({ emoji: '🔥', title: '誓約達成！', message: `ボーナス攻撃力 +${bonusVal} / テンションUP!` });
+      launchConfetti(confettiCanvas, prefersReducedMotion);
+    } else if (commitmentResult.status === 'broken') {
+      // Penalty: Heal Boss 20%
+      if (BossBattle.state.currentMonster) {
+        const healAmount = Math.floor(BossBattle.state.currentMonster.maxHp * commitmentResult.penalty);
+        BossBattle.forceHeal(healAmount);
+        showToast({ emoji: '😈', title: '誓約違反...', message: `ボスのHPが ${healAmount} 回復しました。` });
+      }
+    }
+    CommitmentManager.clear();
+  }
 
   startButton.disabled = true;
   startButton.textContent = '進行中';
@@ -635,6 +732,8 @@ const pauseWorkout = () => {
 };
 
 const resetWorkout = () => {
+  TensionManager.reset();
+  SkillManager.reset();
   workoutTimer.cancel();
   phaseDuration = null;
   currentPhase = Phase.IDLE;
@@ -643,6 +742,9 @@ const resetWorkout = () => {
   quizSessionCorrect = 0;
   quizSessionTotal = 0;
   updateQuizStats();
+
+  const shareBtn = document.getElementById('share-result-button');
+  if (shareBtn) shareBtn.remove();
 
   currentSet = 1;
   currentRep = 1;
@@ -888,14 +990,23 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
   } else if (phaseKey === Phase.UP) {
     // Answer Reveal Phase
     if (currentQuiz) {
+      // Check Auto Win Skill (Mage: Foresight)
+      let autoWin = false;
+      if (SkillManager.shouldAutoWinQuiz()) {
+        autoWin = true;
+        SkillManager.consumeQuizEffect();
+        showToast({ emoji: '🔮', title: '予知発動', message: 'クイズに自動正解しました！' });
+      }
+
       quizProblem.textContent = `問題: ${currentQuiz.problemText}`;
       quizAnswer.textContent = `答え: ${currentQuiz.correctAnswer}`;
 
       // Grading Logic
-      const isCorrect = userSelectedOption !== null && Number(userSelectedOption) === currentQuiz.correctAnswer;
+      const isCorrect = autoWin || (userSelectedOption !== null && Number(userSelectedOption) === currentQuiz.correctAnswer);
       isCurrentQuizCorrect = isCorrect;
 
       if (isCorrect) quizSessionCorrect++;
+      if (isCorrect) TensionManager.add(20);
       updateQuizStats();
 
       quizOptionButtons.forEach(btn => {
@@ -1100,6 +1211,50 @@ const initApp = async () => {
   initializePresets();
   initializeHistory();
 
+  // Initialize Voice Command
+  const isVoiceSupported = VoiceControl.init({
+    start: () => {
+      if (!workoutStarted && currentPhase === Phase.IDLE) {
+        startWorkout();
+      }
+    },
+    pause: () => {
+      // Pause or Resume
+      if (workoutStarted && currentPhase !== Phase.FINISHED) {
+        pauseWorkout();
+      }
+    },
+    reset: () => {
+      // Allow reset only if paused or finished to prevent accidental resets
+      if (isPaused || currentPhase === Phase.FINISHED) {
+        resetWorkout();
+      }
+    }
+  });
+
+  const voiceCommandGroup = document.getElementById('voice-command-control-group');
+  if (!isVoiceSupported && voiceCommandGroup) {
+    voiceCommandGroup.style.display = 'none';
+  } else if (voiceCommandToggle) {
+    const stored = isStorageAvailable ? localStorage.getItem(VOICE_COMMAND_KEY) : null;
+    const enabled = stored === 'true';
+    voiceCommandToggle.checked = enabled;
+    if (voiceCommandStatusText) voiceCommandStatusText.textContent = enabled ? 'ON' : 'OFF';
+
+    // Note: Auto-starting speech recognition might be blocked by browsers without user interaction.
+    // If it fails, the user will need to toggle it OFF and ON again.
+    if (enabled) {
+      VoiceControl.setEnabled(true);
+    }
+
+    voiceCommandToggle.addEventListener('change', (e) => {
+      const isChecked = e.target.checked;
+      VoiceControl.setEnabled(isChecked);
+      if (voiceCommandStatusText) voiceCommandStatusText.textContent = isChecked ? 'ON' : 'OFF';
+      if (isStorageAvailable) localStorage.setItem(VOICE_COMMAND_KEY, String(isChecked));
+    });
+  }
+
   AchievementSystem.init({
     achievementsData, // Pass loaded data
     onHistoryTabSelected: () => {
@@ -1115,11 +1270,84 @@ const initApp = async () => {
 
   // Initialize systems dependent on weapon data
   DailyMissionSystem.init({ baseWeaponsData, weaponsMap });
+  WeeklyChallengeSystem.init({ baseWeaponsData, weaponsMap });
   BossBattle.init({ baseWeaponsData, weaponsMap });
+
+  // Mission Tabs Logic
+  const missionTabDaily = document.getElementById('mission-tab-daily');
+  const missionTabWeekly = document.getElementById('mission-tab-weekly');
+  const missionListDaily = document.getElementById('mission-list');
+  const missionListWeekly = document.getElementById('mission-list-weekly');
+  const weeklyInfoContainer = document.getElementById('weekly-info-container');
+
+  if (missionTabDaily && missionTabWeekly && missionListDaily && missionListWeekly) {
+    missionTabDaily.addEventListener('click', () => {
+      missionTabDaily.classList.add('active');
+      missionTabWeekly.classList.remove('active');
+      missionListDaily.style.display = '';
+      missionListWeekly.style.display = 'none';
+      if (weeklyInfoContainer) weeklyInfoContainer.style.display = 'none';
+    });
+
+    missionTabWeekly.addEventListener('click', () => {
+      missionTabWeekly.classList.add('active');
+      missionTabDaily.classList.remove('active');
+      missionListDaily.style.display = 'none';
+      missionListWeekly.style.display = '';
+      if (weeklyInfoContainer) weeklyInfoContainer.style.display = '';
+      WeeklyChallengeSystem.render();
+    });
+  }
+
+  // Initial render
+  WeeklyChallengeSystem.render();
+
+  // Hook into BossBattle for weekly challenge tracking
+  const originalHandleDefeat = BossBattle.handleDefeat;
+  BossBattle.handleDefeat = function(...args) {
+    originalHandleDefeat.apply(this, args);
+    WeeklyChallengeSystem.check({ type: 'boss_kill' });
+  };
 
   TitleManager.init(titlesData);
   AdventureSystem.init();
   ClassManager.init(classesData);
+  ShareManager.init();
+  TensionManager.init();
+  SkillManager.init();
+  await BestiaryManager.init();
+
+  const bestiaryBtn = document.getElementById('bestiary-button');
+  if (bestiaryBtn) {
+    bestiaryBtn.addEventListener('click', () => BestiaryManager.open());
+  }
+
+  const bestiaryModal = document.getElementById('bestiary-modal');
+  if (bestiaryModal) {
+    bestiaryModal.addEventListener('click', (e) => {
+      if (e.target.hasAttribute('data-close') || e.target.classList.contains('modal-overlay')) {
+        BestiaryManager.close();
+      }
+    });
+  }
+
+  StreakGuardian.init();
+  StreakGuardian.update(historyEntries);
+  setInterval(() => {
+    StreakGuardian.update(historyEntries);
+  }, 60000);
+
+  CommitmentManager.init();
+  // Check for expiration on load (e.g. opened app after deadline)
+  const expirationResult = CommitmentManager.checkExpiration();
+  if (expirationResult && expirationResult.status === 'broken') {
+    if (BossBattle.state.currentMonster) {
+      const healAmount = Math.floor(BossBattle.state.currentMonster.maxHp * expirationResult.penalty);
+      BossBattle.forceHeal(healAmount);
+      showToast({ emoji: '😈', title: '誓約期限切れ...', message: '約束を破ったため、ボスが回復しました。' });
+    }
+    CommitmentManager.clear();
+  }
 
   updateQuizAndTimerDisplay(Phase.IDLE);
   updateDisplays();
@@ -1138,6 +1366,7 @@ if (typeof window !== 'undefined') {
   window.BossBattle = BossBattle;
   window.InventoryManager = InventoryManager;
   window.DailyMissionSystem = DailyMissionSystem;
+  window.WeeklyChallengeSystem = WeeklyChallengeSystem;
   window.AchievementSystem = AchievementSystem;
   window.AdventureSystem = AdventureSystem;
   window.TitleManager = TitleManager;
@@ -1147,11 +1376,20 @@ if (typeof window !== 'undefined') {
   window.finishWorkout = finishWorkout;
   window.showToast = showToast;
   window.VoiceCoach = VoiceCoach;
+  window.ShareManager = ShareManager;
+  window.TensionManager = TensionManager;
+  window.BestiaryManager = BestiaryManager;
+  window.StreakGuardian = StreakGuardian;
+  window.VoiceControl = VoiceControl;
+  window.CommitmentManager = CommitmentManager;
+  window.SkillManager = SkillManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
+  window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
 
   // Expose internal state for testing
   Object.defineProperty(window, 'currentQuiz', {
     get: () => currentQuiz,
+    set: (val) => { currentQuiz = val; },
     configurable: true
   });
   Object.defineProperty(window, 'sessionAttackBonus', {

@@ -8,6 +8,14 @@
       "attackMultiplier": 1.0,
       "quizMultiplier": 1.0,
       "criticalRateBonus": 0.0
+    },
+    "skill": {
+      "id": "skill_novice",
+      "name": "深呼吸",
+      "description": "テンション50%回復",
+      "emoji": "😮‍💨",
+      "type": "recover_tension",
+      "value": 50
     }
   },
   {
@@ -19,6 +27,14 @@
       "attackMultiplier": 1.2,
       "quizMultiplier": 1.0,
       "criticalRateBonus": 0.0
+    },
+    "skill": {
+      "id": "skill_warrior",
+      "name": "パワーサージ",
+      "description": "このセット中、攻撃力1.5倍",
+      "emoji": "💪",
+      "type": "buff_attack_set",
+      "value": 1.5
     }
   },
   {
@@ -30,6 +46,14 @@
       "attackMultiplier": 1.0,
       "quizMultiplier": 2.0,
       "criticalRateBonus": 0.0
+    },
+    "skill": {
+      "id": "skill_mage",
+      "name": "予知",
+      "description": "次のクイズを自動正解",
+      "emoji": "🔮",
+      "type": "auto_quiz_win",
+      "value": 1
     }
   },
   {
@@ -41,6 +65,14 @@
       "attackMultiplier": 1.0,
       "quizMultiplier": 1.0,
       "criticalRateBonus": 0.2
+    },
+    "skill": {
+      "id": "skill_rogue",
+      "name": "強運",
+      "description": "次の一撃が確定会心＆ドロップ判定2倍",
+      "emoji": "🍀",
+      "type": "next_crit_drop",
+      "value": 2
     }
   }
 ]
