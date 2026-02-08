@@ -30,6 +30,7 @@ import { StreakGuardian } from './modules/streak-guardian.js';
 import { VoiceControl } from './modules/voice-control.js';
 import { CommitmentManager } from './modules/commitment-manager.js';
 import { SkillManager } from './modules/skill-manager.js';
+import { LoadoutManager } from './modules/loadout-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -1317,6 +1318,8 @@ const initApp = async () => {
   SkillManager.init();
   await BestiaryManager.init();
 
+  LoadoutManager.init();
+
   const bestiaryBtn = document.getElementById('bestiary-button');
   if (bestiaryBtn) {
     bestiaryBtn.addEventListener('click', () => BestiaryManager.open());
@@ -1383,6 +1386,7 @@ if (typeof window !== 'undefined') {
   window.VoiceControl = VoiceControl;
   window.CommitmentManager = CommitmentManager;
   window.SkillManager = SkillManager;
+  window.LoadoutManager = LoadoutManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
 
