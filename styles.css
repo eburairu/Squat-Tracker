@@ -2202,3 +2202,45 @@ body.boost-mode .tension-label {
 .route-easy:hover {
   box-shadow: 0 10px 20px -5px rgba(34, 197, 94, 0.3);
 }
+
+/* Loadout System */
+.loadout-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.loadout-item:last-child {
+  border-bottom: none;
+}
+
+.loadout-info {
+  flex: 1;
+}
+
+.loadout-name {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.loadout-preview {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.loadout-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
