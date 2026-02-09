@@ -31,6 +31,7 @@ import { VoiceControl } from './modules/voice-control.js';
 import { CommitmentManager } from './modules/commitment-manager.js';
 import { SkillManager } from './modules/skill-manager.js';
 import { LoadoutManager } from './modules/loadout-manager.js';
+import { ComboSystem } from './modules/combo-system.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -385,7 +386,8 @@ const performAttack = () => {
   const rawAttackPower = userBaseAp + weaponBonus + sessionAttackBonus;
   const tensionMultiplier = TensionManager.getMultiplier();
   const skillMultiplier = SkillManager.getAttackMultiplier();
-  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier * tensionMultiplier * skillMultiplier);
+  const comboMultiplier = ComboSystem.getMultiplier();
+  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier * tensionMultiplier * skillMultiplier * comboMultiplier);
 
   const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical, classMods.criticalRateBonus);
   BossBattle.damage(damage.amount, damage.isCritical);
@@ -451,6 +453,7 @@ const startPhaseCycle = () => {
     schedulePhase(() => {
       setPhase(Phase.UP, upPhase.duration(), '1秒で立ちます');
       schedulePhase(() => {
+        ComboSystem.increment();
         performAttack();
         nextRepOrSet();
       }, upPhase.duration());
@@ -513,6 +516,7 @@ const recordWorkout = () => {
 const finishWorkout = () => {
   TensionManager.reset();
   SkillManager.reset();
+  ComboSystem.reset();
   currentPhase = Phase.FINISHED;
   phaseDuration = null;
   isPaused = false;
@@ -718,6 +722,7 @@ const pauseWorkout = () => {
   }
   isPaused = !isPaused;
   if (isPaused) {
+    ComboSystem.reset();
     hasPaused = true;
     pausedAt = Date.now();
     phaseHint.textContent = '一時停止中';
@@ -735,6 +740,7 @@ const pauseWorkout = () => {
 const resetWorkout = () => {
   TensionManager.reset();
   SkillManager.reset();
+  ComboSystem.reset();
   workoutTimer.cancel();
   phaseDuration = null;
   currentPhase = Phase.IDLE;
@@ -1030,6 +1036,7 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
           showToast({ emoji: '🛡️', title: 'ブロック成功！', message: 'プレイヤーの進行を阻止しました！' });
         }
       } else {
+        ComboSystem.reset();
         if (userSelectedOption === null) {
           showToast({ emoji: '❌', title: '不正解！', message: '回答が選択されませんでした。' });
         } else {
@@ -1319,6 +1326,7 @@ const initApp = async () => {
   await BestiaryManager.init();
 
   LoadoutManager.init();
+  ComboSystem.init();
 
   const bestiaryBtn = document.getElementById('bestiary-button');
   if (bestiaryBtn) {
@@ -1387,6 +1395,7 @@ if (typeof window !== 'undefined') {
   window.CommitmentManager = CommitmentManager;
   window.SkillManager = SkillManager;
   window.LoadoutManager = LoadoutManager;
+  window.ComboSystem = ComboSystem;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
 

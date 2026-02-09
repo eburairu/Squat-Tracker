@@ -2244,3 +2244,37 @@ body.boost-mode .tension-label {
   color: var(--text-secondary);
   font-style: italic;
 }
+
+/* Combo System */
+.session-header-right {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.combo-badge {
+  font-family: var(--font-family);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--warning-color);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  pointer-events: none;
+}
+
+.combo-badge.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.combo-badge.pulse {
+  animation: combo-pop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes combo-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); color: #fbbf24; }
+  100% { transform: scale(1); }
+}
