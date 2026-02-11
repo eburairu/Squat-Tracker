@@ -31,6 +31,7 @@ import { VoiceControl } from './modules/voice-control.js';
 import { CommitmentManager } from './modules/commitment-manager.js';
 import { SkillManager } from './modules/skill-manager.js';
 import { LoadoutManager } from './modules/loadout-manager.js';
+import { ComboSystem } from './modules/combo-system.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -389,7 +390,7 @@ const performAttack = () => {
 
   const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical, classMods.criticalRateBonus);
   BossBattle.damage(damage.amount, damage.isCritical);
-  TensionManager.add(10);
+  TensionManager.add(10 + ComboSystem.getTensionBonus());
 
   // Note: sessionAttackBonus is now cumulative and NOT reset here.
 };
@@ -513,6 +514,7 @@ const recordWorkout = () => {
 const finishWorkout = () => {
   TensionManager.reset();
   SkillManager.reset();
+  ComboSystem.reset();
   currentPhase = Phase.FINISHED;
   phaseDuration = null;
   isPaused = false;
@@ -735,6 +737,7 @@ const pauseWorkout = () => {
 const resetWorkout = () => {
   TensionManager.reset();
   SkillManager.reset();
+  ComboSystem.reset();
   workoutTimer.cancel();
   phaseDuration = null;
   currentPhase = Phase.IDLE;
@@ -1007,7 +1010,12 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
       isCurrentQuizCorrect = isCorrect;
 
       if (isCorrect) quizSessionCorrect++;
-      if (isCorrect) TensionManager.add(20);
+      if (isCorrect) {
+        TensionManager.add(20);
+        ComboSystem.increment();
+      } else {
+        ComboSystem.reset();
+      }
       updateQuizStats();
 
       quizOptionButtons.forEach(btn => {
@@ -1319,6 +1327,7 @@ const initApp = async () => {
   await BestiaryManager.init();
 
   LoadoutManager.init();
+  ComboSystem.init();
 
   const bestiaryBtn = document.getElementById('bestiary-button');
   if (bestiaryBtn) {
@@ -1387,6 +1396,7 @@ if (typeof window !== 'undefined') {
   window.CommitmentManager = CommitmentManager;
   window.SkillManager = SkillManager;
   window.LoadoutManager = LoadoutManager;
+  window.ComboSystem = ComboSystem;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
 
