@@ -32,6 +32,7 @@ import { CommitmentManager } from './modules/commitment-manager.js';
 import { SkillManager } from './modules/skill-manager.js';
 import { LoadoutManager } from './modules/loadout-manager.js';
 import { ComboSystem } from './modules/combo-system.js';
+import { EncounterManager } from './modules/encounter-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -472,6 +473,10 @@ const startCountdown = (label, callback) => {
 const startRest = () => {
   const restSeconds = parseInt(restDurationInput.value, 10);
   setPhase(Phase.REST, restSeconds, '休憩中');
+
+  // Encounter Check
+  EncounterManager.checkEncounter();
+
   schedulePhase(() => {
     setPhase(Phase.REST_COUNTDOWN, parseInt(countdownDurationInput.value, 10), '再開までカウントダウン');
     schedulePhase(() => {
@@ -1328,6 +1333,17 @@ const initApp = async () => {
 
   LoadoutManager.init();
   ComboSystem.init();
+  EncounterManager.init({
+    onPause: () => {
+      if (!isPaused) pauseWorkout();
+    },
+    onResume: () => {
+      if (isPaused) pauseWorkout();
+    },
+    onApplyBonus: (val) => {
+      sessionAttackBonus += val;
+    }
+  });
 
   const bestiaryBtn = document.getElementById('bestiary-button');
   if (bestiaryBtn) {
@@ -1397,6 +1413,7 @@ if (typeof window !== 'undefined') {
   window.SkillManager = SkillManager;
   window.LoadoutManager = LoadoutManager;
   window.ComboSystem = ComboSystem;
+  window.EncounterManager = EncounterManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
 
