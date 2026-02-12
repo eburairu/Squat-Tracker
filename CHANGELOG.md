@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+# [0.4.0](https://github.com/eburairu/Squat-Tracker/compare/v0.3.0...v0.4.0) (2026-02-12)
+
+
+### Features
+
+* **encounter:** implement dynamic in-workout events ([8691e43](https://github.com/eburairu/Squat-Tracker/commit/8691e438f1dc72f504608ad45f6f66489d789d01))
+* **loadout:** 装備マイセット（ロードアウト）機能の実装 ([48b8317](https://github.com/eburairu/Squat-Tracker/commit/48b83173f3f5ff37c6931160bfc63822d36fb243))
+* リズムコンボシステムの実装 ([c287317](https://github.com/eburairu/Squat-Tracker/commit/c287317df66b80b75d16d079eff3be4a1eecc410))
+* リズムコンボシステムの実装 ([1a44e5c](https://github.com/eburairu/Squat-Tracker/commit/1a44e5c322949b0c26e39cbc38375a1d964f1281))
+* リズムコンボシステムの実装 ([11e4ed2](https://github.com/eburairu/Squat-Tracker/commit/11e4ed2c0fa0ba98c82908edaa04f34ef71e3578))
+
 # [0.3.0](https://github.com/eburairu/Squat-Tracker/compare/v0.2.0...v0.3.0) (2026-02-07)
 
 
