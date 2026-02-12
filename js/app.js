@@ -33,6 +33,7 @@ import { SkillManager } from './modules/skill-manager.js';
 import { LoadoutManager } from './modules/loadout-manager.js';
 import { ComboSystem } from './modules/combo-system.js';
 import { EncounterManager } from './modules/encounter-manager.js';
+import { FortuneManager } from './modules/fortune-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -387,7 +388,8 @@ const performAttack = () => {
   const rawAttackPower = userBaseAp + weaponBonus + sessionAttackBonus;
   const tensionMultiplier = TensionManager.getMultiplier();
   const skillMultiplier = SkillManager.getAttackMultiplier();
-  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier * tensionMultiplier * skillMultiplier);
+  const fortuneMultiplier = FortuneManager.getMultiplier('attack');
+  const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier * tensionMultiplier * skillMultiplier * fortuneMultiplier);
 
   const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical, classMods.criticalRateBonus);
   BossBattle.damage(damage.amount, damage.isCritical);
@@ -588,7 +590,8 @@ const finishWorkout = () => {
 
   const currentClass = ClassManager.getCurrentClass();
   if (currentClass) {
-    ClassManager.addExperience(currentClass.id, totalSets * repsPerSet);
+    const expMultiplier = FortuneManager.getMultiplier('exp');
+    ClassManager.addExperience(currentClass.id, Math.floor(totalSets * repsPerSet * expMultiplier));
   }
 
   launchConfetti(confettiCanvas, prefersReducedMotion);
@@ -687,6 +690,13 @@ const startWorkout = () => {
   quizSessionCorrect = 0;
   quizSessionTotal = 0;
   updateQuizStats();
+
+  // Fortune Tension Bonus
+  const initialTension = FortuneManager.getMultiplier('tension');
+  if (initialTension > 0) {
+    TensionManager.add(initialTension);
+    showToast({ emoji: '🍀', title: '運勢ボーナス', message: `テンション +${initialTension}%` });
+  }
 
   // Commitment Check
   const commitmentResult = CommitmentManager.checkAndResolve();
@@ -1333,6 +1343,7 @@ const initApp = async () => {
 
   LoadoutManager.init();
   ComboSystem.init();
+  FortuneManager.init();
   EncounterManager.init({
     onPause: () => {
       if (!isPaused) pauseWorkout();
@@ -1414,6 +1425,7 @@ if (typeof window !== 'undefined') {
   window.LoadoutManager = LoadoutManager;
   window.ComboSystem = ComboSystem;
   window.EncounterManager = EncounterManager;
+  window.FortuneManager = FortuneManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
 
