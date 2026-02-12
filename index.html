@@ -530,6 +530,22 @@
     </div>
   </div>
 
+  <div id="encounter-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1"></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="encounter-title">
+      <div class="modal-header">
+        <h2 id="encounter-title">Event</h2>
+      </div>
+      <div class="modal-body encounter-body">
+        <div id="encounter-emoji" class="encounter-emoji"></div>
+        <p id="encounter-desc" class="encounter-desc"></p>
+        <div id="encounter-choices" class="encounter-choices">
+          <!-- Buttons injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="js/app.js"></script>
 </body>
 
