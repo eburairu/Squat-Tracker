@@ -1,0 +1,27 @@
+# デイリー運勢システム (Daily Fortune System) タスクリスト
+
+- [ ] `js/modules/fortune-manager.js` の実装
+  - [ ] 定数 (`FORTUNES`) の定義
+  - [ ] `FortuneManager` クラスの枠組み作成
+  - [ ] `init()` メソッド実装 (ロード, リセット判定)
+  - [ ] `draw()` メソッド実装 (抽選ロジック, 保存)
+  - [ ] `getMultiplier()` メソッド実装
+  - [ ] `updateUI()` メソッド実装
+- [ ] `index.html` の修正
+  - [ ] `stat-grid` に運勢カードを追加
+  - [ ] `body` 直下に `fortune-modal` を追加
+- [ ] `styles.css` の修正
+  - [ ] `.fortune-status-card` のスタイル
+  - [ ] `#fortune-modal` のスタイル
+  - [ ] 抽選アニメーション（おみくじ箱など）のスタイル
+- [ ] `js/app.js` の修正
+  - [ ] `FortuneManager` のインポートと `init()` 呼び出し
+  - [ ] `performAttack` で攻撃倍率適用
+  - [ ] `finishWorkout` で経験値倍率適用
+  - [ ] `startWorkout` でテンション初期値適用
+- [ ] テストの実装と実行
+  - [ ] `tests/fortune.spec.js` 作成
+  - [ ] E2Eテスト実行 (`npx playwright test tests/fortune.spec.js`)
+- [ ] 最終確認
+  - [ ] Lintチェック
+  - [ ] 動作確認
