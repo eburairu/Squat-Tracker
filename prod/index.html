@@ -12,6 +12,10 @@
 
 <body>
   <div id="adventure-background" class="adventure-background"></div>
+  <div id="combo-container" class="combo-container">
+    <div id="combo-count" class="combo-count">0</div>
+    <div id="combo-label" class="combo-label">COMBO!</div>
+  </div>
   <main class="app">
     <header class="hero">
       <div class="hero-copy">
@@ -56,6 +60,11 @@
             <span class="stat-label">クラス</span>
             <span id="current-class-icon" class="stat-value" style="font-size: 2rem; line-height: 1;">🌱</span>
             <span class="stat-unit">change</span>
+          </div>
+          <div class="stat-card clickable" id="open-loadout-menu" role="button" tabindex="0" aria-label="マイセット">
+            <span class="stat-label">マイセット</span>
+            <span id="current-loadout-icon" class="stat-value" style="font-size: 2rem; line-height: 1;">📂</span>
+            <span class="stat-unit">equip</span>
           </div>
         </div>
 
@@ -456,6 +465,24 @@
     </div>
   </div>
 
+  <div id="loadout-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" id="close-loadout-modal-overlay" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="loadout-modal-title">
+      <div class="modal-header">
+        <h2 id="loadout-modal-title">マイセット管理</h2>
+        <button class="ghost small close-modal" id="close-loadout-modal" aria-label="閉じる">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="loadout-controls" style="padding: 1rem; border-bottom: 1px solid var(--border-color);">
+           <button id="create-new-loadout" class="primary" style="width: 100%;">＋ 現在の装備を保存</button>
+        </div>
+        <div id="loadout-list" class="loadout-list" style="padding: 0;">
+          <!-- Loadouts injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="route-selection-modal" class="modal" aria-hidden="true" style="display: none;">
     <div class="modal-overlay" tabindex="-1"></div>
     <div class="modal-container route-selection-container">
@@ -498,6 +525,22 @@
              </div>
           </div>
           <button id="bestiary-detail-back" class="ghost small back-to-list">一覧に戻る</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="encounter-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1"></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="encounter-title">
+      <div class="modal-header">
+        <h2 id="encounter-title">Event</h2>
+      </div>
+      <div class="modal-body encounter-body">
+        <div id="encounter-emoji" class="encounter-emoji"></div>
+        <p id="encounter-desc" class="encounter-desc"></p>
+        <div id="encounter-choices" class="encounter-choices">
+          <!-- Buttons injected by JS -->
         </div>
       </div>
     </div>
