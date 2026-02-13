@@ -2427,3 +2427,163 @@ body.boost-mode .tension-label {
   font-size: 4rem;
   animation: shake 0.5s infinite;
 }
+
+/* Playlist System */
+.playlist-group {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+}
+
+.playlist-list {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  list-style: none;
+  max-height: 400px;
+}
+
+.playlist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.playlist-item:last-child {
+  border-bottom: none;
+}
+
+.playlist-item:hover {
+  background-color: var(--bg-color);
+}
+
+.playlist-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.playlist-item-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.playlist-item-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.playlist-status-tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--accent-color);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Modal Layout Adjustments */
+#playlist-manager-container {
+  height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#playlist-list-view,
+#playlist-editor-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.playlist-controls {
+  margin-bottom: 1rem;
+}
+
+.editor-header {
+  margin-bottom: 1rem;
+}
+
+.editor-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.editor-items {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  list-style: none;
+  margin-bottom: 1rem;
+  padding: 0;
+  background-color: var(--bg-color);
+}
+
+.editor-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+}
+
+.editor-item:last-child {
+  border-bottom: none;
+}
+
+.editor-item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.editor-item-index {
+  background-color: var(--border-color);
+  color: var(--text-secondary);
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.add-session-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-session-row select {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.full-width {
+  width: 100%;
+}
