@@ -181,6 +181,9 @@
           <div>
             <p class="card-eyebrow">Session</p>
             <h2>セッションガイド</h2>
+            <div id="playlist-status-indicator" class="playlist-status-tag" style="display: none;">
+              🎵 <span id="playlist-progress-text">1/3</span>
+            </div>
           </div>
           <div class="phase-chip">
             <span class="phase-label">フェーズ</span>
@@ -258,6 +261,17 @@
               </select>
               <button id="save-preset-button" class="ghost small" title="現在の設定を保存">保存</button>
               <button id="delete-preset-button" class="ghost small delete-btn" title="選択中のプリセットを削除">削除</button>
+            </div>
+          </label>
+        </div>
+        <div class="control-group playlist-group">
+          <label class="preset-label">
+            プレイリスト
+            <div class="preset-actions">
+              <select id="playlist-select" aria-label="プレイリスト選択">
+                <option value="">-- プレイリストを選択 --</option>
+              </select>
+              <button id="manage-playlist-button" class="ghost small" title="プレイリスト管理">管理</button>
             </div>
           </label>
         </div>
@@ -555,6 +569,53 @@
       </div>
       <div id="fortune-modal-body" class="modal-body" style="text-align: center;">
         <!-- Injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <div id="playlist-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="playlist-modal-title">
+      <div class="modal-header">
+        <h2 id="playlist-modal-title">プレイリスト管理</h2>
+        <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="playlist-manager-container" class="playlist-container">
+          <!-- List View -->
+          <div id="playlist-list-view">
+            <div class="playlist-controls">
+              <button id="create-playlist-btn" class="primary full-width">＋ 新規プレイリスト作成</button>
+            </div>
+            <ul id="playlist-manager-list" class="playlist-list">
+              <!-- JS Injected -->
+            </ul>
+          </div>
+
+          <!-- Edit View -->
+          <div id="playlist-editor-view" style="display: none;">
+            <div class="editor-header">
+              <input type="text" id="playlist-name-input" placeholder="プレイリスト名" class="input-field" />
+            </div>
+            <div class="editor-body">
+              <h4>セッション構成</h4>
+              <ul id="playlist-editor-items" class="editor-items">
+                <!-- JS Injected -->
+              </ul>
+              <div class="add-session-row">
+                <select id="playlist-editor-preset-select">
+                   <!-- Options from PresetManager -->
+                </select>
+                <button id="playlist-add-session-btn" class="secondary small">追加</button>
+              </div>
+            </div>
+            <div class="editor-footer">
+              <button id="playlist-save-btn" class="primary">保存</button>
+              <button id="playlist-cancel-btn" class="ghost">キャンセル</button>
+              <button id="playlist-delete-btn" class="danger small" style="display: none;">削除</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

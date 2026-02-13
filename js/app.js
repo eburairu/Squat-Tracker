@@ -34,6 +34,7 @@ import { LoadoutManager } from './modules/loadout-manager.js';
 import { ComboSystem } from './modules/combo-system.js';
 import { EncounterManager } from './modules/encounter-manager.js';
 import { FortuneManager } from './modules/fortune-manager.js';
+import { PlaylistManager } from './modules/playlist-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -81,6 +82,11 @@ const presetSelect = document.getElementById('preset-select');
 const savePresetButton = document.getElementById('save-preset-button');
 const deletePresetButton = document.getElementById('delete-preset-button');
 
+const playlistSelect = document.getElementById('playlist-select');
+const managePlaylistButton = document.getElementById('manage-playlist-button');
+const playlistStatusIndicator = document.getElementById('playlist-status-indicator');
+const playlistProgressText = document.getElementById('playlist-progress-text');
+
 const sensorToggle = document.getElementById('sensor-toggle');
 const sensorCalibrateButton = document.getElementById('sensor-calibrate');
 const sensorStatus = document.getElementById('sensor-status');
@@ -114,6 +120,9 @@ let workoutSaved = false;
 let lastCountdownSecond = null;
 let userLevel = 1;
 let userBaseAp = 1;
+
+let activePlaylist = null;
+let currentPlaylistIndex = 0;
 
 let sensorMode = false;
 let sensorActive = false;
@@ -599,7 +608,29 @@ const finishWorkout = () => {
 
   // Show Commitment Modal after a short delay
   setTimeout(() => {
-    CommitmentManager.showModal();
+    if (activePlaylist && currentPlaylistIndex < activePlaylist.items.length - 1) {
+       currentPlaylistIndex++;
+
+       // Reset state for next session
+       workoutStarted = false;
+       currentPhase = Phase.IDLE;
+       updateQuizAndTimerDisplay(Phase.IDLE);
+       phaseTimer.textContent = '05';
+       progressBar.style.width = '0%';
+       phaseDisplay.textContent = '待機中';
+       startButton.textContent = 'スタート';
+
+       loadPlaylistSession(currentPlaylistIndex);
+       VoiceCoach.speak('次のセッションの準備をしてください');
+    } else {
+       if (activePlaylist) {
+         showToast({ emoji: '🎉', title: 'プレイリスト完走！', message: '全てのセッションを完了しました！' });
+         activePlaylist = null;
+         currentPlaylistIndex = 0;
+         if (playlistStatusIndicator) playlistStatusIndicator.style.display = 'none';
+       }
+       CommitmentManager.showModal();
+    }
   }, 2000);
 };
 
@@ -973,6 +1004,280 @@ const applyReducedMotionPreference = () => {
 };
 
 
+// --- Playlist Logic ---
+
+const loadPlaylistSession = (index) => {
+  if (!activePlaylist || !activePlaylist.items[index]) return;
+
+  const session = activePlaylist.items[index];
+  const s = session.settings;
+
+  if (s.setCount) setCountInput.value = s.setCount;
+  if (s.repCount) repCountInput.value = s.repCount;
+  if (s.downDuration) downDurationInput.value = s.downDuration;
+  if (s.holdDuration) holdDurationInput.value = s.holdDuration;
+  if (s.upDuration) upDurationInput.value = s.upDuration;
+  if (s.restDuration) restDurationInput.value = s.restDuration;
+  if (s.countdownDuration) countdownDurationInput.value = s.countdownDuration;
+
+  const inputs = [
+    setCountInput, repCountInput, downDurationInput,
+    holdDurationInput, upDurationInput, restDurationInput,
+    countdownDurationInput
+  ];
+  inputs.forEach(input => {
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('change'));
+  });
+  updateStartButtonAvailability();
+
+  if (playlistStatusIndicator && playlistProgressText) {
+    playlistStatusIndicator.style.display = 'inline-flex';
+    playlistProgressText.textContent = `${index + 1}/${activePlaylist.items.length} ${session.name}`;
+  }
+
+  phaseHint.textContent = `次はセッション ${index + 1}: ${session.name}`;
+  showToast({ emoji: '🎵', title: 'プレイリスト進行中', message: `次は「${session.name}」です。` });
+};
+
+const renderPlaylistManagerList = () => {
+  const list = document.getElementById('playlist-manager-list');
+  if (!list) return;
+
+  const playlists = PlaylistManager.getAllPlaylists();
+  list.innerHTML = '';
+
+  if (playlists.length === 0) {
+    list.innerHTML = '<li style="text-align:center; padding:1rem; color:var(--text-secondary);">プレイリストがありません</li>';
+    return;
+  }
+
+  playlists.forEach(p => {
+    const li = document.createElement('li');
+    li.className = 'playlist-item';
+
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'playlist-item-info';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'playlist-item-name';
+    nameSpan.textContent = p.name;
+
+    const metaSpan = document.createElement('span');
+    metaSpan.className = 'playlist-item-meta';
+    metaSpan.textContent = `${p.items.length} セッション`;
+
+    infoDiv.appendChild(nameSpan);
+    infoDiv.appendChild(metaSpan);
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'ghost small edit-playlist-btn';
+    editBtn.dataset.id = p.id;
+    editBtn.textContent = '編集';
+
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openPlaylistEditor(p.id);
+    });
+
+    li.appendChild(infoDiv);
+    li.appendChild(editBtn);
+    list.appendChild(li);
+  });
+};
+
+const openPlaylistEditor = (id = null) => {
+  const listView = document.getElementById('playlist-list-view');
+  const editorView = document.getElementById('playlist-editor-view');
+  const nameInput = document.getElementById('playlist-name-input');
+  const itemsList = document.getElementById('playlist-editor-items');
+  const deleteBtn = document.getElementById('playlist-delete-btn');
+  const saveBtn = document.getElementById('playlist-save-btn');
+
+  listView.style.display = 'none';
+  editorView.style.display = 'flex';
+
+  // Clear State
+  itemsList.innerHTML = '';
+  let currentItems = [];
+  let currentId = id;
+
+  if (id) {
+    const playlist = PlaylistManager.getPlaylist(id);
+    if (playlist) {
+      nameInput.value = playlist.name;
+      currentItems = JSON.parse(JSON.stringify(playlist.items));
+      deleteBtn.style.display = 'inline-block';
+    }
+  } else {
+    nameInput.value = '';
+    currentItems = [];
+    deleteBtn.style.display = 'none';
+  }
+
+  // Render Items Helper
+  const renderItems = () => {
+    itemsList.innerHTML = '';
+    currentItems.forEach((item, idx) => {
+      const li = document.createElement('li');
+      li.className = 'editor-item';
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'editor-item-content';
+
+      const indexSpan = document.createElement('span');
+      indexSpan.className = 'editor-item-index';
+      indexSpan.textContent = idx + 1;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = item.name;
+
+      contentDiv.appendChild(indexSpan);
+      contentDiv.appendChild(nameSpan);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'ghost small remove-item-btn';
+      removeBtn.textContent = '✕';
+
+      removeBtn.addEventListener('click', () => {
+        currentItems.splice(idx, 1);
+        renderItems();
+      });
+
+      li.appendChild(contentDiv);
+      li.appendChild(removeBtn);
+      itemsList.appendChild(li);
+    });
+  };
+
+  renderItems();
+
+  // Save Handler
+  const handleSave = () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      alert('プレイリスト名を入力してください');
+      return;
+    }
+    if (currentItems.length === 0) {
+      alert('セッションを1つ以上追加してください');
+      return;
+    }
+
+    if (currentId) {
+      PlaylistManager.updatePlaylist(currentId, name, currentItems);
+    } else {
+      PlaylistManager.createPlaylist(name, currentItems);
+    }
+
+    closeEditor();
+  };
+
+  // Delete Handler
+  const handleDelete = () => {
+    if (confirm('本当に削除しますか？')) {
+      if (currentId) {
+        PlaylistManager.deletePlaylist(currentId);
+      }
+      closeEditor();
+    }
+  };
+
+  // Add Session Handler
+  const handleAddSession = () => {
+    const presetSelect = document.getElementById('playlist-editor-preset-select');
+    const presetName = presetSelect.value;
+    if (!presetName) return;
+
+    const preset = PresetManager.getPreset(presetName);
+    if (preset) {
+      currentItems.push({
+        name: preset.name,
+        settings: { ...preset.settings } // Copy
+      });
+      renderItems();
+    }
+  };
+
+  // Attach Listeners
+  saveBtn.onclick = handleSave;
+  deleteBtn.onclick = handleDelete;
+  document.getElementById('playlist-add-session-btn').onclick = handleAddSession;
+
+  // Preset Select Options
+  const presetSelectEditor = document.getElementById('playlist-editor-preset-select');
+  presetSelectEditor.innerHTML = '<option value="">-- プリセットを追加 --</option>';
+  PresetManager.presets.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    presetSelectEditor.appendChild(opt);
+  });
+};
+
+const closeEditor = () => {
+  const listView = document.getElementById('playlist-list-view');
+  const editorView = document.getElementById('playlist-editor-view');
+  listView.style.display = 'block';
+  editorView.style.display = 'none';
+  renderPlaylistManagerList();
+};
+
+const setupPlaylistManagerUI = () => {
+  // Main Select
+  if (playlistSelect) {
+    PlaylistManager.init({ playlistSelect }); // Render options
+    playlistSelect.addEventListener('change', () => {
+      const id = playlistSelect.value;
+      if (!id) {
+        activePlaylist = null;
+        if (playlistStatusIndicator) playlistStatusIndicator.style.display = 'none';
+        return;
+      }
+
+      const playlist = PlaylistManager.getPlaylist(id);
+      if (playlist) {
+        activePlaylist = playlist;
+        currentPlaylistIndex = 0;
+        loadPlaylistSession(0);
+        if (presetSelect) presetSelect.value = '';
+      }
+    });
+  }
+
+  // Manage Button
+  if (managePlaylistButton) {
+    managePlaylistButton.addEventListener('click', () => {
+      const modal = document.getElementById('playlist-modal');
+      modal.classList.add('active');
+      renderPlaylistManagerList();
+    });
+  }
+
+  // Create Button
+  const createBtn = document.getElementById('create-playlist-btn');
+  if (createBtn) {
+    createBtn.addEventListener('click', () => openPlaylistEditor());
+  }
+
+  // Cancel Button
+  const cancelBtn = document.getElementById('playlist-cancel-btn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', closeEditor);
+  }
+
+  // Modal Close Overlay
+  const modal = document.getElementById('playlist-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target.hasAttribute('data-close') || e.target.classList.contains('modal-overlay')) {
+        modal.classList.remove('active');
+      }
+    });
+  }
+};
+
+
 // --- Quiz Logic ---
 
 const updateQuizAndTimerDisplay = (phaseKey) => {
@@ -1233,6 +1538,7 @@ const initApp = async () => {
   initializeVoiceCoach();
   initializeWorkoutSettings();
   initializePresets();
+  setupPlaylistManagerUI();
   initializeHistory();
 
   // Initialize Voice Command
@@ -1426,6 +1732,7 @@ if (typeof window !== 'undefined') {
   window.ComboSystem = ComboSystem;
   window.EncounterManager = EncounterManager;
   window.FortuneManager = FortuneManager;
+  window.PlaylistManager = PlaylistManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
 
@@ -1449,6 +1756,14 @@ if (typeof window !== 'undefined') {
   });
   Object.defineProperty(window, 'quizSessionTotal', {
     get: () => quizSessionTotal,
+    configurable: true
+  });
+  Object.defineProperty(window, 'activePlaylist', {
+    get: () => activePlaylist,
+    configurable: true
+  });
+  Object.defineProperty(window, 'currentPlaylistIndex', {
+    get: () => currentPlaylistIndex,
     configurable: true
   });
 }
