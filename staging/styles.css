@@ -2587,3 +2587,201 @@ body.boost-mode .tension-label {
 .full-width {
   width: 100%;
 }
+
+/* Class Modal Tabs */
+.modal-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background-color: var(--bg-color);
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+}
+
+.modal-tab-btn {
+  border: none;
+  background: none;
+  padding: 0.4rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 0.3rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-tab-btn.active {
+  background-color: var(--card-bg);
+  color: var(--accent-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.modal-view {
+  display: none;
+  animation: fadeIn 0.3s;
+}
+
+.modal-view.active {
+  display: block;
+}
+
+/* Skill Tree Grid */
+.mastery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.sp-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+}
+
+.sp-value {
+  color: var(--accent-color);
+  font-size: 1.5rem;
+}
+
+.mastery-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.skill-tree-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding: 1rem;
+}
+
+.skill-tree-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 80px); /* 3 columns fixed width */
+  grid-template-rows: repeat(4, 100px); /* 4 rows */
+  gap: 1.5rem; /* Gap handles spacing */
+  position: relative;
+}
+
+/* Node Styles */
+.skill-node {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--card-bg);
+  border: 3px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin: auto; /* Center in grid cell */
+}
+
+.skill-node:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.skill-node.locked {
+  opacity: 0.5;
+  filter: grayscale(1);
+  background-color: var(--bg-color);
+}
+
+.skill-node.available {
+  border-color: var(--warning-color);
+  animation: pulse-border 2s infinite;
+  opacity: 1;
+  filter: grayscale(0.5);
+}
+
+.skill-node.unlocked {
+  border-color: var(--accent-color);
+  background-color: var(--accent-color);
+  color: white;
+  filter: grayscale(0);
+}
+
+.skill-node.selected {
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+  transform: scale(1.15);
+}
+
+@keyframes pulse-border {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+/* Connectors */
+.connector-v {
+  position: absolute;
+  width: 4px;
+  background-color: var(--border-color);
+  z-index: 1;
+  transform-origin: top center;
+}
+
+.connector-v.active {
+  background-color: var(--accent-color);
+}
+
+/* Detail Panel */
+.skill-node-detail {
+  background-color: var(--bg-color);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  animation: slideUp 0.3s;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.node-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.node-detail-header h3 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.node-cost-badge {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.6rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.node-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.node-msg {
+  font-size: 0.85rem;
+  color: var(--danger-color);
+}
+
+.node-msg.success {
+  color: var(--success-color);
+}
