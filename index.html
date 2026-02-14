@@ -468,12 +468,43 @@
     <div class="modal-overlay" tabindex="-1"></div>
     <div class="modal-content wide" role="dialog" aria-modal="true" aria-labelledby="class-modal-title">
       <div class="modal-header">
-        <h2 id="class-modal-title">クラスチェンジ</h2>
+        <h2 id="class-modal-title">クラス管理</h2>
+        <div class="modal-tabs">
+          <button class="modal-tab-btn active" data-target="class-selection">クラス選択</button>
+          <button class="modal-tab-btn" data-target="skill-tree">マスタリー</button>
+        </div>
         <button class="ghost small close-modal" id="close-class-modal" aria-label="閉じる">✕</button>
       </div>
       <div class="modal-body">
-        <div id="class-list" class="class-list">
-          <!-- Class Cards injected by JS -->
+        <div id="class-selection-view" class="modal-view active">
+           <div id="class-list" class="class-list">
+             <!-- Class Cards injected by JS -->
+           </div>
+        </div>
+        <div id="skill-tree-view" class="modal-view" style="display: none;">
+           <div class="mastery-header">
+             <div class="sp-container">
+               <span class="sp-label">残りSP:</span>
+               <span id="current-sp-value" class="sp-value">0</span>
+             </div>
+             <div class="mastery-note">レベルアップでSPを獲得して能力を解放しよう</div>
+           </div>
+           <div class="skill-tree-container">
+             <div id="skill-tree-grid" class="skill-tree-grid">
+               <!-- Nodes injected by JS -->
+             </div>
+           </div>
+           <div id="skill-node-detail" class="skill-node-detail" style="display: none;">
+             <div class="node-detail-header">
+               <h3 id="node-detail-name">Skill Name</h3>
+               <span id="node-detail-cost" class="node-cost-badge">Cost: 1</span>
+             </div>
+             <p id="node-detail-desc">Description goes here.</p>
+             <div class="node-detail-actions">
+               <button id="unlock-node-btn" class="primary small">習得する</button>
+               <span id="node-unlock-msg" class="node-msg"></span>
+             </div>
+           </div>
         </div>
       </div>
     </div>

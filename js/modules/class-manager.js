@@ -63,7 +63,28 @@ const ClassManager = {
     }
     try {
       const raw = localStorage.getItem(MASTERY_KEY);
-      this.masteryData = raw ? JSON.parse(raw) : {};
+      let data = raw ? JSON.parse(raw) : {};
+
+      // Migration: Convert number (old format) to object (new format)
+      // Old: { "warrior": 100 }
+      // New: { "warrior": { exp: 100, unlockedNodes: [] } }
+      const migratedData = {};
+      let hasMigration = false;
+
+      for (const key in data) {
+        if (typeof data[key] === 'number') {
+          migratedData[key] = { exp: data[key], unlockedNodes: [] };
+          hasMigration = true;
+        } else {
+          migratedData[key] = data[key];
+        }
+      }
+
+      this.masteryData = migratedData;
+      if (hasMigration) {
+        this.saveMasteryData();
+      }
+
     } catch (e) {
       console.error('Failed to load mastery data', e);
       this.masteryData = {};
@@ -79,8 +100,22 @@ const ClassManager = {
     }
   },
 
+  // Helper to get raw exp safely
+  getExp(classId) {
+    const data = this.masteryData[classId];
+    if (!data) return 0;
+    if (typeof data === 'number') return data; // Should not happen after migration
+    return data.exp || 0;
+  },
+
+  getUnlockedNodes(classId) {
+    const data = this.masteryData[classId];
+    if (!data || typeof data !== 'object') return [];
+    return data.unlockedNodes || [];
+  },
+
   getLevel(classId) {
-    const exp = this.masteryData[classId] || 0;
+    const exp = this.getExp(classId);
     // Find the highest level threshold that fits the current exp
     for (let i = MASTERY_THRESHOLDS.length - 1; i >= 0; i--) {
       if (exp >= MASTERY_THRESHOLDS[i]) {
@@ -91,7 +126,7 @@ const ClassManager = {
   },
 
   getExpProgress(classId) {
-    const exp = this.masteryData[classId] || 0;
+    const exp = this.getExp(classId);
     const level = this.getLevel(classId);
 
     // Max Level Check
@@ -124,10 +159,16 @@ const ClassManager = {
     if (!classId || amount <= 0) return null;
 
     const oldLevel = this.getLevel(classId);
-    const currentExp = this.masteryData[classId] || 0;
+
+    // Initialize if not exists
+    if (!this.masteryData[classId]) {
+        this.masteryData[classId] = { exp: 0, unlockedNodes: [] };
+    }
+
+    const currentExp = this.masteryData[classId].exp;
     const newExp = currentExp + amount;
 
-    this.masteryData[classId] = newExp;
+    this.masteryData[classId].exp = newExp;
     this.saveMasteryData();
 
     const newLevel = this.getLevel(classId);
@@ -138,7 +179,7 @@ const ClassManager = {
         showToast({
           emoji: '🆙',
           title: 'Class Level Up!',
-          message: `${cls.name}が Lv.${newLevel} になりました！`,
+          message: `${cls.name}が Lv.${newLevel} になりました！\nSPを獲得しました！`,
           sound: true
         });
       }
@@ -148,10 +189,73 @@ const ClassManager = {
     return { leveledUp: false, oldLevel, newLevel };
   },
 
+  // --- Skill Tree Logic ---
+
+  getSP(classId) {
+    const level = this.getLevel(classId);
+    const totalSP = Math.max(0, level - 1);
+
+    const unlockedNodes = this.getUnlockedNodes(classId);
+    const cls = this.classes.find(c => c.id === classId);
+
+    let usedSP = 0;
+    if (cls && cls.skillTree) {
+        unlockedNodes.forEach(nodeId => {
+            const node = cls.skillTree.find(n => n.id === nodeId);
+            if (node) {
+                usedSP += node.cost;
+            }
+        });
+    }
+
+    return {
+        total: totalSP,
+        used: usedSP,
+        available: totalSP - usedSP
+    };
+  },
+
+  unlockNode(classId, nodeId) {
+    const cls = this.classes.find(c => c.id === classId);
+    if (!cls || !cls.skillTree) return { success: false, reason: 'invalid_class' };
+
+    const node = cls.skillTree.find(n => n.id === nodeId);
+    if (!node) return { success: false, reason: 'invalid_node' };
+
+    const sp = this.getSP(classId);
+    if (sp.available < node.cost) return { success: false, reason: 'not_enough_sp' };
+
+    const unlocked = this.getUnlockedNodes(classId);
+    if (unlocked.includes(nodeId)) return { success: false, reason: 'already_unlocked' };
+
+    // Check prerequisites
+    if (node.prerequisites && node.prerequisites.length > 0) {
+        const allMet = node.prerequisites.every(reqId => unlocked.includes(reqId));
+        if (!allMet) return { success: false, reason: 'prerequisites_not_met' };
+    }
+
+    // Unlock
+    this.masteryData[classId].unlockedNodes.push(nodeId);
+    this.saveMasteryData();
+
+    // Notify UI (if needed, or caller updates UI)
+    showToast({
+        emoji: '🔓',
+        title: 'スキル習得',
+        message: `${node.name}を習得しました！`,
+        sound: true
+    });
+
+    return { success: true };
+  },
+
+  // ------------------------
+
   setupEventListeners() {
     if (this.elements.triggerBtn) {
       this.elements.triggerBtn.addEventListener('click', () => {
-        this.renderList();
+        this.renderList(); // Render initial list
+        this.renderSkillTree(); // Pre-render tree
         this.openModal();
       });
     }
@@ -170,10 +274,78 @@ const ClassManager = {
         }
       });
     }
+
+    // Tab Handling
+    const tabs = document.querySelectorAll('.modal-tab-btn');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remove active class from all tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            // Hide all views
+            document.querySelectorAll('.modal-view').forEach(v => {
+                v.classList.remove('active');
+                v.style.display = 'none';
+            });
+
+            // Activate clicked tab
+            tab.classList.add('active');
+            const targetId = tab.dataset.target;
+            const targetView = document.getElementById(targetId === 'class-selection' ? 'class-selection-view' : 'skill-tree-view');
+
+            if (targetView) {
+                targetView.classList.add('active');
+                targetView.style.display = 'block';
+
+                if (targetId === 'skill-tree') {
+                    this.renderSkillTree();
+                } else {
+                    this.renderList();
+                }
+            }
+        });
+    });
+
+    // Unlock Node Button
+    const unlockBtn = document.getElementById('unlock-node-btn');
+    if (unlockBtn) {
+        unlockBtn.addEventListener('click', () => {
+             const nodeId = unlockBtn.dataset.nodeId;
+             if (nodeId) {
+                 const res = this.unlockNode(this.currentClassId, nodeId);
+                 if (res.success) {
+                     this.renderSkillTree();
+                     this.showNodeDetail(nodeId); // Refresh detail view
+                 } else {
+                     // Shake button or show error
+                     const msg = document.getElementById('node-unlock-msg');
+                     if (msg) msg.textContent = '条件を満たしていません';
+                 }
+             }
+        });
+    }
   },
 
   openModal() {
     if (this.elements.modal) {
+      // Reset to class selection tab
+      const tabs = document.querySelectorAll('.modal-tab-btn');
+      tabs.forEach(t => t.classList.remove('active'));
+      const selectionTab = document.querySelector('.modal-tab-btn[data-target="class-selection"]');
+      if (selectionTab) selectionTab.classList.add('active');
+
+      const views = document.querySelectorAll('.modal-view');
+      views.forEach(v => {
+          v.classList.remove('active');
+          v.style.display = 'none';
+      });
+      const selectionView = document.getElementById('class-selection-view');
+      if (selectionView) {
+          selectionView.classList.add('active');
+          selectionView.style.display = 'block';
+      }
+
+      this.renderList(); // Ensure list is up to date
+
       this.elements.modal.classList.add('active');
       this.elements.modal.setAttribute('aria-hidden', 'false');
     }
@@ -271,6 +443,156 @@ const ClassManager = {
     });
   },
 
+  renderSkillTree() {
+      const container = document.getElementById('skill-tree-grid');
+      const spDisplay = document.getElementById('current-sp-value');
+      const detailPanel = document.getElementById('skill-node-detail');
+
+      if (!container || !spDisplay) return;
+
+      // Clear previous
+      container.innerHTML = '';
+      if (detailPanel) detailPanel.style.display = 'none'; // Reset detail on re-render? Or keep it open if same node? Let's hide for simplicity.
+
+      const currentClass = this.getCurrentClass();
+      if (!currentClass || !currentClass.skillTree) {
+          container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">このクラスにはスキルツリーがありません。</p>';
+          return;
+      }
+
+      // Update SP
+      const sp = this.getSP(this.currentClassId);
+      spDisplay.textContent = sp.available;
+
+      const unlockedNodes = this.getUnlockedNodes(this.currentClassId);
+
+      // Render Nodes
+      currentClass.skillTree.forEach(node => {
+          const el = document.createElement('div');
+
+          let state = 'locked';
+          if (unlockedNodes.includes(node.id)) {
+              state = 'unlocked';
+          } else {
+              // Check availability
+              const prerequisitesMet = !node.prerequisites || node.prerequisites.every(req => unlockedNodes.includes(req));
+              if (prerequisitesMet && sp.available >= node.cost) {
+                  state = 'available';
+              } else if (prerequisitesMet) {
+                  // Prerequisites met but not enough SP
+                  state = 'locked'; // Or create a specific state like 'affordable'
+              }
+          }
+
+          el.className = `skill-node ${state}`;
+          el.style.gridRow = node.position.row;
+          el.style.gridColumn = node.position.col;
+
+          // Icon based on effect type
+          let icon = '✨';
+          if (node.effect.target === 'attackMultiplier') icon = '⚔️';
+          else if (node.effect.target === 'expMultiplier') icon = '📚';
+          else if (node.effect.target === 'quizMultiplier') icon = '🧠';
+          else if (node.effect.target === 'criticalRateBonus') icon = '🎯';
+
+          el.textContent = icon;
+          el.dataset.id = node.id;
+
+          el.addEventListener('click', () => this.showNodeDetail(node.id));
+
+          container.appendChild(el);
+
+          // Draw Connector (Primitive implementation using CSS borders on new elements)
+          // Only draw if there are prerequisites
+          if (node.prerequisites && node.prerequisites.length > 0) {
+              // Only simple vertical connections supported for now visually
+              // Ideally we check position of prerequisite node.
+              // Assuming prerequisites are strictly "above" (lower row index)
+              node.prerequisites.forEach(reqId => {
+                  const reqNode = currentClass.skillTree.find(n => n.id === reqId);
+                  if (reqNode) {
+                      // Only draw if in same column for vertical, or adjacent for diagonal
+                      // Simple implementation: Just draw a vertical line if same column
+                      if (reqNode.position.col === node.position.col && reqNode.position.row < node.position.row) {
+                          const connector = document.createElement('div');
+                          connector.className = 'connector-v';
+                          if (unlockedNodes.includes(node.id)) connector.classList.add('active');
+
+                          // Position logic (Hardcoded for 80px width, 100px height grid)
+                          // Row height is ~100px including gap.
+                          // Top of current node is (row-1)*100 + gap + offset... this is tricky with Grid.
+                          // Alternative: Put connector INSIDE the grid cell of the parent, spanning down?
+                          // Or absolute positioning relative to container.
+                          // Let's rely on visual proximity for now without explicit lines if too complex.
+                          // Or use simple CSS ::after on the parent node if it has a single child.
+
+                          // Simplified: Skip lines for this iteration to avoid layout bugs.
+                          // The grid layout itself implies hierarchy.
+                      }
+                  }
+              });
+          }
+      });
+  },
+
+  showNodeDetail(nodeId) {
+      const cls = this.getCurrentClass();
+      const node = cls.skillTree.find(n => n.id === nodeId);
+      if (!node) return;
+
+      const detailPanel = document.getElementById('skill-node-detail');
+      const nameEl = document.getElementById('node-detail-name');
+      const costEl = document.getElementById('node-detail-cost');
+      const descEl = document.getElementById('node-detail-desc');
+      const unlockBtn = document.getElementById('unlock-node-btn');
+      const msgEl = document.getElementById('node-unlock-msg');
+
+      if (!detailPanel) return;
+
+      detailPanel.style.display = 'block';
+      detailPanel.classList.remove('active');
+      void detailPanel.offsetWidth; // Trigger reflow
+      detailPanel.classList.add('active');
+
+      nameEl.textContent = node.name;
+      costEl.textContent = `Cost: ${node.cost}`;
+      descEl.textContent = node.description;
+      msgEl.textContent = '';
+      msgEl.className = 'node-msg';
+
+      const unlockedNodes = this.getUnlockedNodes(this.currentClassId);
+      const isUnlocked = unlockedNodes.includes(nodeId);
+      const sp = this.getSP(this.currentClassId);
+
+      // Update Button State
+      unlockBtn.dataset.nodeId = nodeId;
+
+      if (isUnlocked) {
+          unlockBtn.textContent = '習得済み';
+          unlockBtn.disabled = true;
+          unlockBtn.className = 'btn ghost small';
+      } else {
+          // Check Requirements
+          const prerequisitesMet = !node.prerequisites || node.prerequisites.every(req => unlockedNodes.includes(req));
+
+          if (!prerequisitesMet) {
+              unlockBtn.textContent = '未解放';
+              unlockBtn.disabled = true;
+              unlockBtn.className = 'btn ghost small';
+              msgEl.textContent = '前提スキルが必要です';
+          } else if (sp.available < node.cost) {
+              unlockBtn.textContent = 'SP不足';
+              unlockBtn.disabled = true;
+              unlockBtn.className = 'btn ghost small';
+              msgEl.textContent = `あとSPが ${node.cost - sp.available} 必要です`;
+          } else {
+              unlockBtn.textContent = '習得する';
+              unlockBtn.disabled = false;
+              unlockBtn.className = 'btn primary small';
+          }
+      }
+  },
+
   changeClass(id) {
     if (this.currentClassId === id) return;
 
@@ -302,10 +624,6 @@ const ClassManager = {
         this.elements.currentClassIcon.textContent = cls.emoji;
         // Show Level in tooltip
         this.elements.currentClassIcon.setAttribute('title', `現在のクラス: ${cls.name} (Lv.${level})`);
-
-        // Optionally update text content to show level if space allows,
-        // but current UI design only shows emoji.
-        // We can add a small badge via CSS if we modify HTML structure later.
       }
     }
   },
@@ -321,6 +639,12 @@ const ClassManager = {
     // Clone base modifiers
     const mods = { ...cls.modifiers };
 
+    // Ensure default properties exist
+    if (mods.attackMultiplier === undefined) mods.attackMultiplier = 1.0;
+    if (mods.quizMultiplier === undefined) mods.quizMultiplier = 1.0;
+    if (mods.criticalRateBonus === undefined) mods.criticalRateBonus = 0.0;
+    if (mods.expMultiplier === undefined) mods.expMultiplier = 1.0;
+
     // Apply Level Bonus
     const level = this.getLevel(classId);
     const bonusLevel = Math.max(0, level - 1);
@@ -334,10 +658,38 @@ const ClassManager = {
     mods.quizMultiplier += bonusLevel * 0.1;
     mods.criticalRateBonus += bonusLevel * 0.01;
 
+    // Apply Skill Tree Bonus
+    const unlockedNodes = this.getUnlockedNodes(classId);
+    if (cls.skillTree) {
+        unlockedNodes.forEach(nodeId => {
+            const node = cls.skillTree.find(n => n.id === nodeId);
+            if (node && node.effect && node.effect.type === 'stat_boost') {
+                const target = node.effect.target;
+                const value = node.effect.value;
+                if (target && value) {
+                    if (mods[target] === undefined) mods[target] = 0; // Initialize if missing
+                    mods[target] += value;
+                }
+
+                // Secondary effect
+                if (node.effect.secondary) {
+                    const secTarget = node.effect.secondary.target;
+                    const secValue = node.effect.secondary.value;
+                    if (secTarget && secValue) {
+                        if (mods[secTarget] === undefined) mods[secTarget] = 0;
+                        mods[secTarget] += secValue;
+                    }
+                }
+            }
+        });
+    }
+
     // Round to reasonable precision to avoid floating point errors
     mods.attackMultiplier = Math.round(mods.attackMultiplier * 100) / 100;
     mods.quizMultiplier = Math.round(mods.quizMultiplier * 100) / 100;
     mods.criticalRateBonus = Math.round(mods.criticalRateBonus * 1000) / 1000;
+    // expMultiplier may not be rounded as strictly, but let's keep it clean
+    mods.expMultiplier = Math.round(mods.expMultiplier * 100) / 100;
 
     return mods;
   }

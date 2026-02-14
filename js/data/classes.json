@@ -16,7 +16,49 @@
       "emoji": "😮‍💨",
       "type": "recover_tension",
       "value": 50
-    }
+    },
+    "skillTree": [
+      {
+        "id": "novice_atk_1",
+        "name": "基礎訓練 I",
+        "description": "攻撃力が5%上昇",
+        "tier": 1,
+        "cost": 1,
+        "position": { "row": 1, "col": 2 },
+        "prerequisites": [],
+        "effect": { "type": "stat_boost", "target": "attackMultiplier", "value": 0.05 }
+      },
+      {
+        "id": "novice_exp_1",
+        "name": "学習意欲 I",
+        "description": "経験値獲得量が5%上昇",
+        "tier": 1,
+        "cost": 1,
+        "position": { "row": 2, "col": 1 },
+        "prerequisites": ["novice_atk_1"],
+        "effect": { "type": "stat_boost", "target": "expMultiplier", "value": 0.05 }
+      },
+      {
+        "id": "novice_ten_1",
+        "name": "集中力 I",
+        "description": "クイズ正解時の倍率が10%上昇",
+        "tier": 2,
+        "cost": 1,
+        "position": { "row": 2, "col": 3 },
+        "prerequisites": ["novice_atk_1"],
+        "effect": { "type": "stat_boost", "target": "quizMultiplier", "value": 0.1 }
+      },
+      {
+        "id": "novice_mastery",
+        "name": "冒険者の心得",
+        "description": "全ステータスが少し上昇",
+        "tier": 3,
+        "cost": 2,
+        "position": { "row": 3, "col": 2 },
+        "prerequisites": ["novice_exp_1", "novice_ten_1"],
+        "effect": { "type": "stat_boost", "target": "attackMultiplier", "value": 0.05, "secondary": { "target": "expMultiplier", "value": 0.05 } }
+      }
+    ]
   },
   {
     "id": "warrior",
@@ -35,7 +77,49 @@
       "emoji": "💪",
       "type": "buff_attack_set",
       "value": 1.5
-    }
+    },
+    "skillTree": [
+      {
+        "id": "warrior_atk_1",
+        "name": "剛腕 I",
+        "description": "攻撃力が10%上昇",
+        "tier": 1,
+        "cost": 1,
+        "position": { "row": 1, "col": 2 },
+        "prerequisites": [],
+        "effect": { "type": "stat_boost", "target": "attackMultiplier", "value": 0.1 }
+      },
+      {
+        "id": "warrior_atk_2",
+        "name": "剛腕 II",
+        "description": "攻撃力がさらに15%上昇",
+        "tier": 2,
+        "cost": 2,
+        "position": { "row": 2, "col": 2 },
+        "prerequisites": ["warrior_atk_1"],
+        "effect": { "type": "stat_boost", "target": "attackMultiplier", "value": 0.15 }
+      },
+      {
+        "id": "warrior_crit_1",
+        "name": "会心撃 I",
+        "description": "クリティカル率が3%上昇",
+        "tier": 2,
+        "cost": 1,
+        "position": { "row": 2, "col": 1 },
+        "prerequisites": ["warrior_atk_1"],
+        "effect": { "type": "stat_boost", "target": "criticalRateBonus", "value": 0.03 }
+      },
+      {
+        "id": "warrior_limit_break",
+        "name": "限界突破",
+        "description": "攻撃力が20%上昇し、クリティカル率も5%上昇",
+        "tier": 3,
+        "cost": 3,
+        "position": { "row": 3, "col": 2 },
+        "prerequisites": ["warrior_atk_2"],
+        "effect": { "type": "stat_boost", "target": "attackMultiplier", "value": 0.2, "secondary": { "target": "criticalRateBonus", "value": 0.05 } }
+      }
+    ]
   },
   {
     "id": "mage",
@@ -54,7 +138,49 @@
       "emoji": "🔮",
       "type": "auto_quiz_win",
       "value": 1
-    }
+    },
+    "skillTree": [
+      {
+        "id": "mage_quiz_1",
+        "name": "魔力増幅 I",
+        "description": "クイズ倍率が20%上昇",
+        "tier": 1,
+        "cost": 1,
+        "position": { "row": 1, "col": 2 },
+        "prerequisites": [],
+        "effect": { "type": "stat_boost", "target": "quizMultiplier", "value": 0.2 }
+      },
+      {
+        "id": "mage_exp_1",
+        "name": "賢者の知恵 I",
+        "description": "経験値獲得量が10%上昇",
+        "tier": 2,
+        "cost": 1,
+        "position": { "row": 2, "col": 1 },
+        "prerequisites": ["mage_quiz_1"],
+        "effect": { "type": "stat_boost", "target": "expMultiplier", "value": 0.1 }
+      },
+      {
+        "id": "mage_quiz_2",
+        "name": "魔力増幅 II",
+        "description": "クイズ倍率がさらに30%上昇",
+        "tier": 2,
+        "cost": 2,
+        "position": { "row": 2, "col": 3 },
+        "prerequisites": ["mage_quiz_1"],
+        "effect": { "type": "stat_boost", "target": "quizMultiplier", "value": 0.3 }
+      },
+      {
+        "id": "mage_mastery",
+        "name": "大賢者",
+        "description": "クイズ倍率が50%上昇",
+        "tier": 3,
+        "cost": 3,
+        "position": { "row": 3, "col": 2 },
+        "prerequisites": ["mage_quiz_2", "mage_exp_1"],
+        "effect": { "type": "stat_boost", "target": "quizMultiplier", "value": 0.5 }
+      }
+    ]
   },
   {
     "id": "rogue",
@@ -73,6 +199,48 @@
       "emoji": "🍀",
       "type": "next_crit_drop",
       "value": 2
-    }
+    },
+    "skillTree": [
+      {
+        "id": "rogue_crit_1",
+        "name": "鋭い眼光 I",
+        "description": "クリティカル率が5%上昇",
+        "tier": 1,
+        "cost": 1,
+        "position": { "row": 1, "col": 2 },
+        "prerequisites": [],
+        "effect": { "type": "stat_boost", "target": "criticalRateBonus", "value": 0.05 }
+      },
+      {
+        "id": "rogue_atk_1",
+        "name": "急襲 I",
+        "description": "攻撃力が10%上昇",
+        "tier": 2,
+        "cost": 1,
+        "position": { "row": 2, "col": 1 },
+        "prerequisites": ["rogue_crit_1"],
+        "effect": { "type": "stat_boost", "target": "attackMultiplier", "value": 0.1 }
+      },
+      {
+        "id": "rogue_crit_2",
+        "name": "鋭い眼光 II",
+        "description": "クリティカル率がさらに5%上昇",
+        "tier": 2,
+        "cost": 2,
+        "position": { "row": 2, "col": 3 },
+        "prerequisites": ["rogue_crit_1"],
+        "effect": { "type": "stat_boost", "target": "criticalRateBonus", "value": 0.05 }
+      },
+      {
+        "id": "rogue_fatality",
+        "name": "必殺の一撃",
+        "description": "クリティカル率が10%上昇し、攻撃力も20%上昇",
+        "tier": 3,
+        "cost": 3,
+        "position": { "row": 3, "col": 2 },
+        "prerequisites": ["rogue_crit_2"],
+        "effect": { "type": "stat_boost", "target": "criticalRateBonus", "value": 0.1, "secondary": { "target": "attackMultiplier", "value": 0.2 } }
+      }
+    ]
   }
 ]
