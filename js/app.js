@@ -35,6 +35,7 @@ import { ComboSystem } from './modules/combo-system.js';
 import { EncounterManager } from './modules/encounter-manager.js';
 import { FortuneManager } from './modules/fortune-manager.js';
 import { PlaylistManager } from './modules/playlist-manager.js';
+import { SmartPlanner } from './modules/smart-planner.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -1539,6 +1540,27 @@ const initApp = async () => {
   initializeWorkoutSettings();
   initializePresets();
   setupPlaylistManagerUI();
+
+  SmartPlanner.init({
+    buttonId: 'smart-plan-button',
+    onApply: (settings) => {
+      if (settings.setCount) setCountInput.value = settings.setCount;
+      if (settings.repCount) repCountInput.value = settings.repCount;
+      // Trigger updates
+      setCountInput.dispatchEvent(new Event('input'));
+      repCountInput.dispatchEvent(new Event('input'));
+      updateStartButtonAvailability();
+    }
+  });
+
+  // Attach Show Event (passing current state)
+  const smartPlanBtn = document.getElementById('smart-plan-button');
+  if (smartPlanBtn) {
+    smartPlanBtn.addEventListener('click', () => {
+      SmartPlanner.show(historyEntries, BossBattle.state, userLevel, userBaseAp);
+    });
+  }
+
   initializeHistory();
 
   // Initialize Voice Command
@@ -1733,6 +1755,7 @@ if (typeof window !== 'undefined') {
   window.EncounterManager = EncounterManager;
   window.FortuneManager = FortuneManager;
   window.PlaylistManager = PlaylistManager;
+  window.SmartPlanner = SmartPlanner;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
 
