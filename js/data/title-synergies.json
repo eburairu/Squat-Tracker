@@ -1,0 +1,100 @@
+[
+  {
+    "id": "syn_legendary_hero",
+    "name": "伝説の英雄",
+    "condition": {
+      "prefix": "p_legendary",
+      "suffix": "s_hero"
+    },
+    "effect": {
+      "type": "stat_boost",
+      "target": "attackMultiplier",
+      "value": 0.2,
+      "description": "攻撃力 +20%"
+    }
+  },
+  {
+    "id": "syn_muscle_warrior",
+    "name": "マッスルウォーリアー",
+    "condition": {
+      "prefix": "p_muscle",
+      "suffix": "s_warrior"
+    },
+    "effect": {
+      "type": "stat_boost",
+      "target": "attackMultiplier",
+      "value": 0.1,
+      "description": "攻撃力 +10%"
+    }
+  },
+  {
+    "id": "syn_smart_scholar",
+    "name": "知の探求者",
+    "condition": {
+      "prefix": "p_smart",
+      "suffix": "s_scholar"
+    },
+    "effect": {
+      "type": "stat_boost",
+      "target": "quizMultiplier",
+      "value": 0.2,
+      "description": "クイズ攻撃力 +20%"
+    }
+  },
+  {
+    "id": "syn_stoic_guardian",
+    "name": "鉄壁の守護者",
+    "condition": {
+      "prefix": "p_stoic",
+      "suffix": "s_guardian"
+    },
+    "effect": {
+      "type": "stat_boost",
+      "target": "expMultiplier",
+      "value": 0.1,
+      "description": "経験値 +10%"
+    }
+  },
+  {
+    "id": "syn_speedy_squatter",
+    "name": "音速のスクワッター",
+    "condition": {
+      "prefix": "p_speedy",
+      "suffix": "s_squatter"
+    },
+    "effect": {
+      "type": "stat_boost",
+      "target": "criticalRateBonus",
+      "value": 0.05,
+      "description": "クリティカル率 +5%"
+    }
+  },
+  {
+    "id": "syn_beginner_trainee",
+    "name": "ルーキー魂",
+    "condition": {
+      "prefix": "p_beginner",
+      "suffix": "s_trainee"
+    },
+    "effect": {
+      "type": "stat_boost",
+      "target": "expMultiplier",
+      "value": 0.2,
+      "description": "経験値 +20%"
+    }
+  },
+  {
+    "id": "syn_night_artist",
+    "name": "夜想曲の芸術家",
+    "condition": {
+      "prefix": "p_night_owl",
+      "suffix": "s_artist"
+    },
+    "effect": {
+      "type": "stat_boost",
+      "target": "quizMultiplier",
+      "value": 0.15,
+      "description": "クイズ攻撃力 +15%"
+    }
+  }
+]
