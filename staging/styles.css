@@ -2873,3 +2873,38 @@ body.boost-mode .tension-label {
 .plan-select-btn {
   width: 100%;
 }
+
+/* Title Synergy */
+.synergy-preview-container {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
+  animation: slideUp 0.3s;
+}
+
+.synergy-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 99px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+  animation: pulse-border 2s infinite;
+}
+
+.synergy-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin-bottom: 0.2rem;
+}
+
+.synergy-effect {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}

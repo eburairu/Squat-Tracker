@@ -1525,11 +1525,12 @@ const initializeHistory = () => {
 
 const initApp = async () => {
   // Load external data first
-  const [achievementsData, baseWeaponsData, titlesData, classesData] = await Promise.all([
+  const [achievementsData, baseWeaponsData, titlesData, classesData, titleSynergiesData] = await Promise.all([
     loadJson('js/data/achievements.json'),
     loadJson('js/data/base-weapons.json'),
     loadJson('js/data/titles.json'),
-    loadJson('js/data/classes.json')
+    loadJson('js/data/classes.json'),
+    loadJson('js/data/title-synergies.json')
   ]);
 
   // Apply data to systems
@@ -1661,7 +1662,7 @@ const initApp = async () => {
     WeeklyChallengeSystem.check({ type: 'boss_kill' });
   };
 
-  TitleManager.init(titlesData);
+  TitleManager.init(titlesData, titleSynergiesData);
   AdventureSystem.init();
   ClassManager.init(classesData);
   ShareManager.init();
