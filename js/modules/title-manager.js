@@ -296,5 +296,34 @@ export const TitleManager = {
         isUnlocked: this.state.unlockedSuffixes.includes(s.id)
       }))
     };
+  },
+
+  getBestSynergy(targetStat) {
+    if (!this.data.synergies || !Array.isArray(this.data.synergies)) return null;
+
+    // Filter synergies by target stat
+    const candidates = this.data.synergies.filter(syn =>
+      syn.effect && syn.effect.type === 'stat_boost' && syn.effect.target === targetStat
+    );
+
+    // Sort by value descending
+    candidates.sort((a, b) => (b.effect.value || 0) - (a.effect.value || 0));
+
+    // Find first unlockable synergy
+    for (const syn of candidates) {
+        if (!syn.condition) continue;
+        const pId = syn.condition.prefix;
+        const sId = syn.condition.suffix;
+
+        // Check ownership
+        const hasPrefix = !pId || this.state.unlockedPrefixes.includes(pId);
+        const hasSuffix = !sId || this.state.unlockedSuffixes.includes(sId);
+
+        if (hasPrefix && hasSuffix) {
+            return syn;
+        }
+    }
+
+    return null;
   }
 };

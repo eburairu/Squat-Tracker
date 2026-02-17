@@ -143,6 +143,7 @@ export const LoadoutManager = {
     this.elements.listContainer = document.getElementById('loadout-list');
     this.elements.closeBtn = document.getElementById('close-loadout-modal');
     this.elements.createNewBtn = document.getElementById('create-new-loadout');
+    this.elements.optimizeBtn = document.getElementById('optimize-loadout-btn');
 
     if (this.elements.triggerBtn) {
       this.elements.triggerBtn.addEventListener('click', () => this.openModal());
@@ -160,23 +161,97 @@ export const LoadoutManager = {
 
     if (this.elements.createNewBtn) {
         this.elements.createNewBtn.addEventListener('click', () => {
-            // Prompt for name (simple implementation)
-            // Ideally use a custom modal or just use default name
-            // For now, let's use a prompt or default if empty
-            // To be robust and non-blocking, maybe just save with default name or date
-            // Let's use a simple prompt for now as Vanilla JS allows it easily,
-            // but for better UX, we might want to just save.
-            // Let's try to get a name via prompt.
             const defaultName = `マイセット ${this.loadouts.length + 1}`;
-            // Note: prompt is blocking but simple.
-            // In a real app we might want an input field in the modal.
-            // Let's stick to prompt for simplicity in this iteration, or auto-name.
-            // Let's auto-name for now to avoid prompt blocking issues in tests if not handled.
-            // Or better: prompt but fallback.
-
-            // Actually, let's implement a small input field in the modal later.
-            // For now, auto-name.
             this.saveCurrentLoadout(defaultName);
+        });
+    }
+
+    if (this.elements.optimizeBtn) {
+        this.elements.optimizeBtn.addEventListener('click', () => {
+            this.optimizeLoadout();
+        });
+    }
+  },
+
+  optimizeLoadout() {
+    if (!ClassManager || !InventoryManager || !TitleManager) return;
+
+    let bestWeaponId = null;
+    let maxWeaponAtk = -1;
+
+    // 1. Find Best Weapon
+    const ownedWeapons = Object.keys(InventoryManager.state.items);
+    ownedWeapons.forEach(id => {
+        const def = InventoryManager.weaponsData[id];
+        const item = InventoryManager.state.items[id];
+        if (def && item) {
+            const atk = def.baseAtk + (item.level - 1) * def.atkPerLevel;
+            if (atk > maxWeaponAtk) {
+                maxWeaponAtk = atk;
+                bestWeaponId = id;
+            }
+        }
+    });
+
+    // 2. Find Best Class (excluding synergy)
+    let bestClassId = null;
+    let maxClassMult = -1;
+
+    ClassManager.classes.forEach(cls => {
+        const mods = ClassManager.getModifiers(cls.id, true);
+        if (mods.attackMultiplier > maxClassMult) {
+            maxClassMult = mods.attackMultiplier;
+            bestClassId = cls.id;
+        }
+    });
+
+    // 3. Find Best Synergy
+    const bestSynergy = TitleManager.getBestSynergy('attackMultiplier');
+    let bestPrefix = TitleManager.state.currentPrefix;
+    let bestSuffix = TitleManager.state.currentSuffix;
+
+    if (bestSynergy) {
+        bestPrefix = bestSynergy.condition.prefix;
+        bestSuffix = bestSynergy.condition.suffix;
+    }
+
+    // Apply Changes
+    const changes = [];
+
+    if (bestWeaponId && bestWeaponId !== InventoryManager.state.equippedId) {
+        InventoryManager.equipWeapon(bestWeaponId);
+        const wName = InventoryManager.weaponsData[bestWeaponId].name;
+        changes.push(`武器: ${wName}`);
+    }
+
+    if (bestClassId && bestClassId !== ClassManager.currentClassId) {
+        ClassManager.changeClass(bestClassId);
+        const cName = ClassManager.classes.find(c => c.id === bestClassId).name;
+        changes.push(`クラス: ${cName}`);
+    }
+
+    const currentP = TitleManager.state.currentPrefix;
+    const currentS = TitleManager.state.currentSuffix;
+
+    if (bestSynergy && (bestPrefix !== currentP || bestSuffix !== currentS)) {
+        TitleManager.equip(bestPrefix, bestSuffix);
+        TitleManager.updateDisplay();
+        changes.push(`称号: ${bestSynergy.name}`);
+    }
+
+    this.closeModal();
+
+    if (changes.length > 0) {
+        showToast({
+            emoji: '⚡️',
+            title: '最強装備適用',
+            message: `攻撃力重視で装備を更新しました！`
+        });
+    } else {
+        showToast({
+            emoji: '👍',
+            title: '最強装備',
+            message: '現在の装備が既に最強です。'
         });
     }
   },

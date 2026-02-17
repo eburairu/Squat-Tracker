@@ -633,7 +633,7 @@ const ClassManager = {
     return this.classes.find(c => c.id === this.currentClassId) || this.classes[0];
   },
 
-  getModifiers(classId = this.currentClassId) {
+  getModifiers(classId = this.currentClassId, excludeSynergy = false) {
     const cls = this.classes.find(c => c.id === classId) || this.classes[0];
     if (!cls) return { attackMultiplier: 1.0, quizMultiplier: 1.0, criticalRateBonus: 0.0 };
 
@@ -686,21 +686,23 @@ const ClassManager = {
     }
 
     // Apply Title Synergy Bonus
-    const synergyMods = TitleManager.getSynergyModifiers();
-    for (const key in synergyMods) {
-        if (mods[key] === undefined) {
-            // Initialize based on key type logic if needed, but safe to assume 0 or 1.0 base?
-            // Actually getModifiers clones base modifiers. If a key is new (not in base), we initialize.
-            // But multipliers usually start at 1.0 if missing, bonuses at 0.
-            // Let's assume initialized by clone or checks above.
-            // If completely new key, initializing to 0 is safe for addition.
-            // However, if we add to a multiplier that doesn't exist, we might want 1.0 + value?
-            // Current getModifiers logic:
-            // if (mods.attackMultiplier === undefined) mods.attackMultiplier = 1.0;
-            // So keys are guaranteed to exist for standard stats.
-            mods[key] = 0;
+    if (!excludeSynergy) {
+        const synergyMods = TitleManager.getSynergyModifiers();
+        for (const key in synergyMods) {
+            if (mods[key] === undefined) {
+                // Initialize based on key type logic if needed, but safe to assume 0 or 1.0 base?
+                // Actually getModifiers clones base modifiers. If a key is new (not in base), we initialize.
+                // But multipliers usually start at 1.0 if missing, bonuses at 0.
+                // Let's assume initialized by clone or checks above.
+                // If completely new key, initializing to 0 is safe for addition.
+                // However, if we add to a multiplier that doesn't exist, we might want 1.0 + value?
+                // Current getModifiers logic:
+                // if (mods.attackMultiplier === undefined) mods.attackMultiplier = 1.0;
+                // So keys are guaranteed to exist for standard stats.
+                mods[key] = 0;
+            }
+            mods[key] += synergyMods[key];
         }
-        mods[key] += synergyMods[key];
     }
 
     // Round to reasonable precision to avoid floating point errors
