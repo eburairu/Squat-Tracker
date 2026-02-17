@@ -3,7 +3,7 @@ import { isStorageAvailable, showToast } from '../utils.js';
 const TITLES_KEY = 'squat-tracker-titles';
 
 export const TitleManager = {
-  data: { prefixes: [], suffixes: [] },
+  data: { prefixes: [], suffixes: [], synergies: [] },
   state: {
     unlockedPrefixes: [],
     unlockedSuffixes: [],
@@ -14,10 +14,13 @@ export const TitleManager = {
   // UI callbacks or references could be stored here
   uiCallback: null,
 
-  init(titlesData) {
+  init(titlesData, synergiesData = []) {
     if (titlesData) {
-      this.data = titlesData;
+      this.data.prefixes = titlesData.prefixes || [];
+      this.data.suffixes = titlesData.suffixes || [];
     }
+    this.data.synergies = synergiesData || [];
+
     this.load();
     // Ensure initial data integrity (e.g. if default titles should be unlocked)
     this.ensureDefaults();
@@ -74,6 +77,29 @@ export const TitleManager = {
         prefixSelect.addEventListener('change', updatePreview);
         suffixSelect.addEventListener('change', updatePreview);
     }
+  },
+
+  getActiveSynergy(prefixId = this.state.currentPrefix, suffixId = this.state.currentSuffix) {
+    if (!prefixId || !suffixId) return null;
+
+    return this.data.synergies.find(syn =>
+      syn.condition.prefix === prefixId &&
+      syn.condition.suffix === suffixId
+    ) || null;
+  },
+
+  getSynergyModifiers() {
+    const activeSynergy = this.getActiveSynergy();
+    if (!activeSynergy || !activeSynergy.effect) return {};
+
+    const mods = {};
+    const { type, target, value } = activeSynergy.effect;
+
+    if (type === 'stat_boost' && target && value) {
+      mods[target] = value;
+    }
+
+    return mods;
   },
 
   updateDisplay() {
@@ -134,6 +160,22 @@ export const TitleManager = {
      const sText = s ? s.text : '';
 
      previewEl.textContent = (pText || sText) ? `${pText}${sText}` : 'Squat Tracker';
+
+     // Synergy Check
+     const synergyContainer = document.getElementById('synergy-preview-container');
+     const synergyNameEl = document.getElementById('synergy-name');
+     const synergyEffectEl = document.getElementById('synergy-effect');
+
+     if (synergyContainer && synergyNameEl && synergyEffectEl) {
+         const activeSynergy = this.getActiveSynergy(pId, sId);
+         if (activeSynergy) {
+             synergyContainer.style.display = 'block';
+             synergyNameEl.textContent = activeSynergy.name;
+             synergyEffectEl.textContent = activeSynergy.effect.description;
+         } else {
+             synergyContainer.style.display = 'none';
+         }
+     }
   },
 
   ensureDefaults() {
