@@ -36,6 +36,7 @@ import { EncounterManager } from './modules/encounter-manager.js';
 import { FortuneManager } from './modules/fortune-manager.js';
 import { PlaylistManager } from './modules/playlist-manager.js';
 import { SmartPlanner } from './modules/smart-planner.js';
+import { GhostManager } from './modules/ghost-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -88,6 +89,10 @@ const managePlaylistButton = document.getElementById('manage-playlist-button');
 const playlistStatusIndicator = document.getElementById('playlist-status-indicator');
 const playlistProgressText = document.getElementById('playlist-progress-text');
 
+const sessionProgressWrapper = document.getElementById('session-progress-wrapper');
+const raceStatus = document.getElementById('race-status');
+const userMarker = document.getElementById('user-marker');
+
 const sensorToggle = document.getElementById('sensor-toggle');
 const sensorCalibrateButton = document.getElementById('sensor-calibrate');
 const sensorStatus = document.getElementById('sensor-status');
@@ -132,6 +137,10 @@ let sensorThreshold = null;
 let lastSensorCounted = false;
 let lastOrientationTime = 0;
 
+let currentTimeline = [];
+let workoutStartTime = null;
+let cumulativePauseDuration = 0;
+
 const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
 const THEME_KEY = 'squat-tracker-theme';
@@ -172,6 +181,8 @@ const sanitizeHistoryEntries = (data) => {
         return null;
       }
       const durations = entry.durations && typeof entry.durations === 'object' ? entry.durations : {};
+      const timeline = Array.isArray(entry.timeline) ? entry.timeline.filter((t) => typeof t === 'number') : [];
+
       return {
         id,
         date,
@@ -185,6 +196,7 @@ const sanitizeHistoryEntries = (data) => {
           rest: Number(durations.rest) || 0,
           countdown: Number(durations.countdown) || 0,
         },
+        timeline,
       };
     })
     .filter(Boolean);
@@ -434,6 +446,12 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
 };
 
 const nextRepOrSet = () => {
+  // Record timeline event
+  if (workoutStartTime && currentPhase === Phase.UP) { // Record at the end of UP phase (rep completion)
+    const elapsed = Date.now() - workoutStartTime - cumulativePauseDuration;
+    currentTimeline.push(elapsed);
+  }
+
   // Disruptive mode penalty: if answered CORRECTLY, repeat the rep (Block progress)
   if (quizMode === 'disruptive' && isCurrentQuizCorrect === true) {
     isCurrentQuizCorrect = null; // Reset for the next attempt
@@ -512,6 +530,7 @@ const createHistoryEntry = () => {
     repsPerSet,
     totalReps: totalSets * repsPerSet,
     durations,
+    timeline: currentTimeline,
   };
 };
 
@@ -543,6 +562,16 @@ const finishWorkout = () => {
   playCelebration();
   VoiceCoach.speak('お疲れ様でした！ナイスファイト');
   recordWorkout();
+
+  // Ghost Result
+  const ghostState = GhostManager.getState(1.0);
+  if (ghostState) {
+    const diffPercent = (ghostState.diff * 100).toFixed(1);
+    const isWin = ghostState.diff >= 0;
+    const msg = isWin ? `ゴーストに勝利！ (Lead: ${diffPercent}%)` : `ゴーストに敗北... (Lag: ${diffPercent}%)`;
+    const emoji = isWin ? '🏆' : '👻';
+    showToast({ emoji, title: 'Race Result', message: msg });
+  }
 
   // Show Share Button
   const existingShareBtn = document.getElementById('share-result-button');
@@ -654,6 +683,36 @@ const tick = () => {
       }
     }
   }
+
+  // Ghost Update & User Progress
+  if (workoutStarted && currentPhase !== Phase.FINISHED && !isPaused && workoutStartTime) {
+    const elapsedTotal = Date.now() - workoutStartTime - cumulativePauseDuration;
+    GhostManager.update(elapsedTotal);
+
+    // User Progress Calculation
+    const totalRepsTarget = totalSets * repsPerSet;
+    const completedReps = (currentSet - 1) * repsPerSet + (currentRep - 1);
+
+    let repProgress = 0;
+    const d = parseInt(downDurationInput.value, 10) * 1000;
+    const h = parseInt(holdDurationInput.value, 10) * 1000;
+    const u = parseInt(upDurationInput.value, 10) * 1000;
+    const totalRepTime = d + h + u;
+    const phaseElapsed = Math.min(Date.now() - phaseStart, phaseDuration || 0);
+
+    if (currentPhase === Phase.DOWN) {
+      repProgress = phaseElapsed / totalRepTime;
+    } else if (currentPhase === Phase.HOLD) {
+      repProgress = (d + phaseElapsed) / totalRepTime;
+    } else if (currentPhase === Phase.UP) {
+      repProgress = (d + h + phaseElapsed) / totalRepTime;
+    }
+    // During REST/COUNTDOWN, repProgress stays 0 (start of next rep)
+
+    const userPercent = Math.min(((completedReps + repProgress) / totalRepsTarget) * 100, 100);
+    if (userMarker) userMarker.style.left = `${userPercent}%`;
+  }
+
   if (Date.now() - phaseStart >= phaseDuration) {
     updateTimerUI();
   }
@@ -708,6 +767,43 @@ const startWorkout = () => {
   isPaused = false;
   workoutStarted = true;
   workoutSaved = false;
+  currentTimeline = [];
+  workoutStartTime = Date.now();
+  cumulativePauseDuration = 0;
+
+  // Ghost Setup
+  let ghostSource = null;
+  const lastHistory = historyEntries[0];
+
+  if (lastHistory) {
+     const isSameSettings =
+        lastHistory.totalSets === totalSets &&
+        lastHistory.repsPerSet === repsPerSet &&
+        lastHistory.durations.down === parseInt(downDurationInput.value, 10) &&
+        lastHistory.durations.hold === parseInt(holdDurationInput.value, 10) &&
+        lastHistory.durations.up === parseInt(upDurationInput.value, 10);
+
+     if (isSameSettings && lastHistory.timeline && lastHistory.timeline.length > 0) {
+        ghostSource = lastHistory;
+        if (raceStatus) raceStatus.textContent = 'vs Previous';
+     } else {
+        if (raceStatus) raceStatus.textContent = 'vs Pace';
+     }
+  } else {
+     if (raceStatus) raceStatus.textContent = 'vs Pace';
+  }
+
+  const repDuration = (parseInt(downDurationInput.value, 10) + parseInt(holdDurationInput.value, 10) + parseInt(upDurationInput.value, 10)) * 1000;
+  // Estimate total duration including rests (rough estimate)
+  const estimatedTotalDuration = (totalSets * repsPerSet * repDuration) + ((totalSets - 1) * parseInt(restDurationInput.value, 10) * 1000);
+
+  GhostManager.init({
+    historyEntry: ghostSource,
+    targetDuration: estimatedTotalDuration,
+    containerId: 'session-progress-container'
+  });
+
+  if (sessionProgressWrapper) sessionProgressWrapper.style.display = 'block';
 
   // Load Skill
   const currentClass = ClassManager.getCurrentClass();
@@ -774,6 +870,7 @@ const pauseWorkout = () => {
     workoutTimer.pause();
   } else {
     const pausedDuration = Date.now() - pausedAt;
+    cumulativePauseDuration += pausedDuration;
     phaseStart += pausedDuration;
     pauseButton.textContent = '一時停止';
     workoutTimer.resume();
@@ -813,6 +910,8 @@ const resetWorkout = () => {
   progressBar.style.width = '0%';
   updateDisplays();
   stopConfetti(confettiCanvas);
+  GhostManager.reset();
+  if (sessionProgressWrapper) sessionProgressWrapper.style.display = 'none';
 };
 
 // --- Inputs & Settings Logic ---
@@ -1759,6 +1858,8 @@ if (typeof window !== 'undefined') {
   window.SmartPlanner = SmartPlanner;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
+  window.startWorkout = startWorkout;
+  window.GhostManager = GhostManager;
 
   // Expose internal state for testing
   Object.defineProperty(window, 'currentQuiz', {
