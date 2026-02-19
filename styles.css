@@ -1407,3 +1407,110 @@ input:checked + .slider:before {
   z-index: 2;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
 }
+
+/* Analytics Modal */
+.analytics-body {
+  padding: 1.5rem;
+}
+
+.analytics-insight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(139, 92, 246, 0.1));
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 2rem;
+  border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.insight-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.insight-message {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.analytics-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.chart-card {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+
+.chart-card h3 {
+  font-size: 1rem;
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+}
+
+.chart-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.chart-container {
+  width: 100%;
+  height: 250px; /* SVG height controlled by viewBox but container needs height */
+  position: relative;
+}
+
+/* SVG Styles */
+.chart-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chart-bar {
+  transition: height 0.5s ease-out, y 0.5s ease-out;
+}
+
+.chart-bar:hover {
+  filter: brightness(1.1);
+}
+
+.chart-line {
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-point {
+  transition: r 0.2s;
+}
+
+.chart-point:hover {
+  r: 4;
+}
+
+.chart-value-label {
+  font-family: var(--font-sans);
+  pointer-events: none;
+  font-weight: bold;
+}
+
+.chart-x-axis {
+  margin-top: 0.5rem;
+}
+
+.chart-x-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .analytics-insight {
+    flex-direction: column;
+    text-align: center;
+  }
+}

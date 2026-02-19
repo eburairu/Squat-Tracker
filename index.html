@@ -66,6 +66,11 @@
             <span id="current-loadout-icon" class="stat-value" style="font-size: 2rem; line-height: 1;">📂</span>
             <span class="stat-unit">equip</span>
           </div>
+          <div class="stat-card clickable" id="open-analytics" role="button" tabindex="0" aria-label="分析レポート">
+            <span class="stat-label">分析</span>
+            <span class="stat-value" style="font-size: 2rem; line-height: 1;">📊</span>
+            <span class="stat-unit">report</span>
+          </div>
         </div>
 
         <div id="skill-button-container" class="skill-button-container" style="display: none;">
@@ -668,6 +673,36 @@
               <button id="playlist-cancel-btn" class="ghost">キャンセル</button>
               <button id="playlist-delete-btn" class="danger small" style="display: none;">削除</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="analytics-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content wide" role="dialog" aria-modal="true" aria-labelledby="analytics-modal-title">
+      <div class="modal-header">
+        <h2 id="analytics-modal-title">分析レポート</h2>
+        <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body analytics-body">
+        <div id="analytics-insight" class="analytics-insight">
+          <div class="insight-icon">💪</div>
+          <p class="insight-message">データを分析中...</p>
+        </div>
+        <div class="analytics-dashboard">
+          <div class="chart-card">
+            <h3>週間アクティビティ</h3>
+            <div id="chart-weekly" class="chart-container"></div>
+          </div>
+          <div class="chart-card">
+            <h3>時間帯別</h3>
+            <div id="chart-hourly" class="chart-container"></div>
+          </div>
+          <div class="chart-card full-width">
+            <h3>月間推移</h3>
+            <div id="chart-monthly" class="chart-container"></div>
           </div>
         </div>
       </div>
