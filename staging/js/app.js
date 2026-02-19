@@ -37,6 +37,9 @@ import { FortuneManager } from './modules/fortune-manager.js';
 import { PlaylistManager } from './modules/playlist-manager.js';
 import { SmartPlanner } from './modules/smart-planner.js';
 import { GhostManager } from './modules/ghost-manager.js';
+import { AnalyticsManager } from './modules/analytics-manager.js';
+import { ChartRenderer } from './modules/chart-renderer.js';
+import { InsightGenerator } from './modules/insight-generator.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -1798,6 +1801,74 @@ const initApp = async () => {
     });
   }
 
+  // アナリティクスのセットアップ
+  const openAnalyticsBtn = document.getElementById('open-analytics');
+  if (openAnalyticsBtn) {
+    openAnalyticsBtn.addEventListener('click', () => {
+      const modal = document.getElementById('analytics-modal');
+      if (!modal) return;
+
+      const analysis = AnalyticsManager.analyze(historyEntries);
+
+      // インサイト（助言）の描画
+      const insight = InsightGenerator.generate(analysis);
+      const insightContainer = document.getElementById('analytics-insight');
+      if (insightContainer) {
+        const iconEl = insightContainer.querySelector('.insight-icon');
+        const msgEl = insightContainer.querySelector('.insight-message');
+        if (iconEl) iconEl.textContent = insight.emoji;
+        if (msgEl) msgEl.textContent = insight.message;
+        insightContainer.className = `analytics-insight insight-${insight.type}`;
+      }
+
+      // チャートの描画
+      const weeklyContainer = document.getElementById('chart-weekly');
+      if (weeklyContainer) {
+        ChartRenderer.renderBarChart(weeklyContainer, analysis.weekly, {
+          labels: ['日', '月', '火', '水', '木', '金', '土'],
+          color: 'var(--accent-color)',
+          height: 200
+        });
+      }
+
+      const hourlyContainer = document.getElementById('chart-hourly');
+      if (hourlyContainer) {
+        const data = [
+          { label: '朝', value: analysis.hourly.morning },
+          { label: '昼', value: analysis.hourly.day },
+          { label: '夜', value: analysis.hourly.night },
+          { label: '深夜', value: analysis.hourly.late }
+        ];
+        ChartRenderer.renderBarChart(hourlyContainer, data, {
+          color: '#10b981', // Emerald
+          height: 200
+        });
+      }
+
+      const monthlyContainer = document.getElementById('chart-monthly');
+      if (monthlyContainer) {
+        ChartRenderer.renderLineChart(monthlyContainer, analysis.monthly, {
+          color: '#f59e0b', // Amber
+          strokeWidth: 3
+        });
+      }
+
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden', 'false');
+    });
+  }
+
+  const analyticsModal = document.getElementById('analytics-modal');
+  if (analyticsModal) {
+    const closeBtns = analyticsModal.querySelectorAll('[data-close]');
+    closeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        analyticsModal.classList.remove('active');
+        analyticsModal.setAttribute('aria-hidden', 'true');
+      });
+    });
+  }
+
   StreakGuardian.init();
   StreakGuardian.update(historyEntries);
   setInterval(() => {
@@ -1860,8 +1931,9 @@ if (typeof window !== 'undefined') {
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
   window.startWorkout = startWorkout;
   window.GhostManager = GhostManager;
+  window.AnalyticsManager = AnalyticsManager;
 
-  // Expose internal state for testing
+  // テスト用に内部状態を公開
   Object.defineProperty(window, 'currentQuiz', {
     get: () => currentQuiz,
     set: (val) => { currentQuiz = val; },
