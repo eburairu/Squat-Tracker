@@ -40,6 +40,7 @@ import { GhostManager } from './modules/ghost-manager.js';
 import { AnalyticsManager } from './modules/analytics-manager.js';
 import { ChartRenderer } from './modules/chart-renderer.js';
 import { InsightGenerator } from './modules/insight-generator.js';
+import { CommentaryManager } from './modules/commentary-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -70,6 +71,8 @@ const voiceToggle = document.getElementById('voice-toggle');
 const voiceStatus = document.getElementById('voice-status');
 const voiceCommandToggle = document.getElementById('voice-command-toggle');
 const voiceCommandStatusText = document.getElementById('voice-command-status-text');
+const commentaryToggle = document.getElementById('commentary-toggle');
+const commentaryStatus = document.getElementById('commentary-status');
 
 const setCountInput = document.getElementById('set-count');
 const repCountInput = document.getElementById('rep-count');
@@ -420,6 +423,19 @@ const performAttack = () => {
   BossBattle.damage(damage.amount, damage.isCritical);
   TensionManager.add(10 + ComboSystem.getTensionBonus());
 
+  if (damage.isCritical) {
+    CommentaryManager.notify('critical');
+  }
+
+  if (BossBattle.state.currentMonster) {
+    const m = BossBattle.state.currentMonster;
+    if (m.maxHp > 0) {
+      const ratio = m.currentHp / m.maxHp;
+      if (ratio <= 0.2) CommentaryManager.notify('boss_damage_20');
+      else if (ratio <= 0.5) CommentaryManager.notify('boss_damage_50');
+    }
+  }
+
   // Note: sessionAttackBonus is now cumulative and NOT reset here.
 };
 
@@ -564,6 +580,7 @@ const finishWorkout = () => {
   progressBar.style.width = '100%';
   playCelebration();
   VoiceCoach.speak('お疲れ様でした！ナイスファイト');
+  CommentaryManager.notify('win');
   recordWorkout();
 
   // Ghost Result
@@ -855,6 +872,7 @@ const startWorkout = () => {
   updateActionButtonStates();
   updateSessionStats();
   VoiceCoach.speak('準備して。スタートします');
+  CommentaryManager.notify('start');
   startCountdown('スタートまでカウントダウン', () => {
     startPhaseCycle();
   });
@@ -1436,6 +1454,7 @@ const updateQuizAndTimerDisplay = (phaseKey) => {
       if (isCorrect) {
         TensionManager.add(20);
         ComboSystem.increment();
+        CommentaryManager.notify('combo', { count: ComboSystem.value });
       } else {
         ComboSystem.reset();
       }
@@ -1710,6 +1729,21 @@ const initApp = async () => {
     });
   }
 
+  if (commentaryToggle) {
+    const stored = isStorageAvailable ? localStorage.getItem('squat-tracker-commentary') : null;
+    const enabled = stored === 'true';
+    commentaryToggle.checked = enabled;
+    CommentaryManager.setEnabled(enabled);
+    if (commentaryStatus) commentaryStatus.textContent = enabled ? 'ON' : 'OFF';
+
+    commentaryToggle.addEventListener('change', (e) => {
+      const isChecked = e.target.checked;
+      CommentaryManager.setEnabled(isChecked);
+      if (commentaryStatus) commentaryStatus.textContent = isChecked ? 'ON' : 'OFF';
+      if (isStorageAvailable) localStorage.setItem('squat-tracker-commentary', String(isChecked));
+    });
+  }
+
   AchievementSystem.init({
     achievementsData, // Pass loaded data
     onHistoryTabSelected: () => {
@@ -1771,6 +1805,7 @@ const initApp = async () => {
   TensionManager.init();
   SkillManager.init();
   await BestiaryManager.init();
+  await CommentaryManager.init();
 
   LoadoutManager.init();
   ComboSystem.init();
@@ -1936,6 +1971,7 @@ if (typeof window !== 'undefined') {
   window.startWorkout = startWorkout;
   window.GhostManager = GhostManager;
   window.AnalyticsManager = AnalyticsManager;
+  window.CommentaryManager = CommentaryManager;
 
   // テスト用に内部状態を公開
   Object.defineProperty(window, 'currentQuiz', {
