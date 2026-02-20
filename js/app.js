@@ -1821,40 +1821,44 @@ const initApp = async () => {
         insightContainer.className = `analytics-insight insight-${insight.type}`;
       }
 
-      // チャートの描画
-      const weeklyContainer = document.getElementById('chart-weekly');
-      if (weeklyContainer) {
-        ChartRenderer.renderBarChart(weeklyContainer, analysis.weekly, {
-          labels: ['日', '月', '火', '水', '木', '金', '土'],
-          color: 'var(--accent-color)',
-          height: 200
-        });
-      }
-
-      const hourlyContainer = document.getElementById('chart-hourly');
-      if (hourlyContainer) {
-        const data = [
-          { label: '朝', value: analysis.hourly.morning },
-          { label: '昼', value: analysis.hourly.day },
-          { label: '夜', value: analysis.hourly.night },
-          { label: '深夜', value: analysis.hourly.late }
-        ];
-        ChartRenderer.renderBarChart(hourlyContainer, data, {
-          color: '#10b981', // Emerald
-          height: 200
-        });
-      }
-
-      const monthlyContainer = document.getElementById('chart-monthly');
-      if (monthlyContainer) {
-        ChartRenderer.renderLineChart(monthlyContainer, analysis.monthly, {
-          color: '#f59e0b', // Amber
-          strokeWidth: 3
-        });
-      }
-
       modal.classList.add('active');
       modal.setAttribute('aria-hidden', 'false');
+
+      // チャートの描画 (DOM反映後に行うためにrequestAnimationFrameを使用)
+      requestAnimationFrame(() => {
+        // チャートの描画
+        const weeklyContainer = document.getElementById('chart-weekly');
+        if (weeklyContainer) {
+          ChartRenderer.renderBarChart(weeklyContainer, analysis.weekly, {
+            labels: ['日', '月', '火', '水', '木', '金', '土'],
+            color: 'var(--accent-color)',
+            height: 200
+          });
+        }
+
+        const hourlyContainer = document.getElementById('chart-hourly');
+        if (hourlyContainer) {
+          const data = [
+            { label: '朝', value: analysis.hourly.morning },
+            { label: '昼', value: analysis.hourly.day },
+            { label: '夜', value: analysis.hourly.night },
+            { label: '深夜', value: analysis.hourly.late }
+          ];
+          ChartRenderer.renderBarChart(hourlyContainer, data, {
+            color: '#10b981', // Emerald
+            height: 200
+          });
+        }
+
+        const monthlyContainer = document.getElementById('chart-monthly');
+        if (monthlyContainer) {
+          ChartRenderer.renderLineChart(monthlyContainer, analysis.monthly, {
+            color: '#f59e0b', // Amber
+            strokeWidth: 3
+          });
+        }
+
+      });
     });
   }
 
