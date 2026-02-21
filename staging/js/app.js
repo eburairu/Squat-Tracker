@@ -1541,95 +1541,7 @@ quizOptionButtons.forEach(button => {
   });
 });
 
-startButton.addEventListener('click', () => {
-  if (sensorMode) {
-    sensorStatus.textContent = 'センサーモードではタイマーを併用できます。';
-  }
-  startWorkout();
-});
 
-pauseButton.addEventListener('click', pauseWorkout);
-resetButton.addEventListener('click', resetWorkout);
-setCountInput.addEventListener('input', updateSessionStats);
-repCountInput.addEventListener('input', updateSessionStats);
-
-if (themeToggle) {
-  themeToggle.addEventListener('change', (event) => {
-    const theme = event.target.checked ? 'dark' : 'light';
-    applyTheme(theme);
-    persistTheme(theme);
-    if (typeof AchievementSystem !== 'undefined') {
-      AchievementSystem.notify('theme_change');
-    }
-  });
-}
-
-if (voiceToggle) {
-  voiceToggle.addEventListener('change', (event) => {
-    const enabled = event.target.checked;
-    VoiceCoach.setEnabled(enabled);
-    if (voiceStatus) {
-      voiceStatus.textContent = enabled ? 'ON' : 'OFF';
-    }
-    if (isStorageAvailable) {
-      localStorage.setItem(VOICE_COACH_KEY, String(enabled));
-    }
-    // モバイルの制限解除のため、ユーザー操作時に空の音声を再生しておく
-    if (enabled) {
-      VoiceCoach.speak('');
-    }
-  });
-}
-
-if (prefersReducedMotion) {
-  prefersReducedMotion.addEventListener('change', applyReducedMotionPreference);
-}
-
-document.addEventListener('keydown', (event) => {
-  if (event.defaultPrevented) {
-    return;
-  }
-  const key = event.key;
-  if (key !== ' ' && key !== 'Enter') {
-    return;
-  }
-  const target = event.target;
-  if (target instanceof HTMLElement) {
-    const tagName = target.tagName;
-    if (
-      tagName === 'INPUT'
-      || tagName === 'TEXTAREA'
-      || tagName === 'SELECT'
-      || tagName === 'BUTTON'
-      || target.isContentEditable
-    ) {
-      return;
-    }
-  }
-  event.preventDefault();
-  if (currentPhase === Phase.IDLE && !workoutStarted) {
-    startWorkout();
-    return;
-  }
-  if (currentPhase !== Phase.FINISHED) {
-    pauseWorkout();
-  }
-});
-
-sensorToggle.addEventListener('change', (event) => {
-  if (event.target.checked) {
-    enableSensor();
-  } else {
-    disableSensor();
-  }
-});
-
-sensorCalibrateButton.addEventListener('click', () => {
-  sensorBaseline = null;
-  sensorThreshold = null;
-  lastSensorCounted = false;
-  sensorStatus.textContent = '角度を再計測します。逆さまに固定して数秒待ってください。';
-});
 
 
 // --- Bootstrap ---
@@ -1929,6 +1841,103 @@ const initApp = async () => {
   updateQuizAndTimerDisplay(Phase.IDLE);
   updateDisplays();
   updateActionButtonStates();
+
+  // --- Event Listeners (Moved inside initApp) ---
+  if (startButton) {
+    startButton.addEventListener('click', () => {
+      if (sensorMode) {
+        sensorStatus.textContent = 'センサーモードではタイマーを併用できます。';
+      }
+      startWorkout();
+    });
+  }
+
+  if (pauseButton) pauseButton.addEventListener('click', pauseWorkout);
+  if (resetButton) resetButton.addEventListener('click', resetWorkout);
+  if (setCountInput) setCountInput.addEventListener('input', updateSessionStats);
+  if (repCountInput) repCountInput.addEventListener('input', updateSessionStats);
+
+  if (themeToggle) {
+    themeToggle.addEventListener('change', (event) => {
+      const theme = event.target.checked ? 'dark' : 'light';
+      applyTheme(theme);
+      persistTheme(theme);
+      if (typeof AchievementSystem !== 'undefined') {
+        AchievementSystem.notify('theme_change');
+      }
+    });
+  }
+
+  if (voiceToggle) {
+    voiceToggle.addEventListener('change', (event) => {
+      const enabled = event.target.checked;
+      VoiceCoach.setEnabled(enabled);
+      if (voiceStatus) {
+        voiceStatus.textContent = enabled ? 'ON' : 'OFF';
+      }
+      if (isStorageAvailable) {
+        localStorage.setItem(VOICE_COACH_KEY, String(enabled));
+      }
+      if (enabled) {
+        VoiceCoach.speak('');
+      }
+    });
+  }
+
+  if (prefersReducedMotion) {
+    prefersReducedMotion.addEventListener('change', applyReducedMotionPreference);
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.defaultPrevented) {
+      return;
+    }
+    const key = event.key;
+    if (key !== ' ' && key !== 'Enter') {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof HTMLElement) {
+      const tagName = target.tagName;
+      if (
+        tagName === 'INPUT'
+        || tagName === 'TEXTAREA'
+        || tagName === 'SELECT'
+        || tagName === 'BUTTON'
+        || target.isContentEditable
+      ) {
+        return;
+      }
+    }
+    event.preventDefault();
+    if (currentPhase === Phase.IDLE && !workoutStarted) {
+      startWorkout();
+      return;
+    }
+    if (currentPhase !== Phase.FINISHED) {
+      pauseWorkout();
+    }
+  });
+
+  if (sensorToggle) {
+    sensorToggle.addEventListener('change', (event) => {
+      if (event.target.checked) {
+        enableSensor();
+      } else {
+        disableSensor();
+      }
+    });
+  }
+
+  if (sensorCalibrateButton) {
+    sensorCalibrateButton.addEventListener('click', () => {
+      sensorBaseline = null;
+      sensorThreshold = null;
+      lastSensorCounted = false;
+      sensorStatus.textContent = '角度を再計測します。逆さまに固定して数秒待ってください。';
+    });
+  }
+
 };
 
 if (document.readyState === 'loading') {
