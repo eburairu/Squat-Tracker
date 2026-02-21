@@ -160,6 +160,7 @@
         <div class="boss-display">
           <div class="boss-avatar-wrapper">
             <div id="boss-avatar" class="boss-avatar"></div>
+            <div id="buddy-container" class="buddy-container" style="display: none;"></div>
           </div>
           <div class="boss-info">
             <div class="boss-name-row">
@@ -432,16 +433,34 @@
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-header">
         <h2 id="modal-title">装備一覧</h2>
+        <div class="modal-tabs">
+          <button class="modal-tab-btn active" data-target="weapon-view">武器</button>
+          <button class="modal-tab-btn" data-target="buddy-view">バディ</button>
+        </div>
         <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
       </div>
       <div class="modal-body">
-        <div class="equipment-summary">
-          <span class="summary-label">現在の攻撃力ボーナス</span>
-          <span id="equipment-total-bonus" class="summary-value">+0</span>
+        <div id="weapon-view" class="modal-view active">
+          <div class="equipment-summary">
+            <span class="summary-label">現在の攻撃力ボーナス</span>
+            <span id="equipment-total-bonus" class="summary-value">+0</span>
+          </div>
+          <ul id="weapon-list" class="weapon-list">
+            <!-- Items injected by JS -->
+          </ul>
         </div>
-        <ul id="weapon-list" class="weapon-list">
-          <!-- Items injected by JS -->
-        </ul>
+        <div id="buddy-view" class="modal-view" style="display: none;">
+          <div class="equipment-summary">
+            <span class="summary-label">現在のバディボーナス</span>
+            <span id="buddy-total-bonus" class="summary-value">+0</span>
+          </div>
+          <div id="buddy-empty-state" class="empty-state" style="display: none;">
+            <p>まだバディがいません。<br>ボスを倒して仲間にしましょう！</p>
+          </div>
+          <ul id="buddy-list" class="buddy-list">
+            <!-- Items injected by JS -->
+          </ul>
+        </div>
       </div>
     </div>
   </div>

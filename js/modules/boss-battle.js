@@ -2,6 +2,7 @@ import { MONSTERS, RARITY_SETTINGS } from '../constants.js';
 // import { WEAPONS } from '../data/weapons.js'; // REMOVED
 import { InventoryManager } from './inventory-manager.js';
 import { AdventureSystem } from './adventure-system.js';
+import { BuddyManager } from './buddy-manager.js';
 import { showToast, getRandomInt } from '../utils.js';
 
 export const BossBattle = {
@@ -163,8 +164,12 @@ export const BossBattle = {
 
     if (!this.state.currentMonster) return;
 
+    // Apply Buddy Bonus
+    const buddyBonus = BuddyManager.getDamageBonus();
+    const totalDamage = amount + buddyBonus;
+
     const monster = this.state.currentMonster;
-    monster.currentHp = Math.max(0, monster.currentHp - amount);
+    monster.currentHp = Math.max(0, monster.currentHp - totalDamage);
     this.state.lastInteraction = Date.now();
 
     if (this.elements.avatar) {
@@ -222,6 +227,10 @@ export const BossBattle = {
         sound: true
       });
     }
+
+    // Try to tame buddy
+    const currentMonsterIndex = this.state.monsterIndex % MONSTERS.length;
+    BuddyManager.checkDrop(currentMonsterIndex);
 
     this.state.totalKills += 1;
     this.state.monsterIndex += 1;
@@ -335,5 +344,17 @@ export const BossBattle = {
     }
 
     this.elements.killCount.textContent = totalKills;
+
+    // Render Buddy
+    const buddyContainer = document.getElementById('buddy-container');
+    if (buddyContainer) {
+      const buddy = BuddyManager.getCurrentBuddy();
+      if (buddy) {
+        buddyContainer.style.display = 'flex';
+        buddyContainer.innerHTML = `<div class="buddy-avatar" title="${buddy.name}">${buddy.emoji}</div>`;
+      } else {
+        buddyContainer.style.display = 'none';
+      }
+    }
   }
 };

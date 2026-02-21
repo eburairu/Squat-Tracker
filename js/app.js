@@ -41,6 +41,7 @@ import { AnalyticsManager } from './modules/analytics-manager.js';
 import { ChartRenderer } from './modules/chart-renderer.js';
 import { InsightGenerator } from './modules/insight-generator.js';
 import { CommentaryManager } from './modules/commentary-manager.js';
+import { BuddyManager } from './modules/buddy-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -1716,6 +1717,7 @@ const initApp = async () => {
   ShareManager.init();
   TensionManager.init();
   SkillManager.init();
+  BuddyManager.init();
   await BestiaryManager.init();
   await CommentaryManager.init();
 
@@ -1981,6 +1983,7 @@ if (typeof window !== 'undefined') {
   window.GhostManager = GhostManager;
   window.AnalyticsManager = AnalyticsManager;
   window.CommentaryManager = CommentaryManager;
+  window.BuddyManager = BuddyManager;
 
   // テスト用に内部状態を公開
   Object.defineProperty(window, 'currentQuiz', {

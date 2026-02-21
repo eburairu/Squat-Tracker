@@ -1,5 +1,6 @@
 // import { WEAPONS } from '../data/weapons.js'; // REMOVED: Dependency injection used instead
 import { isStorageAvailable } from '../utils.js';
+import { BuddyManager } from './buddy-manager.js';
 
 const INVENTORY_KEY = 'squat-tracker-inventory';
 
@@ -29,6 +30,9 @@ export const InventoryManager = {
     if (!this.weaponsData[this.state.equippedId]) {
       this.state.equippedId = 'unarmed';
     }
+
+    this.setupTabs();
+
     // Render UI if elements exist
     this.render();
     this.setupUI();
@@ -174,7 +178,38 @@ export const InventoryManager = {
     });
   },
 
+  setupTabs() {
+    const modal = document.getElementById('equipment-modal');
+    if (!modal) return;
+
+    const tabs = modal.querySelectorAll('.modal-tab-btn');
+    const views = modal.querySelectorAll('.modal-view');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        console.log('Tab clicked:', tab.getAttribute('data-target'));
+        // Deactivate all
+        tabs.forEach(t => t.classList.remove('active'));
+        views.forEach(v => {
+            v.classList.remove('active');
+            // Remove inline style if any (from index.html initial state)
+            v.style.display = '';
+        });
+
+        // Activate clicked
+        tab.classList.add('active');
+        const targetId = tab.getAttribute('data-target');
+        const targetView = document.getElementById(targetId);
+        if (targetView) {
+            targetView.classList.add('active');
+        }
+      });
+    });
+  },
+
   render() {
+    this.renderBuddyList();
+
     const listEl = document.getElementById('weapon-list');
     const bonusEl = document.getElementById('equipment-total-bonus');
     const totalBonus = this.getAttackBonus();
@@ -231,6 +266,65 @@ export const InventoryManager = {
       });
 
       listEl.appendChild(li);
+    });
+  },
+
+  renderBuddyList() {
+    const listEl = document.getElementById('buddy-list');
+    const bonusEl = document.getElementById('buddy-total-bonus');
+    const emptyState = document.getElementById('buddy-empty-state');
+
+    if (!listEl) return;
+
+    const buddies = BuddyManager.getBuddyList();
+    const currentBuddy = BuddyManager.getCurrentBuddy();
+    const bonus = BuddyManager.getDamageBonus();
+
+    if (bonusEl) {
+        bonusEl.textContent = `+${bonus}`;
+    }
+
+    listEl.innerHTML = '';
+
+    if (buddies.length === 0) {
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+
+    // Sort: Equipped first, then acquired date desc
+    buddies.sort((a, b) => {
+        if (currentBuddy && a.id === currentBuddy.id) return -1;
+        if (currentBuddy && b.id === currentBuddy.id) return 1;
+        return b.acquiredAt - a.acquiredAt;
+    });
+
+    buddies.forEach(buddy => {
+        const isEquipped = currentBuddy && buddy.id === currentBuddy.id;
+        const li = document.createElement('li');
+        li.className = `buddy-item ${isEquipped ? 'equipped' : ''}`;
+
+        // Formula: BASE + (Level * 2). Assuming BASE=3.
+        const dmg = 3 + (buddy.level * 2);
+
+        li.innerHTML = `
+            <div class="buddy-icon">${buddy.emoji}</div>
+            <div class="buddy-info">
+                <span class="buddy-name">${buddy.name} <span class="buddy-level">Lv.${buddy.level}</span></span>
+                <span class="buddy-effect">追加ダメージ: +${dmg}</span>
+            </div>
+            ${isEquipped ? '<span style="font-size:0.8rem; color:var(--accent-color); font-weight:bold;">同行中</span>' : ''}
+        `;
+
+        li.addEventListener('click', () => {
+            if (!isEquipped) {
+                BuddyManager.equipBuddy(buddy.id);
+                this.renderBuddyList(); // Re-render to update UI
+            }
+        });
+
+        listEl.appendChild(li);
     });
   }
 };
