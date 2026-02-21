@@ -1559,13 +1559,35 @@ const initializeHistory = () => {
 
 const initApp = async () => {
   // Load external data first
-  const [achievementsData, baseWeaponsData, titlesData, classesData, titleSynergiesData] = await Promise.all([
-    loadJson('js/data/achievements.json'),
-    loadJson('js/data/base-weapons.json'),
-    loadJson('js/data/titles.json'),
-    loadJson('js/data/classes.json'),
-    loadJson('js/data/title-synergies.json')
+  const results = await Promise.all([
+    loadJson("js/data/achievements.json"),
+    loadJson("js/data/base-weapons.json"),
+    loadJson("js/data/titles.json"),
+    loadJson("js/data/classes.json"),
+    loadJson("js/data/title-synergies.json")
   ]);
+
+  const achievementsData = results[0] || [];
+  const baseWeaponsData = results[1] || [];
+  const titlesData = results[2] || { prefixes: [], suffixes: [] };
+
+  let classesData = results[3];
+  if (!classesData || !Array.isArray(classesData) || classesData.length === 0) {
+    console.warn("Failed to load classes.json, using fallback data.");
+    classesData = [
+      {
+        id: "novice",
+        name: "冒険者",
+        description: "基本のクラス。特別な能力はないが、全ての基礎となる。",
+        emoji: "🌱",
+        modifiers: { attackMultiplier: 1.0, quizMultiplier: 1.0, criticalRateBonus: 0.0, expMultiplier: 1.0 },
+        skill: { id: "skill_novice", name: "深呼吸", description: "テンション50%回復", emoji: "😮‍💨", type: "recover_tension", value: 50 },
+        skillTree: []
+      }
+    ];
+  }
+
+  const titleSynergiesData = results[4] || [];
 
   // Apply data to systems
 
