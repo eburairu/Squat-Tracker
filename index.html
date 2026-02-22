@@ -182,6 +182,22 @@
         </div>
       </div>
 
+      <div class="card schedule-card reveal delay-2" id="daily-schedule-card" style="display: none;">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Today's Plan</p>
+            <h2>本日の予定</h2>
+          </div>
+          <div class="schedule-badge">
+            <span id="schedule-plan-label">維持コース</span>
+          </div>
+        </div>
+        <div class="schedule-content">
+          <p id="schedule-description">3セット × 10回 (標準テンポ)</p>
+          <button id="start-schedule-button" class="primary full-width">設定を反映して開始</button>
+        </div>
+      </div>
+
       <div class="card workout-card reveal delay-2">
         <div class="card-head">
           <div>
@@ -282,6 +298,13 @@
             </button>
           </div>
           <p class="smart-plan-desc" style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">今の状態に最適なメニューを作成します。</p>
+        </div>
+        <div class="control-group scheduler-group" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+             <label class="preset-label" style="margin: 0;">週間スケジュール</label>
+             <button id="open-scheduler-button" class="btn secondary small">📅 設定</button>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">曜日ごとのメニューを自動設定します。</p>
         </div>
         <div class="control-group preset-group">
           <label class="preset-label">
@@ -731,6 +754,63 @@
             <h3>月間推移</h3>
             <div id="chart-monthly" class="chart-container"></div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scheduler-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="scheduler-modal-title">
+      <div class="modal-header">
+        <h2 id="scheduler-modal-title">週間スケジュール設定</h2>
+        <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="scheduler-step">
+          <h3>1. 目標を選択</h3>
+          <div class="plan-options">
+            <label class="plan-option">
+              <input type="radio" name="scheduler-plan" value="maintain" checked>
+              <div class="plan-card">
+                <span class="plan-icon">🛡️</span>
+                <span class="plan-name">現状維持</span>
+                <span class="plan-desc">3セット × 10回</span>
+              </div>
+            </label>
+            <label class="plan-option">
+              <input type="radio" name="scheduler-plan" value="improve">
+              <div class="plan-card">
+                <span class="plan-icon">📈</span>
+                <span class="plan-name">体力向上</span>
+                <span class="plan-desc">3セット × 15回</span>
+              </div>
+            </label>
+            <label class="plan-option">
+              <input type="radio" name="scheduler-plan" value="challenge">
+              <div class="plan-card">
+                <span class="plan-icon">🔥</span>
+                <span class="plan-name">限界挑戦</span>
+                <span class="plan-desc">4セット × 15回 (Slow)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="scheduler-step">
+          <h3>2. 実施曜日を選択</h3>
+          <div class="day-selector">
+            <label class="day-check"><input type="checkbox" name="scheduler-day" value="1"> <span>月</span></label>
+            <label class="day-check"><input type="checkbox" name="scheduler-day" value="2"> <span>火</span></label>
+            <label class="day-check"><input type="checkbox" name="scheduler-day" value="3"> <span>水</span></label>
+            <label class="day-check"><input type="checkbox" name="scheduler-day" value="4"> <span>木</span></label>
+            <label class="day-check"><input type="checkbox" name="scheduler-day" value="5"> <span>金</span></label>
+            <label class="day-check"><input type="checkbox" name="scheduler-day" value="6"> <span>土</span></label>
+            <label class="day-check"><input type="checkbox" name="scheduler-day" value="0"> <span>日</span></label>
+          </div>
+        </div>
+        <div class="scheduler-footer">
+          <button id="save-schedule-button" class="primary full-width">スケジュールを作成</button>
+          <button id="clear-schedule-button" class="ghost small" style="margin-top: 0.5rem; width: 100%;">設定を削除</button>
         </div>
       </div>
     </div>

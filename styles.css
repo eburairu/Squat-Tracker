@@ -1662,3 +1662,128 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
+
+/* Weekly Scheduler */
+.scheduler-group {
+  margin-top: 1rem;
+}
+
+.plan-options {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+.plan-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.plan-card {
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-main);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.plan-option input:checked + .plan-card {
+  border-color: var(--accent-color);
+  background: rgba(79, 70, 229, 0.05);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.plan-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.plan-name {
+  display: block;
+  font-weight: 800;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.plan-desc {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.day-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.day-check {
+  cursor: pointer;
+}
+
+.day-check input {
+  position: absolute;
+  opacity: 0;
+}
+
+.day-check span {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-main);
+  transition: all 0.2s;
+  font-size: 0.8rem;
+}
+
+.day-check input:checked + span {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  transform: scale(1.1);
+}
+
+/* Today's Schedule Card */
+.schedule-card {
+  border-left: 5px solid var(--accent-color);
+  background: linear-gradient(to right, rgba(79, 70, 229, 0.05), transparent);
+}
+
+.schedule-badge {
+  background: var(--accent-color);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.schedule-content {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+#schedule-description {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
