@@ -42,6 +42,7 @@ import { ChartRenderer } from './modules/chart-renderer.js';
 import { InsightGenerator } from './modules/insight-generator.js';
 import { CommentaryManager } from './modules/commentary-manager.js';
 import { BuddyManager } from './modules/buddy-manager.js';
+import { SchedulerManager } from './modules/scheduler-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -1400,6 +1401,147 @@ const setupPlaylistManagerUI = () => {
 };
 
 
+// --- Scheduler Logic ---
+
+const updateSchedulerUI = () => {
+  const scheduleCard = document.getElementById('daily-schedule-card');
+  const planLabel = document.getElementById('schedule-plan-label');
+  const description = document.getElementById('schedule-description');
+
+  if (!scheduleCard || !planLabel || !description) return;
+
+  const todaySchedule = SchedulerManager.getTodaySchedule();
+
+  if (todaySchedule) {
+    scheduleCard.style.display = 'block';
+    planLabel.textContent = todaySchedule.planLabel;
+
+    // Create description text
+    const s = todaySchedule.settings;
+    let desc = `${s.setCount}セット × ${s.repCount}回`;
+
+    // Add tempo info if slow
+    if (todaySchedule.planType === 'challenge') {
+      desc += ' (Slow Tempo)';
+    }
+
+    description.textContent = desc;
+  } else {
+    scheduleCard.style.display = 'none';
+  }
+};
+
+const applyScheduleSettings = () => {
+  const todaySchedule = SchedulerManager.getTodaySchedule();
+  if (!todaySchedule) return;
+
+  const s = todaySchedule.settings;
+  if (s.setCount) setCountInput.value = s.setCount;
+  if (s.repCount) repCountInput.value = s.repCount;
+  if (s.downDuration) downDurationInput.value = s.downDuration;
+  if (s.holdDuration) holdDurationInput.value = s.holdDuration;
+  if (s.upDuration) upDurationInput.value = s.upDuration;
+  if (s.restDuration) restDurationInput.value = s.restDuration;
+  if (s.countdownDuration) countdownDurationInput.value = s.countdownDuration;
+
+  // Trigger input events
+  setCountInput.dispatchEvent(new Event('input'));
+  repCountInput.dispatchEvent(new Event('input'));
+  setCountInput.dispatchEvent(new Event('change'));
+  repCountInput.dispatchEvent(new Event('change'));
+
+  updateStartButtonAvailability();
+
+  showToast({ emoji: '📅', title: '設定完了', message: '本日の予定をセットしました！' });
+
+  // Scroll to workout card
+  document.querySelector('.workout-card').scrollIntoView({ behavior: 'smooth' });
+};
+
+const setupScheduler = () => {
+  const openBtn = document.getElementById('open-scheduler-button');
+  const modal = document.getElementById('scheduler-modal');
+  const saveBtn = document.getElementById('save-schedule-button');
+  const clearBtn = document.getElementById('clear-schedule-button');
+  const startBtn = document.getElementById('start-schedule-button');
+  const closeBtns = modal ? modal.querySelectorAll('[data-close]') : [];
+
+  if (openBtn && modal) {
+    openBtn.addEventListener('click', () => {
+      // Load current settings into modal
+      const current = SchedulerManager.load();
+      if (current) {
+        // Set Plan Radio
+        const radio = modal.querySelector(`input[name="scheduler-plan"][value="${current.planType}"]`);
+        if (radio) radio.checked = true;
+
+        // Set Days Checkboxes
+        const checkboxes = modal.querySelectorAll('input[name="scheduler-day"]');
+        checkboxes.forEach(cb => {
+          cb.checked = current.selectedDays.includes(Number(cb.value));
+        });
+      }
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden', 'false');
+    });
+  }
+
+  closeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (modal) {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    });
+  });
+
+  if (saveBtn && modal) {
+    saveBtn.addEventListener('click', () => {
+      const planType = modal.querySelector('input[name="scheduler-plan"]:checked')?.value;
+      const dayCheckboxes = modal.querySelectorAll('input[name="scheduler-day"]:checked');
+      const selectedDays = Array.from(dayCheckboxes).map(cb => Number(cb.value));
+
+      if (!planType) {
+        alert('目標を選択してください。');
+        return;
+      }
+
+      if (selectedDays.length === 0) {
+        alert('実施する曜日を少なくとも1つ選択してください。');
+        return;
+      }
+
+      if (SchedulerManager.save(planType, selectedDays)) {
+        showToast({ emoji: '✅', title: '保存しました', message: '週間スケジュールを作成しました。' });
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+        updateSchedulerUI();
+      } else {
+        alert('保存に失敗しました。');
+      }
+    });
+  }
+
+  if (clearBtn && modal) {
+    clearBtn.addEventListener('click', () => {
+      if (confirm('スケジュール設定を削除しますか？')) {
+        SchedulerManager.clear();
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+        updateSchedulerUI();
+        showToast({ emoji: '🗑️', title: '削除しました', message: 'スケジュール設定をクリアしました。' });
+      }
+    });
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener('click', applyScheduleSettings);
+  }
+
+  // Initial check
+  updateSchedulerUI();
+};
+
 // --- Quiz Logic ---
 
 const updateQuizAndTimerDisplay = (phaseKey) => {
@@ -1743,6 +1885,7 @@ const initApp = async () => {
   await BestiaryManager.init();
   await CommentaryManager.init();
 
+  setupScheduler();
   LoadoutManager.init();
   ComboSystem.init();
   FortuneManager.init();
@@ -2006,6 +2149,7 @@ if (typeof window !== 'undefined') {
   window.AnalyticsManager = AnalyticsManager;
   window.CommentaryManager = CommentaryManager;
   window.BuddyManager = BuddyManager;
+  window.SchedulerManager = SchedulerManager;
 
   // テスト用に内部状態を公開
   Object.defineProperty(window, 'currentQuiz', {
