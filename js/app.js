@@ -655,6 +655,17 @@ const finishWorkout = () => {
     ClassManager.addExperience(currentClass.id, Math.floor(totalSets * repsPerSet * expMultiplier));
   }
 
+  // Buddy Exp
+  const buddyExpGain = totalSets * repsPerSet;
+  const buddyResult = BuddyManager.addExp(buddyExpGain);
+  if (buddyResult && buddyResult.leveledUp && !buddyResult.evolved) {
+    showToast({
+      emoji: '🆙',
+      title: 'バディ レベルアップ！',
+      message: `${buddyResult.buddy.name} が Lv.${buddyResult.buddy.level} になった！`
+    });
+  }
+
   launchConfetti(confettiCanvas, prefersReducedMotion);
   updateActionButtonStates();
 
@@ -1706,7 +1717,8 @@ const initApp = async () => {
     loadJson("js/data/base-weapons.json"),
     loadJson("js/data/titles.json"),
     loadJson("js/data/classes.json"),
-    loadJson("js/data/title-synergies.json")
+    loadJson("js/data/title-synergies.json"),
+    loadJson("js/data/buddy-evolution.json")
   ]);
 
   const achievementsData = results[0] || [];
@@ -1730,6 +1742,7 @@ const initApp = async () => {
   }
 
   const titleSynergiesData = results[4] || [];
+  const buddyEvolutionData = results[5] || {};
 
   // Apply data to systems
 
@@ -1881,7 +1894,7 @@ const initApp = async () => {
   ShareManager.init();
   TensionManager.init();
   SkillManager.init();
-  BuddyManager.init();
+  BuddyManager.init(buddyEvolutionData);
   await BestiaryManager.init();
   await CommentaryManager.init();
 
