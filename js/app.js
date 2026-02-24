@@ -2105,6 +2105,36 @@ const initApp = async () => {
     });
   }
 
+
+  // Settings Modal
+  const openSettingsBtn = document.getElementById('open-settings');
+  const settingsModal = document.getElementById('settings-modal');
+  const resetAllDataBtn = document.getElementById('reset-all-data');
+
+  if (openSettingsBtn && settingsModal) {
+    openSettingsBtn.addEventListener('click', () => {
+      settingsModal.classList.add('active');
+      settingsModal.setAttribute('aria-hidden', 'false');
+    });
+
+    const closeBtns = settingsModal.querySelectorAll('[data-close]');
+    closeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        settingsModal.classList.remove('active');
+        settingsModal.setAttribute('aria-hidden', 'true');
+      });
+    });
+  }
+
+  if (resetAllDataBtn) {
+    resetAllDataBtn.addEventListener('click', () => {
+      if (confirm(`本当に全てのデータを削除しますか？\nこの操作は取り消せません。\nプレイ履歴、設定、獲得したアイテムなど全てが失われます。`)) {
+        localStorage.clear();
+        location.reload();
+      }
+    });
+  }
+
 };
 
 if (document.readyState === 'loading') {
