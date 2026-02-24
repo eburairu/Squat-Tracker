@@ -19,13 +19,16 @@
   <main class="app">
     <header class="hero">
       <div class="hero-copy">
-        <div class="theme-toggle" aria-label="テーマ切替">
-          <span class="theme-label">Theme</span>
-          <label class="switch">
-            <input id="theme-toggle" type="checkbox" data-theme-toggle />
-            <span class="slider"></span>
-            <span id="theme-status" class="switch-label">ライト</span>
-          </label>
+        <div class="header-controls">
+          <div class="theme-toggle" aria-label="テーマ切替">
+            <span class="theme-label">Theme</span>
+            <label class="switch">
+              <input id="theme-toggle" type="checkbox" data-theme-toggle />
+              <span class="slider"></span>
+              <span id="theme-status" class="switch-label">ライト</span>
+            </label>
+          </div>
+          <button id="open-settings" class="ghost icon-button" aria-label="設定" style="font-size: 1.5rem; padding: 0.25rem; line-height: 1; border: none; cursor: pointer;">⚙️</button>
         </div>
         <div id="voice-status-indicator" class="voice-status-indicator hidden" aria-label="音声認識状態">
           <span class="mic-icon">🎙️</span>
@@ -811,6 +814,23 @@
         <div class="scheduler-footer">
           <button id="save-schedule-button" class="primary full-width">スケジュールを作成</button>
           <button id="clear-schedule-button" class="ghost small" style="margin-top: 0.5rem; width: 100%;">設定を削除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <div id="settings-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <div class="modal-header">
+        <h2 id="settings-modal-title">設定</h2>
+        <button class="ghost small close-modal" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-section">
+          <h3>データ管理</h3>
+          <p class="settings-desc">アプリケーションの全データを削除し、初期状態に戻します。この操作は取り消せません。</p>
+          <button id="reset-all-data" class="danger full-width">全てのデータを初期化</button>
         </div>
       </div>
     </div>
