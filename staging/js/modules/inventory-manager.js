@@ -305,13 +305,24 @@ export const InventoryManager = {
         const li = document.createElement('li');
         li.className = `buddy-item ${isEquipped ? 'equipped' : ''}`;
 
-        // Formula: BASE + (Level * 2). Assuming BASE=3.
-        const dmg = 3 + (buddy.level * 2);
+        // Formula: BASE + (Level * 2). Assuming BASE=3 if undefined.
+        const base = buddy.baseDamage || 3;
+        const dmg = base + (buddy.level * 2);
+
+        // Exp Calc
+        const nextExp = BuddyManager.getRequiredExp(buddy.level);
+        const expPercent = Math.min((buddy.exp / nextExp) * 100, 100);
 
         li.innerHTML = `
             <div class="buddy-icon">${buddy.emoji}</div>
             <div class="buddy-info">
-                <span class="buddy-name">${buddy.name} <span class="buddy-level">Lv.${buddy.level}</span></span>
+                <div class="buddy-header">
+                    <span class="buddy-name">${buddy.name}</span>
+                    <span class="buddy-level">Lv.${buddy.level}</span>
+                </div>
+                <div class="buddy-exp-container" title="EXP: ${buddy.exp} / ${nextExp}">
+                    <div class="buddy-exp-bar" style="width: ${expPercent}%"></div>
+                </div>
                 <span class="buddy-effect">追加ダメージ: +${dmg}</span>
             </div>
             ${isEquipped ? '<span style="font-size:0.8rem; color:var(--accent-color); font-weight:bold;">同行中</span>' : ''}
