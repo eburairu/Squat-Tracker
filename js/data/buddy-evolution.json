@@ -1,0 +1,30 @@
+{
+  "スライム": {
+    "targetLevel": 5,
+    "nextId": "king_slime",
+    "nextName": "キングスライム",
+    "nextEmoji": "👑",
+    "baseDamageBonus": 5
+  },
+  "コウモリ": {
+    "targetLevel": 5,
+    "nextId": "vampire",
+    "nextName": "ヴァンパイア",
+    "nextEmoji": "🧛",
+    "baseDamageBonus": 5
+  },
+  "ゴースト": {
+    "targetLevel": 5,
+    "nextId": "reaper",
+    "nextName": "死神",
+    "nextEmoji": "☠️",
+    "baseDamageBonus": 5
+  },
+  "ドラゴン": {
+    "targetLevel": 10,
+    "nextId": "ancient_dragon",
+    "nextName": "古龍",
+    "nextEmoji": "🐲",
+    "baseDamageBonus": 10
+  }
+}
