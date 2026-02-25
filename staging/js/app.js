@@ -16,7 +16,7 @@ import { AchievementSystem } from './modules/achievement-system.js';
 import { DataManager } from './modules/data-manager.js';
 import { PresetManager } from './modules/preset-manager.js';
 import { AdventureSystem } from './modules/adventure-system.js';
-import { WeeklyChallengeSystem } from './modules/weekly-challenge.js';
+// import { WeeklyChallengeSystem } from './modules/weekly-challenge.js';
 import { TitleManager } from './modules/title-manager.js';
 import { ClassManager } from './modules/class-manager.js';
 import { BestiaryManager } from './modules/bestiary-manager.js';
@@ -43,6 +43,7 @@ import { InsightGenerator } from './modules/insight-generator.js';
 import { CommentaryManager } from './modules/commentary-manager.js';
 import { BuddyManager } from './modules/buddy-manager.js';
 import { SchedulerManager } from './modules/scheduler-manager.js';
+import { BingoManager } from './modules/bingo-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -427,6 +428,7 @@ const performAttack = () => {
 
   if (damage.isCritical) {
     CommentaryManager.notify('critical');
+    BingoManager.checkProgress({ type: 'critical_hit' });
   }
 
   if (BossBattle.state.currentMonster) {
@@ -643,10 +645,9 @@ const finishWorkout = () => {
     totalSets: totalSets
   });
 
-  WeeklyChallengeSystem.check({
+  BingoManager.checkProgress({
     type: 'finish',
-    totalReps: totalSets * repsPerSet,
-    totalSets: totalSets
+    totalReps: totalSets * repsPerSet
   });
 
   const currentClass = ClassManager.getCurrentClass();
@@ -1849,7 +1850,7 @@ const initApp = async () => {
 
   // Initialize systems dependent on weapon data
   DailyMissionSystem.init({ baseWeaponsData, weaponsMap });
-  WeeklyChallengeSystem.init({ baseWeaponsData, weaponsMap });
+  BingoManager.init({ baseWeaponsData, weaponsMap });
   BossBattle.init({ baseWeaponsData, weaponsMap });
 
   // Mission Tabs Logic
@@ -1874,18 +1875,18 @@ const initApp = async () => {
       missionListDaily.style.display = 'none';
       missionListWeekly.style.display = '';
       if (weeklyInfoContainer) weeklyInfoContainer.style.display = '';
-      WeeklyChallengeSystem.render();
+      BingoManager.render();
     });
   }
 
   // Initial render
-  WeeklyChallengeSystem.render();
+  BingoManager.render();
 
   // Hook into BossBattle for weekly challenge tracking
   const originalHandleDefeat = BossBattle.handleDefeat;
   BossBattle.handleDefeat = function(...args) {
     originalHandleDefeat.apply(this, args);
-    WeeklyChallengeSystem.check({ type: 'boss_kill' });
+    BingoManager.checkProgress({ type: 'boss_kill' });
   };
 
   TitleManager.init(titlesData, titleSynergiesData);
@@ -2162,7 +2163,7 @@ if (typeof window !== 'undefined') {
   window.BossBattle = BossBattle;
   window.InventoryManager = InventoryManager;
   window.DailyMissionSystem = DailyMissionSystem;
-  window.WeeklyChallengeSystem = WeeklyChallengeSystem;
+  // window.WeeklyChallengeSystem = WeeklyChallengeSystem;
   window.AchievementSystem = AchievementSystem;
   window.AdventureSystem = AdventureSystem;
   window.TitleManager = TitleManager;
@@ -2193,6 +2194,7 @@ if (typeof window !== 'undefined') {
   window.CommentaryManager = CommentaryManager;
   window.BuddyManager = BuddyManager;
   window.SchedulerManager = SchedulerManager;
+  window.BingoManager = BingoManager;
 
   // テスト用に内部状態を公開
   Object.defineProperty(window, 'currentQuiz', {
