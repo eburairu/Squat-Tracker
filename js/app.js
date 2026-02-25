@@ -44,6 +44,8 @@ import { CommentaryManager } from './modules/commentary-manager.js';
 import { BuddyManager } from './modules/buddy-manager.js';
 import { SchedulerManager } from './modules/scheduler-manager.js';
 import { BingoManager } from './modules/bingo-manager.js';
+import { ThemeManager } from './modules/theme-manager.js';
+import { SoundManager } from './modules/sound-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -242,39 +244,6 @@ const saveHistoryEntries = (entries) => {
   } catch (error) {
     return false;
   }
-};
-
-// --- Theme Logic ---
-
-const getPreferredTheme = () => {
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
-  return 'light';
-};
-
-const applyTheme = (theme) => {
-  const isDark = theme === 'dark';
-  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  if (themeToggle) {
-    themeToggle.checked = isDark;
-  }
-  if (themeStatus) {
-    themeStatus.textContent = isDark ? 'ダーク' : 'ライト';
-  }
-};
-
-const persistTheme = (theme) => {
-  if (!isStorageAvailable) {
-    return;
-  }
-  localStorage.setItem(THEME_KEY, theme);
-};
-
-const initializeTheme = () => {
-  const stored = isStorageAvailable ? localStorage.getItem(THEME_KEY) : null;
-  const theme = stored || getPreferredTheme();
-  applyTheme(theme);
 };
 
 // --- Main UI Updates ---
@@ -1748,7 +1717,8 @@ const initApp = async () => {
   // Apply data to systems
 
   applyReducedMotionPreference();
-  initializeTheme();
+  ThemeManager.init();
+  SoundManager.init();
   initializeVoiceCoach();
   initializeWorkoutSettings();
   initializePresets();
@@ -2039,10 +2009,8 @@ const initApp = async () => {
   if (repCountInput) repCountInput.addEventListener('input', updateSessionStats);
 
   if (themeToggle) {
-    themeToggle.addEventListener('change', (event) => {
-      const theme = event.target.checked ? 'dark' : 'light';
-      applyTheme(theme);
-      persistTheme(theme);
+    themeToggle.addEventListener('change', () => {
+      // ThemeManager handles toggle logic
       if (typeof AchievementSystem !== 'undefined') {
         AchievementSystem.notify('theme_change');
       }
@@ -2129,6 +2097,8 @@ const initApp = async () => {
     openSettingsBtn.addEventListener('click', () => {
       settingsModal.classList.add('active');
       settingsModal.setAttribute('aria-hidden', 'false');
+      ThemeManager.bindSettingsUI();
+      SoundManager.bindSettingsUI();
     });
 
     const closeBtns = settingsModal.querySelectorAll('[data-close]');

@@ -1,6 +1,7 @@
 // Global variables for audio context and confetti context
 let audioContext = null;
 let confettiCtx = null;
+let currentSoundType = 'triangle';
 
 export const ensureAudioContext = () => {
   if (!audioContext) {
@@ -12,13 +13,20 @@ export const ensureAudioContext = () => {
   return audioContext;
 };
 
+export const setSoundType = (type) => {
+  const allowed = ['sine', 'square', 'sawtooth', 'triangle'];
+  if (allowed.includes(type)) {
+    currentSoundType = type;
+  }
+};
+
 export const playTone = (frequency, duration, options = {}) => {
   ensureAudioContext();
   const now = audioContext.currentTime;
   const startTime = options.startTime ?? now;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
-  oscillator.type = options.type ?? 'triangle';
+  oscillator.type = options.type ?? currentSoundType;
   oscillator.frequency.setValueAtTime(frequency * 0.96, startTime);
   oscillator.frequency.linearRampToValueAtTime(frequency * 1.08, startTime + duration / 1000);
   gain.gain.setValueAtTime(0, startTime);
@@ -30,7 +38,7 @@ export const playTone = (frequency, duration, options = {}) => {
 };
 
 export const beep = (frequency = 659.25, duration = 150) => {
-  playTone(frequency, duration, { type: 'triangle', volume: 0.2 });
+  playTone(frequency, duration, { volume: 0.2 });
 };
 
 export const playCelebration = () => {
@@ -38,9 +46,9 @@ export const playCelebration = () => {
   const now = audioContext.currentTime;
   const notes = [880, 1174.66, 1318.51, 1567.98];
   notes.forEach((frequency, index) => {
-    playTone(frequency, 180, { startTime: now + index * 0.12, type: 'sine', volume: 0.22 });
+    playTone(frequency, 180, { startTime: now + index * 0.12, volume: 0.22 });
   });
-  playTone(2093, 260, { startTime: now + 0.1, type: 'triangle', volume: 0.16 });
+  playTone(2093, 260, { startTime: now + 0.1, volume: 0.16 });
 };
 
 export const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
