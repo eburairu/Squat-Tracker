@@ -29,6 +29,87 @@
   --border-color: #374151;
 }
 
+/* Forest Theme */
+[data-style='forest'] {
+  --bg-main: #f1f8e9; /* Light Green 50 */
+  --bg-card: #ffffff;
+  --text-primary: #1b5e20; /* Dark Green 900 */
+  --text-secondary: #33691e; /* Light Green 900 */
+  --accent-color: #43a047; /* Green 600 */
+  --accent-hover: #2e7d32; /* Green 800 */
+  --border-color: #c8e6c9; /* Green 100 */
+}
+[data-style='forest'][data-theme='dark'] {
+  --bg-main: #052e16; /* Custom Dark Green */
+  --bg-card: #14532d; /* Green 900 */
+  --text-primary: #dcfce7; /* Green 100 */
+  --text-secondary: #86efac; /* Green 300 */
+  --accent-color: #4ade80; /* Green 400 */
+  --accent-hover: #22c55e; /* Green 500 */
+  --border-color: #166534; /* Green 800 */
+}
+
+/* Volcano Theme */
+[data-style='volcano'] {
+  --bg-main: #fff7ed; /* Orange 50 */
+  --bg-card: #ffffff;
+  --text-primary: #7c2d12; /* Orange 900 */
+  --text-secondary: #9a3412; /* Orange 800 */
+  --accent-color: #ea580c; /* Orange 600 */
+  --accent-hover: #c2410c; /* Orange 700 */
+  --border-color: #ffedd5; /* Orange 100 */
+}
+[data-style='volcano'][data-theme='dark'] {
+  --bg-main: #431407; /* Orange 950 */
+  --bg-card: #7c2d12; /* Orange 900 */
+  --text-primary: #ffedd5; /* Orange 100 */
+  --text-secondary: #fdba74; /* Orange 300 */
+  --accent-color: #fb923c; /* Orange 400 */
+  --accent-hover: #f97316; /* Orange 500 */
+  --border-color: #9a3412; /* Orange 800 */
+}
+
+/* Ocean Theme */
+[data-style='ocean'] {
+  --bg-main: #ecfeff; /* Cyan 50 */
+  --bg-card: #ffffff;
+  --text-primary: #164e63; /* Cyan 900 */
+  --text-secondary: #155e75; /* Cyan 800 */
+  --accent-color: #0891b2; /* Cyan 600 */
+  --accent-hover: #0e7490; /* Cyan 700 */
+  --border-color: #cffafe; /* Cyan 100 */
+}
+[data-style='ocean'][data-theme='dark'] {
+  --bg-main: #083344; /* Cyan 950 */
+  --bg-card: #164e63; /* Cyan 900 */
+  --text-primary: #cffafe; /* Cyan 100 */
+  --text-secondary: #67e8f9; /* Cyan 300 */
+  --accent-color: #22d3ee; /* Cyan 400 */
+  --accent-hover: #06b6d4; /* Cyan 500 */
+  --border-color: #155e75; /* Cyan 800 */
+}
+
+/* Cyber Theme */
+[data-style='cyber'] {
+  --bg-main: #fdf4ff; /* Fuchsia 50 */
+  --bg-card: #ffffff;
+  --text-primary: #701a75; /* Fuchsia 900 */
+  --text-secondary: #86198f; /* Fuchsia 800 */
+  --accent-color: #d946ef; /* Fuchsia 500 */
+  --accent-hover: #c026d3; /* Fuchsia 600 */
+  --border-color: #f0abfc; /* Fuchsia 200 */
+}
+[data-style='cyber'][data-theme='dark'] {
+  --bg-main: #020617; /* Slate 950 */
+  --bg-card: #0f172a; /* Slate 900 */
+  --text-primary: #e2e8f0; /* Slate 200 */
+  --text-secondary: #94a3b8; /* Slate 400 */
+  --accent-color: #22d3ee; /* Cyan 400 */
+  --accent-hover: #06b6d4; /* Cyan 500 */
+  --border-color: #1e293b; /* Slate 800 */
+  --shadow-md: 0 0 15px rgba(34, 211, 238, 0.2);
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-main);
@@ -1919,4 +2000,91 @@ input:checked + .slider:before {
   background: rgba(255, 215, 0, 0.5);
   pointer-events: none;
   z-index: 10;
+}
+
+/* Settings & Themes */
+.settings-section {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.settings-section h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.settings-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.theme-option {
+  cursor: pointer;
+  position: relative;
+  display: block; /* Ensure label wraps content */
+}
+
+.theme-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-preview {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  transition: all 0.2s;
+  background: var(--bg-card);
+}
+
+.theme-option input:checked + .theme-preview {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-color);
+  transform: scale(1.05);
+}
+
+.theme-name {
+  display: block;
+  text-align: center;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Sound Select */
+.sound-control-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sound-preview-btn {
+  padding: 0.75rem;
+  font-size: 1.2rem;
+  line-height: 1;
 }

@@ -828,6 +828,48 @@
       </div>
       <div class="modal-body">
         <div class="settings-section">
+          <h3>テーマ設定</h3>
+          <p class="settings-desc">アプリの雰囲気と音を変更できます。</p>
+          <div class="theme-grid">
+            <label class="theme-option">
+              <input type="radio" name="theme-style" value="default" checked>
+              <div class="theme-preview" style="background: #ffffff; color: #1f2937;">🎨</div>
+              <span class="theme-name">Default</span>
+            </label>
+            <label class="theme-option">
+              <input type="radio" name="theme-style" value="forest">
+              <div class="theme-preview" style="background: #f1f8e9; color: #2e7d32;">🌲</div>
+              <span class="theme-name">Forest</span>
+            </label>
+            <label class="theme-option">
+              <input type="radio" name="theme-style" value="volcano">
+              <div class="theme-preview" style="background: #fff7ed; color: #ff5722;">🌋</div>
+              <span class="theme-name">Volcano</span>
+            </label>
+            <label class="theme-option">
+              <input type="radio" name="theme-style" value="ocean">
+              <div class="theme-preview" style="background: #ecfeff; color: #00bcd4;">🌊</div>
+              <span class="theme-name">Ocean</span>
+            </label>
+            <label class="theme-option">
+              <input type="radio" name="theme-style" value="cyber">
+              <div class="theme-preview" style="background: #fdf4ff; color: #d500f9;">👾</div>
+              <span class="theme-name">Cyber</span>
+            </label>
+          </div>
+          <div class="sound-control-row">
+             <label for="sound-type-select" style="flex: 1; margin: 0;">サウンドスキン</label>
+             <select id="sound-type-select" style="width: auto;">
+               <option value="triangle">Triangle (標準)</option>
+               <option value="sine">Sine (柔らかい)</option>
+               <option value="square">Square (8bit)</option>
+               <option value="sawtooth">Sawtooth (鋭い)</option>
+             </select>
+             <button id="sound-preview-btn" class="ghost sound-preview-btn" title="試聴">🔊</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
           <h3>データ管理</h3>
           <p class="settings-desc">アプリケーションの全データを削除し、初期状態に戻します。この操作は取り消せません。</p>
           <button id="reset-all-data" class="danger full-width">全てのデータを初期化</button>
