@@ -2088,3 +2088,97 @@ input:checked + .slider:before {
   font-size: 1.2rem;
   line-height: 1;
 }
+
+/* --- Tower Mode Styles --- */
+.tower-entry-card {
+  border-left: 5px solid #8b5cf6; /* Violet */
+  background: linear-gradient(to right, rgba(139, 92, 246, 0.05), transparent);
+}
+
+.tower-stats {
+  text-align: right;
+}
+
+.tower-highscore {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #8b5cf6;
+}
+
+.tower-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.tower-start-btn {
+  background: #8b5cf6;
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3);
+}
+
+.tower-start-btn:hover {
+  background: #7c3aed;
+}
+
+.tower-battle-card {
+  border: 2px solid #8b5cf6;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+}
+
+.tower-status-row {
+  margin-bottom: 1.5rem;
+  background: var(--bg-main);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+}
+
+.status-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.tower-hp-track {
+  height: 10px;
+  background: rgba(239, 68, 68, 0.2); /* Red tint */
+  border-radius: 5px;
+}
+
+.tower-hp-bar {
+  background: linear-gradient(90deg, #22c55e, #10b981); /* Green gradient */
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.tower-hp-bar.warning {
+  background: #f59e0b;
+}
+
+.tower-hp-bar.danger {
+  background: #ef4444;
+  animation: pulse-hp 1s infinite;
+}
+
+@keyframes pulse-hp {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.tower-avatar {
+  background: #111827; /* Dark bg for enemy */
+  border-color: #8b5cf6;
+  color: #a78bfa;
+}
+
+.danger-text {
+  color: var(--danger-color) !important;
+}
+
+.danger-text:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
