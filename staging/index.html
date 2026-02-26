@@ -185,6 +185,58 @@
         </div>
       </div>
 
+      <div class="card tower-entry-card reveal delay-2" id="tower-entry-card">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Challenge Mode</p>
+            <h2>エンドレス・タワー</h2>
+          </div>
+          <div class="tower-stats">
+            <span class="label">High Score</span>
+            <span id="tower-highscore" class="tower-highscore">0F</span>
+          </div>
+        </div>
+        <p class="tower-desc">体力が尽きるまで階層を登り続けろ！<br>1階層 = 1セット。君はどこまで行けるか？</p>
+        <button id="tower-start-button" class="primary full-width tower-start-btn">挑戦する</button>
+      </div>
+
+      <div class="card tower-battle-card reveal delay-2" id="tower-battle-card" style="display: none;">
+        <div class="card-head">
+          <div>
+            <p class="card-eyebrow">Endless Tower</p>
+            <h2 id="tower-floor-display">Floor 1</h2>
+          </div>
+          <button id="tower-retreat-button" class="ghost small danger-text">リタイア</button>
+        </div>
+
+        <div class="tower-status-row">
+           <div class="tower-player-status">
+             <div class="status-label-row">
+               <span>Player HP</span>
+               <span id="tower-player-hp-text">100/100</span>
+             </div>
+             <div class="progress tower-hp-track">
+               <div id="tower-player-hp-bar" class="progress-bar tower-hp-bar" style="width: 100%"></div>
+             </div>
+           </div>
+        </div>
+
+        <div class="boss-display tower-enemy-display">
+          <div class="boss-avatar-wrapper">
+            <div id="tower-enemy-avatar" class="boss-avatar tower-avatar">👻</div>
+          </div>
+          <div class="boss-info">
+            <div class="boss-name-row">
+              <span id="tower-enemy-name">Tower Keeper</span>
+              <span id="tower-enemy-hp-text">-- / --</span>
+            </div>
+            <div class="progress boss-progress">
+              <div id="tower-enemy-hp-bar" class="progress-bar" style="width: 100%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card schedule-card reveal delay-2" id="daily-schedule-card" style="display: none;">
         <div class="card-head">
           <div>
