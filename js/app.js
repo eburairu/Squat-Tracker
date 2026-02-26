@@ -46,6 +46,7 @@ import { SchedulerManager } from './modules/scheduler-manager.js';
 import { BingoManager } from './modules/bingo-manager.js';
 import { ThemeManager } from './modules/theme-manager.js';
 import { SoundManager } from './modules/sound-manager.js';
+import { TowerManager } from './modules/tower-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -392,7 +393,13 @@ const performAttack = () => {
   const totalAttackPower = Math.floor(rawAttackPower * classMods.attackMultiplier * tensionMultiplier * skillMultiplier * fortuneMultiplier);
 
   const damage = RpgSystem.calculateDamage(totalAttackPower, forceCritical, classMods.criticalRateBonus);
-  BossBattle.damage(damage.amount, damage.isCritical);
+
+  if (TowerManager.state.isActive) {
+    TowerManager.damage(damage.amount, damage.isCritical);
+  } else {
+    BossBattle.damage(damage.amount, damage.isCritical);
+  }
+
   TensionManager.add(10 + ComboSystem.getTensionBonus());
 
   if (damage.isCritical) {
@@ -400,7 +407,7 @@ const performAttack = () => {
     BingoManager.checkProgress({ type: 'critical_hit' });
   }
 
-  if (BossBattle.state.currentMonster) {
+  if (!TowerManager.state.isActive && BossBattle.state.currentMonster) {
     const m = BossBattle.state.currentMonster;
     if (m.maxHp > 0) {
       const ratio = m.currentHp / m.maxHp;
@@ -461,6 +468,15 @@ const nextRepOrSet = () => {
     currentSet += 1;
     currentRep = 1;
     SkillManager.onSetFinished();
+
+    if (TowerManager.state.isActive) {
+      TowerManager.onSetFinished();
+      if (!TowerManager.state.isActive) {
+        // Game Over triggered finishWorkout inside onSetFinished
+        return;
+      }
+    }
+
     startRest();
     return;
   }
@@ -540,6 +556,10 @@ const recordWorkout = () => {
 };
 
 const finishWorkout = () => {
+  if (TowerManager.state.isActive) {
+    TowerManager.endTower(true);
+  }
+
   TensionManager.reset();
   SkillManager.reset();
   ComboSystem.reset();
@@ -883,6 +903,10 @@ const pauseWorkout = () => {
 };
 
 const resetWorkout = () => {
+  if (TowerManager.state.isActive) {
+    TowerManager.endTower(false);
+  }
+
   TensionManager.reset();
   SkillManager.reset();
   ComboSystem.reset();
@@ -1868,6 +1892,7 @@ const initApp = async () => {
   BuddyManager.init(buddyEvolutionData);
   await BestiaryManager.init();
   await CommentaryManager.init();
+  TowerManager.init();
 
   setupScheduler();
   LoadoutManager.init();
@@ -2165,6 +2190,8 @@ if (typeof window !== 'undefined') {
   window.BuddyManager = BuddyManager;
   window.SchedulerManager = SchedulerManager;
   window.BingoManager = BingoManager;
+  window.TowerManager = TowerManager;
+  window.performAttack = performAttack; // Test helper
 
   // テスト用に内部状態を公開
   Object.defineProperty(window, 'currentQuiz', {
