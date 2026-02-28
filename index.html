@@ -20,6 +20,14 @@
     <header class="hero">
       <div class="hero-copy">
         <div class="header-controls">
+          <!-- タマゴUI -->
+          <div id="egg-container" class="egg-container clickable" role="button" tabindex="0" aria-label="バディ・エッグの進捗">
+            <span id="egg-icon" class="egg-icon">🥚</span>
+            <div class="egg-progress-wrapper">
+              <div id="egg-progress-fill" class="egg-progress-fill"></div>
+            </div>
+            <span id="egg-progress-text" class="egg-progress-text">0/50</span>
+          </div>
           <div class="theme-toggle" aria-label="テーマ切替">
             <span class="theme-label">Theme</span>
             <label class="switch">
@@ -867,6 +875,24 @@
           <button id="save-schedule-button" class="primary full-width">スケジュールを作成</button>
           <button id="clear-schedule-button" class="ghost small" style="margin-top: 0.5rem; width: 100%;">設定を削除</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Egg Hatch Modal (追加) -->
+  <div id="egg-hatch-modal" class="modal" aria-hidden="true">
+    <div class="modal-overlay" tabindex="-1" data-close></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="egg-hatch-title">
+      <div class="modal-header">
+        <h2 id="egg-hatch-title">タマゴが孵化しそう！</h2>
+        <button class="ghost small close-modal" id="egg-modal-close" aria-label="閉じる" data-close>✕</button>
+      </div>
+      <div class="modal-body center-content">
+        <div id="egg-reward-text" class="egg-reward-area">
+          <div class="egg-hatch-animation">🥚</div>
+          <p>中から何かが...</p>
+        </div>
+        <button id="egg-hatch-btn" class="btn primary large pulse">割る！</button>
       </div>
     </div>
   </div>

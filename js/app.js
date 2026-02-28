@@ -47,6 +47,7 @@ import { BingoManager } from './modules/bingo-manager.js';
 import { ThemeManager } from './modules/theme-manager.js';
 import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
+import { EggManager } from './modules/egg-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -575,6 +576,9 @@ const finishWorkout = () => {
   VoiceCoach.speak('お疲れ様でした！ナイスファイト');
   CommentaryManager.notify('win');
   recordWorkout();
+
+  // タマゴの進捗を進める (このセッションで行ったスクワット回数を追加)
+  EggManager.addProgress(completedSets * repsPerSet);
 
   // Ghost Result
   const ghostState = GhostManager.getState(1.0);
@@ -1747,6 +1751,7 @@ const initApp = async () => {
   initializeWorkoutSettings();
   initializePresets();
   setupPlaylistManagerUI();
+  EggManager.init(); // タマゴシステム初期化
 
   SmartPlanner.init({
     buttonId: 'smart-plan-button',
@@ -2181,6 +2186,7 @@ if (typeof window !== 'undefined') {
   window.FortuneManager = FortuneManager;
   window.PlaylistManager = PlaylistManager;
   window.SmartPlanner = SmartPlanner;
+  window.EggManager = EggManager;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
   window.startWorkout = startWorkout;
