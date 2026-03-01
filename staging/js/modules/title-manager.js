@@ -1,6 +1,5 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { isStorageAvailable, showToast } from '../utils.js';
-
-const TITLES_KEY = 'squat-tracker-titles';
 
 export const TitleManager = {
   data: { prefixes: [], suffixes: [], synergies: [] },
@@ -188,7 +187,7 @@ export const TitleManager = {
   load() {
     if (!isStorageAvailable) return;
     try {
-      const raw = localStorage.getItem(TITLES_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.TITLES);
       if (raw) {
         const parsed = JSON.parse(raw);
         // Merge with default state structure to avoid crashes on schema updates
@@ -207,7 +206,7 @@ export const TitleManager = {
   save() {
     if (!isStorageAvailable) return;
     try {
-      localStorage.setItem(TITLES_KEY, JSON.stringify(this.state));
+      localStorage.setItem(STORAGE_KEYS.TITLES, JSON.stringify(this.state));
     } catch (e) {
       console.error('Failed to save titles', e);
     }

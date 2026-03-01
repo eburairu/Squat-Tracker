@@ -1,7 +1,8 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { isStorageAvailable } from '../utils.js';
 import { setSoundType } from '../utils.js';
 
-const SOUND_KEY = 'squat-tracker-sound-type'; // sine, triangle, etc.
+// sine, triangle, etc.
 
 export const SoundManager = {
   type: 'triangle',
@@ -17,7 +18,7 @@ export const SoundManager = {
 
   load() {
     if (isStorageAvailable) {
-      const stored = localStorage.getItem(SOUND_KEY);
+      const stored = localStorage.getItem(STORAGE_KEYS.SOUND);
       if (stored && ['sine', 'triangle', 'square', 'sawtooth'].includes(stored)) {
         this.type = stored;
       }
@@ -26,7 +27,7 @@ export const SoundManager = {
 
   save() {
     if (isStorageAvailable) {
-      localStorage.setItem(SOUND_KEY, this.type);
+      localStorage.setItem(STORAGE_KEYS.SOUND, this.type);
     }
   },
 

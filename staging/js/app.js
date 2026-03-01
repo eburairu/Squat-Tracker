@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from './constants.js';
 import { Phase } from './constants.js';
 import {
   ensureAudioContext, beep, playCelebration,
@@ -153,12 +154,7 @@ let currentTimeline = [];
 let workoutStartTime = null;
 let cumulativePauseDuration = 0;
 
-const HISTORY_KEY = 'squat-tracker-history-v1';
 const MAX_HISTORY_ENTRIES = 50;
-const THEME_KEY = 'squat-tracker-theme';
-const VOICE_COACH_KEY = 'squat-tracker-voice';
-const VOICE_COMMAND_KEY = 'squat-tracker-voice-command';
-const WORKOUT_SETTINGS_KEY = 'squat-tracker-workout-settings';
 let historyEntries = [];
 
 const phases = [
@@ -219,7 +215,7 @@ const loadHistoryEntries = () => {
     return [];
   }
   try {
-    const raw = localStorage.getItem(HISTORY_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.HISTORY);
     if (!raw) {
       return [];
     }
@@ -230,7 +226,7 @@ const loadHistoryEntries = () => {
     }
     return sanitized;
   } catch (error) {
-    localStorage.removeItem(HISTORY_KEY);
+    localStorage.removeItem(STORAGE_KEYS.HISTORY);
     return [];
   }
 };
@@ -240,7 +236,7 @@ const saveHistoryEntries = (entries) => {
     return false;
   }
   try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(entries));
     return true;
   } catch (error) {
     return false;
@@ -989,7 +985,7 @@ const saveWorkoutSettings = () => {
   };
 
   try {
-    localStorage.setItem(WORKOUT_SETTINGS_KEY, JSON.stringify(settings));
+    localStorage.setItem(STORAGE_KEYS.WORKOUT_SETTINGS, JSON.stringify(settings));
   } catch (error) {
     // Ignore errors
   }
@@ -999,7 +995,7 @@ const loadWorkoutSettings = () => {
   if (!isStorageAvailable) return;
 
   try {
-    const raw = localStorage.getItem(WORKOUT_SETTINGS_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.WORKOUT_SETTINGS);
     if (!raw) return;
 
     const settings = JSON.parse(raw);
@@ -1116,7 +1112,7 @@ const initializeVoiceCoach = () => {
   VoiceCoach.init();
   if (!voiceToggle || !voiceStatus) return;
 
-  const stored = isStorageAvailable ? localStorage.getItem(VOICE_COACH_KEY) : null;
+  const stored = isStorageAvailable ? localStorage.getItem(STORAGE_KEYS.VOICE_COACH) : null;
   const enabled = stored === 'true';
 
   voiceToggle.checked = enabled;
@@ -1795,7 +1791,7 @@ const initApp = async () => {
   if (!isVoiceSupported && voiceCommandGroup) {
     voiceCommandGroup.style.display = 'none';
   } else if (voiceCommandToggle) {
-    const stored = isStorageAvailable ? localStorage.getItem(VOICE_COMMAND_KEY) : null;
+    const stored = isStorageAvailable ? localStorage.getItem(STORAGE_KEYS.VOICE_COMMAND) : null;
     const enabled = stored === 'true';
     voiceCommandToggle.checked = enabled;
     if (voiceCommandStatusText) voiceCommandStatusText.textContent = enabled ? 'ON' : 'OFF';
@@ -1810,12 +1806,12 @@ const initApp = async () => {
       const isChecked = e.target.checked;
       VoiceControl.setEnabled(isChecked);
       if (voiceCommandStatusText) voiceCommandStatusText.textContent = isChecked ? 'ON' : 'OFF';
-      if (isStorageAvailable) localStorage.setItem(VOICE_COMMAND_KEY, String(isChecked));
+      if (isStorageAvailable) localStorage.setItem(STORAGE_KEYS.VOICE_COMMAND, String(isChecked));
     });
   }
 
   if (commentaryToggle) {
-    const stored = isStorageAvailable ? localStorage.getItem('squat-tracker-commentary') : null;
+    const stored = isStorageAvailable ? localStorage.getItem(STORAGE_KEYS.COMMENTARY) : null;
     const enabled = stored === 'true';
     commentaryToggle.checked = enabled;
     CommentaryManager.setEnabled(enabled);
@@ -1825,7 +1821,7 @@ const initApp = async () => {
       const isChecked = e.target.checked;
       CommentaryManager.setEnabled(isChecked);
       if (commentaryStatus) commentaryStatus.textContent = isChecked ? 'ON' : 'OFF';
-      if (isStorageAvailable) localStorage.setItem('squat-tracker-commentary', String(isChecked));
+      if (isStorageAvailable) localStorage.setItem(STORAGE_KEYS.COMMENTARY, String(isChecked));
     });
   }
 
@@ -2050,7 +2046,7 @@ const initApp = async () => {
         voiceStatus.textContent = enabled ? 'ON' : 'OFF';
       }
       if (isStorageAvailable) {
-        localStorage.setItem(VOICE_COACH_KEY, String(enabled));
+        localStorage.setItem(STORAGE_KEYS.VOICE_COACH, String(enabled));
       }
       if (enabled) {
         VoiceCoach.speak('');

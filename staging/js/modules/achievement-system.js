@@ -1,11 +1,10 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { PresetManager } from './preset-manager.js';
 import { VoiceCoach } from './voice-coach.js';
 import { RpgSystem } from './rpg-system.js';
-import { computeStreak, computeStats, isStorageAvailable, showToast } from '../utils.js';
+import { createElement, setupTabs, computeStreak, computeStats, isStorageAvailable, showToast } from '../utils.js';
 import { BossBattle } from './boss-battle.js';
 import { TitleManager } from './title-manager.js';
-
-const ACHIEVEMENTS_KEY = 'squat-tracker-achievements';
 
 export const AchievementSystem = {
   badges: [],
@@ -47,20 +46,10 @@ export const AchievementSystem = {
     const tabs = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
 
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        contents.forEach(c => c.classList.remove('active'));
-
-        tab.classList.add('active');
-        const targetId = `tab-${tab.dataset.tab}`;
-        const target = document.getElementById(targetId);
-        if (target) target.classList.add('active');
-
+    setupTabs(tabs, contents, (tab, targetId) => {
         if (tab.dataset.tab === 'history' && typeof this.callbacks.onHistoryTabSelected === 'function') {
              this.callbacks.onHistoryTabSelected();
         }
-      });
     });
   },
 
@@ -76,7 +65,7 @@ export const AchievementSystem = {
   load() {
     if (!isStorageAvailable) return;
     try {
-      const raw = localStorage.getItem(ACHIEVEMENTS_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
       if (raw) {
         this.unlocked = JSON.parse(raw);
       }
@@ -88,7 +77,7 @@ export const AchievementSystem = {
   save() {
     if (!isStorageAvailable) return;
     try {
-      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(this.unlocked));
+      localStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(this.unlocked));
     } catch (e) {
       // Ignore
     }
@@ -233,18 +222,9 @@ export const AchievementSystem = {
     grid.innerHTML = '';
     this.badges.forEach(badge => {
       const isUnlocked = this.isUnlocked(badge.id);
-      const el = document.createElement('div');
-      el.className = `badge ${isUnlocked ? 'unlocked' : 'locked'}`;
-
-      const emoji = document.createElement('div');
-      emoji.className = 'badge-emoji';
-      emoji.textContent = badge.emoji;
-
-      const name = document.createElement('div');
-      name.className = 'badge-name';
-      name.textContent = badge.name;
-
-      el.append(emoji, name);
+      const emoji = createElement('div', { className: 'badge-emoji', textContent: badge.emoji });
+      const name = createElement('div', { className: 'badge-name', textContent: badge.name });
+      const el = createElement('div', { className: `badge ${isUnlocked ? 'unlocked' : 'locked'}` }, emoji, name);
 
       el.addEventListener('click', () => {
         const status = isUnlocked ? '✅ 獲得済み' : '🔒 未獲得';

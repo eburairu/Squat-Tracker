@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { getLocalDateKey, isStorageAvailable, showToast } from '../utils.js';
 
 const FORTUNES = [
@@ -7,8 +8,6 @@ const FORTUNES = [
   { id: 'lucky',     name: '吉',   weight: 25, effect: { attack: 1.0, exp: 1.0, tension: 20 }, emoji: '🍀', message: 'ラッキー！テンションボーナスGET！' },
   { id: 'normal',    name: '末吉', weight: 10, effect: { attack: 1.0, exp: 1.0, tension: 0 }, emoji: '🍵', message: '平常心でいきましょう。' }
 ];
-
-const STORAGE_KEY = 'squat-tracker-fortune';
 
 export const FortuneManager = {
   state: {
@@ -26,7 +25,7 @@ export const FortuneManager = {
   loadState() {
     if (!isStorageAvailable) return;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.FORTUNE);
       if (raw) {
         const parsed = JSON.parse(raw);
         this.state = parsed;
@@ -39,7 +38,7 @@ export const FortuneManager = {
   saveState() {
     if (!isStorageAvailable) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+      localStorage.setItem(STORAGE_KEYS.FORTUNE, JSON.stringify(this.state));
     } catch (e) {
       // Ignore
     }

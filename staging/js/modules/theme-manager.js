@@ -1,7 +1,8 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { isStorageAvailable } from '../utils.js';
 
-const THEME_KEY = 'squat-tracker-theme'; // light or dark
-const STYLE_KEY = 'squat-tracker-theme-style'; // default, forest, etc.
+
+
 
 export const ThemeManager = {
   mode: 'light',
@@ -18,9 +19,9 @@ export const ThemeManager = {
     this.setupUI();
 
     // Listen for system preference changes if no preference stored
-    if (!localStorage.getItem(THEME_KEY)) {
+    if (!localStorage.getItem(STORAGE_KEYS.THEME)) {
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-            if (!localStorage.getItem(THEME_KEY)) {
+            if (!localStorage.getItem(STORAGE_KEYS.THEME)) {
                 this.mode = e.matches ? 'dark' : 'light';
                 this.apply();
                 this.updateUI();
@@ -31,8 +32,8 @@ export const ThemeManager = {
 
   load() {
     if (isStorageAvailable) {
-      const storedMode = localStorage.getItem(THEME_KEY);
-      const storedStyle = localStorage.getItem(STYLE_KEY);
+      const storedMode = localStorage.getItem(STORAGE_KEYS.THEME);
+      const storedStyle = localStorage.getItem(STORAGE_KEYS.THEME_STYLE);
 
       if (storedMode) {
         this.mode = storedMode;
@@ -53,8 +54,8 @@ export const ThemeManager = {
 
   save() {
     if (isStorageAvailable) {
-      localStorage.setItem(THEME_KEY, this.mode);
-      localStorage.setItem(STYLE_KEY, this.style);
+      localStorage.setItem(STORAGE_KEYS.THEME, this.mode);
+      localStorage.setItem(STORAGE_KEYS.THEME_STYLE, this.style);
     }
   },
 

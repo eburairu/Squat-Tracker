@@ -231,3 +231,64 @@ export const computeStreak = (entries) => {
   }
   return streak;
 };
+
+export const createElement = (tag, props = {}, ...children) => {
+  const el = document.createElement(tag);
+  Object.entries(props).forEach(([key, val]) => {
+    if (key === 'className') el.className = val;
+    else if (key === 'dataset') Object.assign(el.dataset, val);
+    else if (key === 'style') Object.assign(el.style, val);
+    else if (key === 'onClick') el.addEventListener('click', val);
+    else if (key === 'textContent') el.textContent = val;
+    else if (key === 'innerHTML') el.innerHTML = val;
+    else if (key === 'id') el.id = val;
+    else el.setAttribute(key, val);
+  });
+  children.forEach(child => {
+    if (typeof child === 'string') el.appendChild(document.createTextNode(child));
+    else if (child instanceof Node) el.appendChild(child);
+  });
+  return el;
+};
+
+export const setupTabs = (tabs, views, callback = null) => {
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // 1. Deactivate all tabs and views
+      tabs.forEach(t => t.classList.remove('active'));
+      views.forEach(v => {
+        v.classList.remove('active');
+        // Handle inline style 'display: none' pattern used in some places
+        if (v.style.display === 'none' || v.style.display === 'block') {
+          v.style.display = 'none';
+        }
+      });
+
+      // 2. Activate clicked tab
+      tab.classList.add('active');
+
+      // 3. Find and activate target view
+      const targetId = tab.dataset.target || tab.dataset.tab;
+      // Depending on usage, targetId might be 'tab-xyz' or 'xyz-view'
+      let targetView = null;
+      if (tab.dataset.target) {
+         // Try matching by exact ID or common patterns
+         targetView = document.getElementById(targetId) || document.getElementById(`${targetId}-view`);
+      } else if (tab.dataset.tab) {
+         targetView = document.getElementById(`tab-${tab.dataset.tab}`);
+      }
+
+      if (targetView) {
+        targetView.classList.add('active');
+        if (targetView.style.display === 'none' || getComputedStyle(targetView).display === 'none') {
+          targetView.style.display = 'block';
+        }
+      }
+
+      // 4. Custom callback logic
+      if (typeof callback === 'function') {
+        callback(tab, targetId, targetView);
+      }
+    });
+  });
+};

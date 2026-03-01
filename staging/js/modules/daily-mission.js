@@ -1,9 +1,8 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { RARITY_SETTINGS } from '../constants.js';
 // import { WEAPONS } from '../data/weapons.js'; // REMOVED
 import { InventoryManager } from './inventory-manager.js';
-import { isStorageAvailable, getLocalDateKey, getRandomInt, showToast } from '../utils.js';
-
-const MISSIONS_KEY = 'squat-tracker-missions';
+import { createElement, isStorageAvailable, getLocalDateKey, getRandomInt, showToast } from '../utils.js';
 
 const MISSION_TYPES = [
   { type: 'login', description: 'アプリを起動してログイン', target: 1, unit: '回' },
@@ -35,7 +34,7 @@ export const DailyMissionSystem = {
   load() {
     if (!isStorageAvailable) return;
     try {
-      const raw = localStorage.getItem(MISSIONS_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.MISSIONS);
       if (raw) {
         this.state = JSON.parse(raw);
       }
@@ -47,7 +46,7 @@ export const DailyMissionSystem = {
   save() {
     if (!isStorageAvailable) return;
     try {
-      localStorage.setItem(MISSIONS_KEY, JSON.stringify(this.state));
+      localStorage.setItem(STORAGE_KEYS.MISSIONS, JSON.stringify(this.state));
     } catch (e) {
       // Ignore
     }
@@ -221,47 +220,27 @@ export const DailyMissionSystem = {
 
     listEl.innerHTML = '';
     this.state.missions.forEach(mission => {
-      const li = document.createElement('li');
-      li.className = `mission-item ${mission.completed ? 'completed' : ''} ${mission.claimed ? 'claimed' : ''}`;
-
-      const content = document.createElement('div');
-      content.className = 'mission-content';
-
-      const title = document.createElement('div');
-      title.className = 'mission-title';
-      title.textContent = mission.description;
-
-      const progressText = document.createElement('div');
-      progressText.className = 'mission-progress-text';
+      const title = createElement('div', { className: 'mission-title', textContent: mission.description });
       const progressVal = Math.min(mission.current, mission.target);
-      progressText.innerHTML = `<span>進捗: ${progressVal} / ${mission.target} ${mission.unit}</span>`;
+      const progressText = createElement('div', { className: 'mission-progress-text', innerHTML: `<span>進捗: ${progressVal} / ${mission.target} ${mission.unit}</span>` });
 
-      const progressBarBg = document.createElement('div');
-      progressBarBg.className = 'mission-progress-bar-bg';
-      const progressBarFill = document.createElement('div');
-      progressBarFill.className = 'mission-progress-bar-fill';
       const pct = Math.min(100, (mission.current / mission.target) * 100);
-      progressBarFill.style.width = `${pct}%`;
-      progressBarBg.appendChild(progressBarFill);
+      const progressBarFill = createElement('div', { className: 'mission-progress-bar-fill', style: { width: `${pct}%` } });
+      const progressBarBg = createElement('div', { className: 'mission-progress-bar-bg' }, progressBarFill);
 
-      content.append(title, progressText, progressBarBg);
+      const content = createElement('div', { className: 'mission-content' }, title, progressText, progressBarBg);
 
-      const action = document.createElement('div');
-      action.className = 'mission-action';
-
+      const action = createElement('div', { className: 'mission-action' });
       if (mission.claimed) {
         action.innerHTML = '<span class="mission-status-icon">✅</span>';
       } else if (mission.completed) {
-        const btn = document.createElement('button');
-        btn.className = 'mission-btn claim';
-        btn.textContent = '報酬を受取る';
-        btn.addEventListener('click', () => this.claimReward(mission.id));
+        const btn = createElement('button', { className: 'mission-btn claim', textContent: '報酬を受取る', onClick: () => this.claimReward(mission.id) });
         action.appendChild(btn);
       } else {
         action.innerHTML = '<span class="mission-status-icon" style="opacity:0.3">🔒</span>';
       }
 
-      li.append(content, action);
+      const li = createElement('li', { className: `mission-item ${mission.completed ? 'completed' : ''} ${mission.claimed ? 'claimed' : ''}` }, content, action);
       listEl.appendChild(li);
     });
   }
