@@ -1,8 +1,7 @@
+import { STORAGE_KEYS } from '../constants.js';
 // import { WEAPONS } from '../data/weapons.js'; // REMOVED: Dependency injection used instead
-import { isStorageAvailable } from '../utils.js';
+import { createElement, setupTabs, isStorageAvailable } from '../utils.js';
 import { BuddyManager } from './buddy-manager.js';
-
-const INVENTORY_KEY = 'squat-tracker-inventory';
 
 export const InventoryManager = {
   weaponsData: {}, // Injected dynamically
@@ -41,7 +40,7 @@ export const InventoryManager = {
   load() {
     if (!isStorageAvailable) return;
     try {
-      const raw = localStorage.getItem(INVENTORY_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.INVENTORY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object' && parsed.items) {
@@ -93,7 +92,7 @@ export const InventoryManager = {
   save() {
     if (!isStorageAvailable) return;
     try {
-      localStorage.setItem(INVENTORY_KEY, JSON.stringify(this.state));
+      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(this.state));
     } catch (e) {
       console.error('Failed to save inventory', e);
     }
@@ -185,25 +184,8 @@ export const InventoryManager = {
     const tabs = modal.querySelectorAll('.modal-tab-btn');
     const views = modal.querySelectorAll('.modal-view');
 
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
+    setupTabs(tabs, views, (tab) => {
         console.log('Tab clicked:', tab.getAttribute('data-target'));
-        // Deactivate all
-        tabs.forEach(t => t.classList.remove('active'));
-        views.forEach(v => {
-            v.classList.remove('active');
-            // Remove inline style if any (from index.html initial state)
-            v.style.display = '';
-        });
-
-        // Activate clicked
-        tab.classList.add('active');
-        const targetId = tab.getAttribute('data-target');
-        const targetView = document.getElementById(targetId);
-        if (targetView) {
-            targetView.classList.add('active');
-        }
-      });
     });
   },
 
@@ -245,26 +227,25 @@ export const InventoryManager = {
       const currentAtk = def.baseAtk + (item.level - 1) * def.atkPerLevel;
       const isEquipped = id === this.state.equippedId;
 
-      const li = document.createElement('li');
-      li.className = `weapon-item ${isEquipped ? 'equipped' : ''}`;
-      li.innerHTML = `
-        <div class="weapon-icon">${def.emoji}</div>
-        <div class="weapon-info">
-          <div class="weapon-name">
-             ${def.name} <span style="font-size:0.8em; color:#666">Lv.${item.level}</span>
-             ${isEquipped ? '<span class="equip-status">装備中</span>' : ''}
+      const li = createElement('li', {
+        className: `weapon-item ${isEquipped ? 'equipped' : ''}`,
+        innerHTML: `
+          <div class="weapon-icon">${def.emoji}</div>
+          <div class="weapon-info">
+            <div class="weapon-name">
+               ${def.name} <span style="font-size:0.8em; color:#666">Lv.${item.level}</span>
+               ${isEquipped ? '<span class="equip-status">装備中</span>' : ''}
+            </div>
+            <div class="weapon-meta">レア度 ${'★'.repeat(def.rarity)}</div>
           </div>
-          <div class="weapon-meta">レア度 ${'★'.repeat(def.rarity)}</div>
-        </div>
-        <div class="weapon-stats">+${currentAtk}</div>
-      `;
-
-      li.addEventListener('click', () => {
-        if (!isEquipped) {
-          this.equipWeapon(id);
+          <div class="weapon-stats">+${currentAtk}</div>
+        `,
+        onClick: () => {
+          if (!isEquipped) {
+            this.equipWeapon(id);
+          }
         }
       });
-
       listEl.appendChild(li);
     });
   },
@@ -302,9 +283,6 @@ export const InventoryManager = {
 
     buddies.forEach(buddy => {
         const isEquipped = currentBuddy && buddy.id === currentBuddy.id;
-        const li = document.createElement('li');
-        li.className = `buddy-item ${isEquipped ? 'equipped' : ''}`;
-
         // Formula: BASE + (Level * 2). Assuming BASE=3 if undefined.
         const base = buddy.baseDamage || 3;
         const dmg = base + (buddy.level * 2);
@@ -313,28 +291,29 @@ export const InventoryManager = {
         const nextExp = BuddyManager.getRequiredExp(buddy.level);
         const expPercent = Math.min((buddy.exp / nextExp) * 100, 100);
 
-        li.innerHTML = `
-            <div class="buddy-icon">${buddy.emoji}</div>
-            <div class="buddy-info">
-                <div class="buddy-header">
-                    <span class="buddy-name">${buddy.name}</span>
-                    <span class="buddy-level">Lv.${buddy.level}</span>
+        const li = createElement('li', {
+            className: `buddy-item ${isEquipped ? 'equipped' : ''}`,
+            innerHTML: `
+                <div class="buddy-icon">${buddy.emoji}</div>
+                <div class="buddy-info">
+                    <div class="buddy-header">
+                        <span class="buddy-name">${buddy.name}</span>
+                        <span class="buddy-level">Lv.${buddy.level}</span>
+                    </div>
+                    <div class="buddy-exp-container" title="EXP: ${buddy.exp} / ${nextExp}">
+                        <div class="buddy-exp-bar" style="width: ${expPercent}%"></div>
+                    </div>
+                    <span class="buddy-effect">追加ダメージ: +${dmg}</span>
                 </div>
-                <div class="buddy-exp-container" title="EXP: ${buddy.exp} / ${nextExp}">
-                    <div class="buddy-exp-bar" style="width: ${expPercent}%"></div>
-                </div>
-                <span class="buddy-effect">追加ダメージ: +${dmg}</span>
-            </div>
-            ${isEquipped ? '<span style="font-size:0.8rem; color:var(--accent-color); font-weight:bold;">同行中</span>' : ''}
-        `;
-
-        li.addEventListener('click', () => {
-            if (!isEquipped) {
-                BuddyManager.equipBuddy(buddy.id);
-                this.renderBuddyList(); // Re-render to update UI
+                ${isEquipped ? '<span style="font-size:0.8rem; color:var(--accent-color); font-weight:bold;">同行中</span>' : ''}
+            `,
+            onClick: () => {
+                if (!isEquipped) {
+                    BuddyManager.equipBuddy(buddy.id);
+                    this.renderBuddyList(); // Re-render to update UI
+                }
             }
         });
-
         listEl.appendChild(li);
     });
   }

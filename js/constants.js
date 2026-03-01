@@ -29,3 +29,31 @@ export const RARITY_SETTINGS = {
   4: { weight: 45, multiplier: 3.5, name: 'Epic' },
   5: { weight: 5, multiplier: 6.0, name: 'Legendary' }
 };
+
+export const STORAGE_KEYS = {
+  HISTORY: 'squat-tracker-history-v1',
+  THEME: 'squat-tracker-theme',
+  THEME_STYLE: 'squat-tracker-theme-style',
+  VOICE_COACH: 'squat-tracker-voice',
+  VOICE_COMMAND: 'squat-tracker-voice-command',
+  WORKOUT_SETTINGS: 'squat-tracker-workout-settings',
+  ACHIEVEMENTS: 'squat-tracker-achievements',
+  ADVENTURE: 'squat-tracker-adventure',
+  BINGO: 'squat-tracker-bingo',
+  BUDDY: 'squat-tracker-buddy',
+  CLASS: 'squat-tracker-class',
+  CLASS_MASTERY: 'squat-tracker-class-mastery',
+  COMMITMENT: 'squat-tracker-commitment',
+  MISSIONS: 'squat-tracker-missions',
+  FORTUNE: 'squat-tracker-fortune',
+  INVENTORY: 'squat-tracker-inventory',
+  LOADOUTS: 'squat-tracker-loadouts',
+  PLAYLISTS: 'squat-tracker-playlists',
+  PRESETS: 'squat-tracker-presets',
+  SCHEDULER: 'squat-tracker-weekly-schedule',
+  SOUND: 'squat-tracker-sound-type',
+  TITLES: 'squat-tracker-titles',
+  BOSS: 'squat-tracker-boss-v1',
+  TOWER_HIGHSCORE: 'squat-tracker-tower-highscore',
+  COMMENTARY: 'squat-tracker-commentary'
+};

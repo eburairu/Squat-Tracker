@@ -1,7 +1,6 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { isStorageAvailable, showToast, getRandomInt, getLocalDateKey } from '../utils.js';
 import { InventoryManager } from './inventory-manager.js';
-
-const STORAGE_KEY = 'squat-tracker-bingo';
 
 const MISSION_TYPES = [
   { type: 'total_reps', description: 'スクワット', base: 50, unit: '回', emoji: '🏋️' },
@@ -52,7 +51,7 @@ export const BingoManager = {
   load() {
     if (!isStorageAvailable) return;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.BINGO);
       if (raw) {
         this.state = JSON.parse(raw);
         // Ensure arrays exist
@@ -66,7 +65,7 @@ export const BingoManager = {
 
   save() {
     if (!isStorageAvailable) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+    localStorage.setItem(STORAGE_KEYS.BINGO, JSON.stringify(this.state));
   },
 
   generateBingo(weekId) {

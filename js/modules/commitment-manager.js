@@ -1,6 +1,5 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { showToast, formatDate } from '../utils.js';
-
-const STORAGE_KEY = 'squat-tracker-commitment';
 
 export const CommitmentManager = {
   state: {
@@ -29,7 +28,7 @@ export const CommitmentManager = {
 
   loadState() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.COMMITMENT);
       if (raw) {
         this.state = JSON.parse(raw);
       }
@@ -40,7 +39,7 @@ export const CommitmentManager = {
 
   saveState() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+      localStorage.setItem(STORAGE_KEYS.COMMITMENT, JSON.stringify(this.state));
     } catch (e) {
       // Ignore
     }

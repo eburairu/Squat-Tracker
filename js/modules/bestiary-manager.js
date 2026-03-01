@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { loadJson } from './resource-loader.js';
 import { MONSTERS } from '../constants.js';
 import { showToast } from '../utils.js';
@@ -102,7 +103,7 @@ export const BestiaryManager = {
     } else {
       // Fallback manual load
       try {
-        const raw = localStorage.getItem('squat-tracker-boss-v1');
+        const raw = localStorage.getItem(STORAGE_KEYS.BOSS);
         if (raw) bossState = JSON.parse(raw);
       } catch (e) {}
     }

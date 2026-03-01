@@ -1,9 +1,8 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { isStorageAvailable, showToast } from '../utils.js';
 import { ClassManager } from './class-manager.js';
 import { InventoryManager } from './inventory-manager.js';
 import { TitleManager } from './title-manager.js';
-
-const LOADOUTS_KEY = 'squat-tracker-loadouts';
 
 export const LoadoutManager = {
   loadouts: [],
@@ -23,7 +22,7 @@ export const LoadoutManager = {
   load() {
     if (!isStorageAvailable) return;
     try {
-      const raw = localStorage.getItem(LOADOUTS_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.LOADOUTS);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.loadouts)) {
@@ -39,7 +38,7 @@ export const LoadoutManager = {
   save() {
     if (!isStorageAvailable) return;
     try {
-      localStorage.setItem(LOADOUTS_KEY, JSON.stringify({ loadouts: this.loadouts }));
+      localStorage.setItem(STORAGE_KEYS.LOADOUTS, JSON.stringify({ loadouts: this.loadouts }));
     } catch (e) {
       console.error('Failed to save loadouts', e);
     }

@@ -1,6 +1,5 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { isStorageAvailable } from '../utils.js';
-
-const PLAYLIST_KEY = 'squat-tracker-playlists';
 
 export const PlaylistManager = {
   playlists: [],
@@ -16,7 +15,7 @@ export const PlaylistManager = {
   loadPlaylists() {
     if (!isStorageAvailable) return;
     try {
-      const stored = localStorage.getItem(PLAYLIST_KEY);
+      const stored = localStorage.getItem(STORAGE_KEYS.PLAYLISTS);
       if (stored) {
         this.playlists = JSON.parse(stored);
       }
@@ -29,7 +28,7 @@ export const PlaylistManager = {
   savePlaylists() {
     if (!isStorageAvailable) return;
     try {
-      localStorage.setItem(PLAYLIST_KEY, JSON.stringify(this.playlists));
+      localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(this.playlists));
     } catch (e) {
       console.error('Failed to save playlists', e);
     }

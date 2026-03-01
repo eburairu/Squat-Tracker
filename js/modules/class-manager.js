@@ -1,8 +1,6 @@
-import { showToast, isStorageAvailable } from '../utils.js';
+import { STORAGE_KEYS } from '../constants.js';
+import { setupTabs, showToast, isStorageAvailable } from '../utils.js';
 import { TitleManager } from './title-manager.js';
-
-const CLASS_KEY = 'squat-tracker-class';
-const MASTERY_KEY = 'squat-tracker-class-mastery';
 
 const MASTERY_THRESHOLDS = [
   0,    // Lv1
@@ -38,7 +36,7 @@ const ClassManager = {
 
     // Load saved class
     if (isStorageAvailable) {
-      const saved = localStorage.getItem(CLASS_KEY);
+      const saved = localStorage.getItem(STORAGE_KEYS.CLASS);
       if (saved && this.classes.find(c => c.id === saved)) {
         this.currentClassId = saved;
       }
@@ -63,7 +61,7 @@ const ClassManager = {
       return;
     }
     try {
-      const raw = localStorage.getItem(MASTERY_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.CLASS_MASTERY);
       let data = raw ? JSON.parse(raw) : {};
 
       // Migration: Convert number (old format) to object (new format)
@@ -95,7 +93,7 @@ const ClassManager = {
   saveMasteryData() {
     if (!isStorageAvailable) return;
     try {
-      localStorage.setItem(MASTERY_KEY, JSON.stringify(this.masteryData));
+      localStorage.setItem(STORAGE_KEYS.CLASS_MASTERY, JSON.stringify(this.masteryData));
     } catch (e) {
       console.error('Failed to save mastery data', e);
     }
@@ -278,32 +276,13 @@ const ClassManager = {
 
     // Tab Handling
     const tabs = document.querySelectorAll('.modal-tab-btn');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            // Remove active class from all tabs
-            tabs.forEach(t => t.classList.remove('active'));
-            // Hide all views
-            document.querySelectorAll('.modal-view').forEach(v => {
-                v.classList.remove('active');
-                v.style.display = 'none';
-            });
-
-            // Activate clicked tab
-            tab.classList.add('active');
-            const targetId = tab.dataset.target;
-            const targetView = document.getElementById(targetId === 'class-selection' ? 'class-selection-view' : 'skill-tree-view');
-
-            if (targetView) {
-                targetView.classList.add('active');
-                targetView.style.display = 'block';
-
-                if (targetId === 'skill-tree') {
-                    this.renderSkillTree();
-                } else {
-                    this.renderList();
-                }
-            }
-        });
+    const views = document.querySelectorAll('.modal-view');
+    setupTabs(tabs, views, (tab, targetId, targetView) => {
+        if (targetId === 'skill-tree') {
+            this.renderSkillTree();
+        } else {
+            this.renderList();
+        }
     });
 
     // Unlock Node Button
@@ -602,7 +581,7 @@ const ClassManager = {
 
     this.currentClassId = id;
     if (isStorageAvailable) {
-      localStorage.setItem(CLASS_KEY, id);
+      localStorage.setItem(STORAGE_KEYS.CLASS, id);
     }
 
     this.updateUI();
