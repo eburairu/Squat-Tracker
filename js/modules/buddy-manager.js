@@ -1,7 +1,7 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { MONSTERS } from '../constants.js';
 import { isStorageAvailable, showToast, playCelebration } from '../utils.js';
 
-const STORAGE_KEY = 'squat-tracker-buddy';
 const DROP_RATE = 0.05; // 5%
 const DEFAULT_BASE_DAMAGE = 3;
 
@@ -15,7 +15,7 @@ export const BuddyManager = (() => {
   const load = () => {
     if (!isStorageAvailable) return;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.BUDDY);
       if (raw) {
         const parsed = JSON.parse(raw);
         state.buddies = parsed.buddies || [];
@@ -44,7 +44,7 @@ export const BuddyManager = (() => {
 
   const save = () => {
     if (!isStorageAvailable) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEYS.BUDDY, JSON.stringify(state));
   };
 
   const init = (evoData = {}) => {

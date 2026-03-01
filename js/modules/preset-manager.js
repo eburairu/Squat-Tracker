@@ -1,6 +1,5 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { isStorageAvailable } from '../utils.js';
-
-const PRESET_KEY = 'squat-tracker-presets';
 
 export const PresetManager = {
   presets: [],
@@ -19,7 +18,7 @@ export const PresetManager = {
   loadPresets() {
     if (!isStorageAvailable) return;
     try {
-      const stored = localStorage.getItem(PRESET_KEY);
+      const stored = localStorage.getItem(STORAGE_KEYS.PRESETS);
       if (stored) {
         this.presets = JSON.parse(stored);
       }
@@ -31,7 +30,7 @@ export const PresetManager = {
   savePresets() {
     if (!isStorageAvailable) return;
     try {
-      localStorage.setItem(PRESET_KEY, JSON.stringify(this.presets));
+      localStorage.setItem(STORAGE_KEYS.PRESETS, JSON.stringify(this.presets));
     } catch (e) {
       console.error('Failed to save presets', e);
     }

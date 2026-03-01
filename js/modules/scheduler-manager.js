@@ -1,5 +1,6 @@
+import { STORAGE_KEYS } from '../constants.js';
 export class SchedulerManager {
-  static STORAGE_KEY = 'squat-tracker-weekly-schedule';
+  static STORAGE_KEY = STORAGE_KEYS.SCHEDULER;
 
   static PLANS = {
     maintain: {

@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { MONSTERS, RARITY_SETTINGS } from '../constants.js';
 // import { WEAPONS } from '../data/weapons.js'; // REMOVED
 import { InventoryManager } from './inventory-manager.js';
@@ -54,7 +55,7 @@ export const BossBattle = {
 
   loadState() {
     try {
-      const raw = localStorage.getItem('squat-tracker-boss-v1');
+      const raw = localStorage.getItem(STORAGE_KEYS.BOSS);
       if (raw) {
         const parsed = JSON.parse(raw);
         this.state = {
@@ -74,7 +75,7 @@ export const BossBattle = {
 
   saveState() {
     try {
-      localStorage.setItem('squat-tracker-boss-v1', JSON.stringify(this.state));
+      localStorage.setItem(STORAGE_KEYS.BOSS, JSON.stringify(this.state));
     } catch (e) {
       // Ignore
     }

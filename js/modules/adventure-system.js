@@ -1,7 +1,6 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { WORLD_MAP } from '../data/world-map.js';
 import { isStorageAvailable } from '../utils.js';
-
-const STORAGE_KEY = 'squat-tracker-adventure';
 
 const ROUTES = {
   NORMAL: {
@@ -51,7 +50,7 @@ export const AdventureSystem = (() => {
   const load = () => {
     if (!isStorageAvailable) return;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEYS.ADVENTURE);
       if (raw) {
         const parsed = JSON.parse(raw);
         state.currentAreaIndex = Number(parsed.currentAreaIndex) || 0;
@@ -67,7 +66,7 @@ export const AdventureSystem = (() => {
 
   const save = () => {
     if (!isStorageAvailable) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEYS.ADVENTURE, JSON.stringify(state));
   };
 
   const init = (options = {}) => {

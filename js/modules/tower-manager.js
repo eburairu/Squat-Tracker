@@ -1,3 +1,4 @@
+import { STORAGE_KEYS } from '../constants.js';
 import { showToast } from '../utils.js';
 
 export const TowerManager = {
@@ -62,7 +63,7 @@ export const TowerManager = {
   },
 
   loadHighScore() {
-    const saved = localStorage.getItem('squat-tracker-tower-highscore');
+    const saved = localStorage.getItem(STORAGE_KEYS.TOWER_HIGHSCORE);
     if (saved) {
       this.state.highScore = parseInt(saved, 10) || 0;
     }
@@ -74,7 +75,7 @@ export const TowerManager = {
 
     if (this.state.currentFloor > this.state.highScore) {
       this.state.highScore = this.state.currentFloor;
-      localStorage.setItem('squat-tracker-tower-highscore', this.state.highScore);
+      localStorage.setItem(STORAGE_KEYS.TOWER_HIGHSCORE, this.state.highScore);
       return true; // 新記録
     }
     return false;
