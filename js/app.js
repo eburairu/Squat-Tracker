@@ -48,6 +48,7 @@ import { BingoManager } from './modules/bingo-manager.js';
 import { ThemeManager } from './modules/theme-manager.js';
 import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
+import { MeditationSystem } from './modules/meditation-system.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -511,7 +512,21 @@ const startRest = () => {
   // Encounter Check
   EncounterManager.checkEncounter();
 
+  // Meditation Check
+  MeditationSystem.start(restSeconds * 1000);
+
   schedulePhase(() => {
+    const { attackBonus, tensionBonus } = MeditationSystem.stop();
+    if (attackBonus > 0 || tensionBonus > 0) {
+      sessionAttackBonus += attackBonus;
+      TensionManager.add(tensionBonus);
+      showToast({
+        emoji: '🧘',
+        title: 'Focus Bonus!',
+        message: `攻撃力 +${attackBonus} / テンション +${tensionBonus}%`
+      });
+    }
+
     setPhase(Phase.REST_COUNTDOWN, parseInt(countdownDurationInput.value, 10), '再開までカウントダウン');
     schedulePhase(() => {
       startPhaseCycle();
@@ -906,6 +921,7 @@ const resetWorkout = () => {
   TensionManager.reset();
   SkillManager.reset();
   ComboSystem.reset();
+  MeditationSystem.stop();
   workoutTimer.cancel();
   phaseDuration = null;
   currentPhase = Phase.IDLE;
@@ -1894,6 +1910,7 @@ const initApp = async () => {
   LoadoutManager.init();
   ComboSystem.init();
   FortuneManager.init();
+  MeditationSystem.init();
   EncounterManager.init({
     onPause: () => {
       if (!isPaused) pauseWorkout();
@@ -2080,6 +2097,10 @@ const initApp = async () => {
       }
     }
     event.preventDefault();
+    if (currentPhase === Phase.REST && MeditationSystem.isActive) {
+      MeditationSystem.handleTap(event);
+      return;
+    }
     if (currentPhase === Phase.IDLE && !workoutStarted) {
       startWorkout();
       return;
@@ -2187,6 +2208,7 @@ if (typeof window !== 'undefined') {
   window.SchedulerManager = SchedulerManager;
   window.BingoManager = BingoManager;
   window.TowerManager = TowerManager;
+  window.MeditationSystem = MeditationSystem;
   window.performAttack = performAttack; // Test helper
 
   // テスト用に内部状態を公開
