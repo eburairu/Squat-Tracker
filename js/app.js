@@ -37,6 +37,7 @@ import { EncounterManager } from './modules/encounter-manager.js';
 import { FortuneManager } from './modules/fortune-manager.js';
 import { PlaylistManager } from './modules/playlist-manager.js';
 import { SmartPlanner } from './modules/smart-planner.js';
+import { SmartMissionRoutine } from './modules/smart-mission-routine.js';
 import { GhostManager } from './modules/ghost-manager.js';
 import { AnalyticsManager } from './modules/analytics-manager.js';
 import { ChartRenderer } from './modules/chart-renderer.js';
@@ -1780,6 +1781,8 @@ const initApp = async () => {
     });
   }
 
+  SmartMissionRoutine.init();
+
   initializeHistory();
 
   // Initialize Voice Command
@@ -2198,6 +2201,7 @@ if (typeof window !== 'undefined') {
   window.FortuneManager = FortuneManager;
   window.PlaylistManager = PlaylistManager;
   window.SmartPlanner = SmartPlanner;
+  window.SmartMissionRoutine = SmartMissionRoutine;
   window.updateStartButtonAvailability = updateStartButtonAvailability;
   window.updateQuizAndTimerDisplay = updateQuizAndTimerDisplay;
   window.startWorkout = startWorkout;
