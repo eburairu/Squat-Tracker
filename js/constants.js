@@ -36,6 +36,7 @@ export const STORAGE_KEYS = {
   THEME_STYLE: 'squat-tracker-theme-style',
   VOICE_COACH: 'squat-tracker-voice',
   VOICE_COMMAND: 'squat-tracker-voice-command',
+  VOICE_PERSONA: 'squat-tracker-voice-persona',
   WORKOUT_SETTINGS: 'squat-tracker-workout-settings',
   ACHIEVEMENTS: 'squat-tracker-achievements',
   ADVENTURE: 'squat-tracker-adventure',
