@@ -1,8 +1,27 @@
+import { loadJson } from './resource-loader.js';
+import { STORAGE_KEYS } from '../constants.js';
+
 export const VoiceCoach = {
   enabled: false,
   voice: null,
+  currentPersonaId: 'default',
+  personas: {},
 
-  init() {
+  async init() {
+    try {
+      this.personas = await loadJson('js/data/personas.json');
+    } catch (e) {
+      console.error('Failed to load personas.json', e);
+      this.personas = {
+        default: {
+          name: "Default",
+          pitch: 1.0,
+          rate: 1.0,
+          lines: {}
+        }
+      };
+    }
+
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
     const setVoice = () => {
@@ -35,11 +54,31 @@ export const VoiceCoach = {
     if (this.voice) {
       utterance.voice = this.voice;
     }
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+
+    const persona = this.personas[this.currentPersonaId] || this.personas['default'];
+    utterance.rate = persona ? (persona.rate || 1.0) : 1.0;
+    utterance.pitch = persona ? (persona.pitch || 1.0) : 1.0;
     utterance.volume = 1.0;
 
     synth.speak(utterance);
+  },
+
+  play(actionKey, defaultText) {
+    const persona = this.personas[this.currentPersonaId] || this.personas['default'];
+    let textToSpeak = defaultText;
+    if (persona && persona.lines && persona.lines[actionKey]) {
+      textToSpeak = persona.lines[actionKey];
+    }
+    this.speak(textToSpeak);
+  },
+
+  setPersona(id) {
+    if (this.personas[id]) {
+      this.currentPersonaId = id;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(STORAGE_KEYS.VOICE_PERSONA, id);
+      }
+    }
   },
 
   setEnabled(value) {
