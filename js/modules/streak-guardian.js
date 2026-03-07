@@ -1,4 +1,5 @@
 import { getLocalDateKey, showToast } from '../utils.js';
+import { PhoenixProtocol } from './phoenix-protocol.js';
 
 export const StreakGuardian = (() => {
   let container = null;
@@ -83,7 +84,7 @@ export const StreakGuardian = (() => {
       return;
     }
 
-    container.style.display = ''; // 表示
+    container.style.display = 'flex'; // 表示
 
     const lastEntry = historyEntries[0];
     const lastDate = new Date(lastEntry.date);
@@ -108,7 +109,14 @@ export const StreakGuardian = (() => {
     // ステータス判定
     if (remaining <= 0) {
       currentStatus = 'lost';
-      render('lost');
+
+      // PhoenixProtocolの判定
+      const eligibility = PhoenixProtocol.checkEligibility(historyEntries);
+      if (eligibility || PhoenixProtocol.state.isActive) {
+        render('phoenix', 0, eligibility);
+      } else {
+        render('lost');
+      }
     } else if (remaining < THRESHOLDS.DANGER) {
       currentStatus = 'danger';
       render('danger', remaining);
@@ -121,10 +129,16 @@ export const StreakGuardian = (() => {
     }
   };
 
-  const render = (status, remaining = 0) => {
+  const render = (status, remaining = 0, phoenixEligibility = null) => {
     // クラスリセット
-    container.classList.remove('status-completed', 'status-safe', 'status-warning', 'status-danger', 'status-lost');
+    container.classList.remove('status-completed', 'status-safe', 'status-warning', 'status-danger', 'status-lost', 'status-phoenix');
     container.classList.add(`status-${status}`);
+
+    // イベントリスナーのクリーンアップ（Phoenix用）
+    const existingBtn = container.querySelector('#phoenix-accept-btn');
+    if (existingBtn) {
+      existingBtn.replaceWith(existingBtn.cloneNode(true));
+    }
 
     let html = '';
     if (status === 'completed') {
@@ -137,6 +151,24 @@ export const StreakGuardian = (() => {
         <div class="guardian-icon">💤</div>
         <div class="guardian-text">記録が途切れました...</div>
       `;
+    } else if (status === 'phoenix') {
+      if (PhoenixProtocol.state.isActive) {
+        html = `
+          <div class="guardian-icon">🦅</div>
+          <div class="guardian-content">
+            <div class="guardian-label">修復クエスト進行中</div>
+            <div class="guardian-timer">残り ${PhoenixProtocol.state.targetReps}回</div>
+          </div>
+        `;
+      } else if (phoenixEligibility) {
+        html = `
+          <div class="guardian-icon">🔥</div>
+          <div class="guardian-content" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div class="guardian-label" style="font-size: 0.8em; margin-right: 8px;">記録修復クエスト発生！</div>
+            <button id="phoenix-accept-btn" class="btn primary small" style="padding: 4px 8px; font-size: 0.8em;">受注</button>
+          </div>
+        `;
+      }
     } else {
       const timeStr = formatDuration(remaining);
       let icon = '🛡️';
@@ -159,6 +191,17 @@ export const StreakGuardian = (() => {
       `;
     }
     container.innerHTML = html;
+
+    if (status === 'phoenix' && phoenixEligibility && !PhoenixProtocol.state.isActive) {
+      const acceptBtn = container.querySelector('#phoenix-accept-btn');
+      if (acceptBtn) {
+        acceptBtn.addEventListener('click', (e) => {
+          e.stopPropagation(); // StreakGuardian自体のクリックイベントを防ぐ
+          PhoenixProtocol.acceptQuest(phoenixEligibility.missedDate);
+          render('phoenix', 0, phoenixEligibility); // 再レンダリングして「進行中」表示にする
+        });
+      }
+    }
   };
 
   return {
