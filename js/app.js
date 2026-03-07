@@ -50,6 +50,7 @@ import { ThemeManager } from './modules/theme-manager.js';
 import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
 import { MeditationSystem } from './modules/meditation-system.js';
+import { PhoenixProtocol } from './modules/phoenix-protocol.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -559,7 +560,20 @@ const recordWorkout = () => {
     return;
   }
   const entry = createHistoryEntry();
+
+  // PhoenixProtocol Check
+  const recoveryEntry = PhoenixProtocol.checkCompletion(entry.totalReps || entry.reps, (recEntry) => {
+    // Save callback
+    historyEntries = [recEntry, ...historyEntries].slice(0, MAX_HISTORY_ENTRIES);
+  });
+
   historyEntries = [entry, ...historyEntries].slice(0, MAX_HISTORY_ENTRIES);
+
+  if (recoveryEntry) {
+     // Re-sort history to keep it chronological if recovery was inserted
+     historyEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }
+
   saveHistoryEntries(historyEntries);
   workoutSaved = true;
   renderStats();
@@ -1878,6 +1892,7 @@ const initApp = async () => {
   });
 
   DataManager.init();
+  PhoenixProtocol.init();
 
   // Initialize Weapon System with data
   const weaponsMap = generateWeapons(baseWeaponsData);
@@ -2239,6 +2254,7 @@ if (typeof window !== 'undefined') {
   window.BingoManager = BingoManager;
   window.TowerManager = TowerManager;
   window.MeditationSystem = MeditationSystem;
+  window.PhoenixProtocol = PhoenixProtocol;
   window.performAttack = performAttack; // Test helper
 
   // テスト用に内部状態を公開
