@@ -435,10 +435,10 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
     const phaseFrequency = phaseBeepFrequencies[phaseKey];
     beep(phaseFrequency ?? 880);
 
-    if (phaseKey === Phase.DOWN) VoiceCoach.speak('しゃがんで');
-    else if (phaseKey === Phase.HOLD) VoiceCoach.speak('キープ');
-    else if (phaseKey === Phase.UP) VoiceCoach.speak('立って');
-    else if (phaseKey === Phase.REST) VoiceCoach.speak('休憩です。深呼吸しましょう');
+    if (phaseKey === Phase.DOWN) VoiceCoach.play('down', 'しゃがんで');
+    else if (phaseKey === Phase.HOLD) VoiceCoach.play('hold', 'キープ');
+    else if (phaseKey === Phase.UP) VoiceCoach.play('up', '立って');
+    else if (phaseKey === Phase.REST) VoiceCoach.play('rest', '休憩です。深呼吸しましょう');
   }
 };
 
@@ -584,7 +584,7 @@ const finishWorkout = () => {
   phaseTimer.textContent = '00';
   progressBar.style.width = '100%';
   playCelebration();
-  VoiceCoach.speak('お疲れ様でした！ナイスファイト');
+  VoiceCoach.play('finish', 'お疲れ様でした！ナイスファイト');
   CommentaryManager.notify('win');
   recordWorkout();
 
@@ -686,7 +686,7 @@ const finishWorkout = () => {
        startButton.textContent = 'スタート';
 
        loadPlaylistSession(currentPlaylistIndex);
-       VoiceCoach.speak('次のセッションの準備をしてください');
+       VoiceCoach.play('next_session', '次のセッションの準備をしてください');
     } else {
        if (activePlaylist) {
          showToast({ emoji: '🎉', title: 'プレイリスト完走！', message: '全てのセッションを完了しました！' });
@@ -886,7 +886,7 @@ const startWorkout = () => {
   startButton.textContent = '進行中';
   updateActionButtonStates();
   updateSessionStats();
-  VoiceCoach.speak('準備して。スタートします');
+  VoiceCoach.play('start', '準備して。スタートします');
   CommentaryManager.notify('start');
   startCountdown('スタートまでカウントダウン', () => {
     startPhaseCycle();
@@ -1125,8 +1125,34 @@ const initializePresets = () => {
   }
 };
 
-const initializeVoiceCoach = () => {
-  VoiceCoach.init();
+const initializeVoiceCoach = async () => {
+  await VoiceCoach.init();
+
+  const select = document.getElementById('voice-persona-select');
+  if (select && VoiceCoach.personas) {
+    select.innerHTML = '';
+    Object.keys(VoiceCoach.personas).forEach(key => {
+      const persona = VoiceCoach.personas[key];
+      const option = document.createElement('option');
+      option.value = key;
+      option.textContent = persona.name || key;
+      select.appendChild(option);
+    });
+
+    const storedPersona = isStorageAvailable ? localStorage.getItem(STORAGE_KEYS.VOICE_PERSONA) : null;
+    if (storedPersona && VoiceCoach.personas[storedPersona]) {
+      VoiceCoach.setPersona(storedPersona);
+      select.value = storedPersona;
+    } else {
+      VoiceCoach.setPersona('default');
+      select.value = 'default';
+    }
+
+    select.addEventListener('change', (e) => {
+      VoiceCoach.setPersona(e.target.value);
+    });
+  }
+
   if (!voiceToggle || !voiceStatus) return;
 
   const stored = isStorageAvailable ? localStorage.getItem(STORAGE_KEYS.VOICE_COACH) : null;
@@ -1756,7 +1782,7 @@ const initApp = async () => {
   applyReducedMotionPreference();
   ThemeManager.init();
   SoundManager.init();
-  initializeVoiceCoach();
+  await initializeVoiceCoach();
   initializeWorkoutSettings();
   initializePresets();
   setupPlaylistManagerUI();
