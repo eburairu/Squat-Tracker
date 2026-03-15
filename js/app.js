@@ -38,6 +38,7 @@ import { FortuneManager } from './modules/fortune-manager.js';
 import { PlaylistManager } from './modules/playlist-manager.js';
 import { SmartPlanner } from './modules/smart-planner.js';
 import { SmartMissionRoutine } from './modules/smart-mission-routine.js';
+import { DailyDirector } from './modules/daily-director.js';
 import { GhostManager } from './modules/ghost-manager.js';
 import { AnalyticsManager } from './modules/analytics-manager.js';
 import { ChartRenderer } from './modules/chart-renderer.js';
@@ -1822,6 +1823,16 @@ const initApp = async () => {
   }
 
   SmartMissionRoutine.init();
+
+  // DailyDirector は SmartMissionRoutine, ClassManager, TitleManager などに依存します。
+  // BingoManager の状態などが fetch でロードされるのを待つため、少し遅延させます。
+  setTimeout(() => {
+    DailyDirector.init();
+    DailyDirector.evaluateAndShow();
+  }, 100);
+
+  // テスト用に DailyDirector をグローバルに公開
+  window.DailyDirector = DailyDirector;
 
   initializeHistory();
 
