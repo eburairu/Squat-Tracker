@@ -38,14 +38,18 @@ test.describe('Smart Planner', () => {
     await expect(modal).toBeVisible();
     await expect(modal).toHaveAttribute('aria-hidden', 'false');
 
-    // Check for 3 plans
+    // 3つのプランが存在することを確認
     const plans = page.locator('.smart-plan-card');
     await expect(plans).toHaveCount(3);
 
-    // Verify specific plan types exist
+    // 特定のプランタイプが存在するか検証
     await expect(page.locator('.plan-challenge')).toBeVisible();
     await expect(page.locator('.plan-maintain')).toBeVisible();
     await expect(page.locator('.plan-light')).toBeVisible();
+
+    // 体調と気分のスライダーが表示されているか確認
+    await expect(page.locator('#smart-condition-slider')).toBeVisible();
+    await expect(page.locator('#smart-mood-slider')).toBeVisible();
   });
 
   test('should apply plan settings when "Apply" is clicked', async ({ page }) => {
@@ -92,8 +96,38 @@ test.describe('Smart Planner', () => {
 
     await page.click('#smart-plan-button');
 
-    // Maintain: 100
+    // Maintain: 100 (Default Condition/Mood 3/3 -> Multiplier 1.0)
     const maintainCard = page.locator('.plan-maintain');
     await expect(maintainCard).toContainText('計 100'); // Check total reps text
+  });
+
+  test('should adjust load dynamically when condition sliders are changed', async ({ page }) => {
+    // 基礎負荷は30になるはず (デフォルトのモックデータより)
+    await page.click('#smart-plan-button');
+
+    const maintainCard = page.locator('.plan-maintain');
+    await expect(maintainCard).toContainText('計 30'); // デフォルト値
+
+    // 体調1、気分1に変更 -> 平均1 -> 乗数0.6
+    // 30 * 0.6 = 18
+    const conditionSlider = page.locator('#smart-condition-slider');
+    const moodSlider = page.locator('#smart-mood-slider');
+
+    // Playwright の `fill` は input 要素に対して正しく input/change イベントを発火させる
+    await conditionSlider.fill('1');
+    await moodSlider.fill('1');
+
+    await expect(maintainCard).toContainText('計 18');
+    await expect(page.locator('#smart-condition-val')).toHaveText('😫');
+    await expect(page.locator('#smart-mood-val')).toHaveText('😫');
+
+    // 体調5、気分5に変更 -> 平均5 -> 乗数1.4
+    // 30 * 1.4 = 42
+    await conditionSlider.fill('5');
+    await moodSlider.fill('5');
+
+    await expect(maintainCard).toContainText('計 42');
+    await expect(page.locator('#smart-condition-val')).toHaveText('🤩');
+    await expect(page.locator('#smart-mood-val')).toHaveText('🤩');
   });
 });
