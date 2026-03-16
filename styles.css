@@ -2301,3 +2301,48 @@ input:checked + .slider:before {
   font-weight: bold;
   color: var(--accent-color);
 }
+
+/* Smart Planner Survey */
+.condition-survey {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.survey-group {
+  margin-bottom: 1rem;
+}
+
+.survey-group:last-child {
+  margin-bottom: 0;
+}
+
+.survey-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.survey-label-row label {
+  margin: 0;
+  font-weight: bold;
+}
+
+.survey-emoji {
+  font-size: 1.5rem;
+}
+
+.survey-slider {
+  width: 100%;
+}
+
+.survey-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
