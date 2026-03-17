@@ -2346,3 +2346,14 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   margin-top: 0.25rem;
 }
+
+@keyframes hatch {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(15deg); }
+  50% { transform: scale(1.2) rotate(-15deg); }
+  75% { transform: scale(1.1) rotate(15deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.hatching {
+  animation: hatch 0.8s ease-in-out;
+}
