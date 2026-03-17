@@ -51,6 +51,7 @@ import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
 import { MeditationSystem } from './modules/meditation-system.js';
 import { PhoenixProtocol } from './modules/phoenix-protocol.js';
+import { EggManager } from './modules/egg-manager.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -674,6 +675,7 @@ const finishWorkout = () => {
   // Buddy Exp
   const buddyExpGain = totalSets * repsPerSet;
   const buddyResult = BuddyManager.addExp(buddyExpGain);
+  EggManager.addReps(totalSets * repsPerSet);
   if (buddyResult && buddyResult.leveledUp && !buddyResult.evolved) {
     showToast({
       emoji: '🆙',
@@ -1946,6 +1948,7 @@ const initApp = async () => {
   TensionManager.init();
   SkillManager.init();
   BuddyManager.init(buddyEvolutionData);
+  EggManager.init();
   await BestiaryManager.init();
   await CommentaryManager.init();
   TowerManager.init();
@@ -2255,6 +2258,7 @@ if (typeof window !== 'undefined') {
   window.TowerManager = TowerManager;
   window.MeditationSystem = MeditationSystem;
   window.PhoenixProtocol = PhoenixProtocol;
+  window.EggManager = EggManager;
   window.performAttack = performAttack; // Test helper
 
   // テスト用に内部状態を公開
