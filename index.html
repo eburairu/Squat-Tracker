@@ -419,6 +419,13 @@
             <input id="rep-count" type="number" min="1" max="50" value="10" />
           </label>
         </div>
+        <div id="tempo-guard-alert" class="tempo-guard-alert" style="display: none;" aria-live="polite">
+          <div class="tempo-guard-icon">⚠️</div>
+          <div class="tempo-guard-content">
+            <p id="tempo-guard-message" class="tempo-guard-message"></p>
+            <button id="apply-safe-tempo-btn" class="btn secondary small apply-safe-btn">安全なテンポ(2-1-1)を適用</button>
+          </div>
+        </div>
         <div class="control-group">
           <label>
             しゃがむ時間（秒）

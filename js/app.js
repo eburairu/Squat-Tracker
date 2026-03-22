@@ -51,6 +51,7 @@ import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
 import { MeditationSystem } from './modules/meditation-system.js';
 import { PhoenixProtocol } from './modules/phoenix-protocol.js';
+import { SafetyTempoGuard } from './modules/safety-tempo-guard.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -1822,6 +1823,8 @@ const initApp = async () => {
   }
 
   SmartMissionRoutine.init();
+
+  SafetyTempoGuard.init();
 
   initializeHistory();
 
