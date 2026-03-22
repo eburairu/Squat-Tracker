@@ -254,6 +254,64 @@ h2 {
   margin-bottom: 1.5rem;
 }
 
+.tempo-guard-alert {
+  background-color: #fffbeb; /* amber-50 */
+  border: 1px solid #f59e0b; /* amber-500 */
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme='dark'] .tempo-guard-alert {
+  background-color: #451a03; /* amber-950 */
+  border-color: #d97706; /* amber-600 */
+}
+
+.tempo-guard-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.tempo-guard-content {
+  flex-grow: 1;
+}
+
+.tempo-guard-message {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  color: #92400e; /* amber-800 */
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .tempo-guard-message {
+  color: #fde68a; /* amber-200 */
+}
+
+.apply-safe-btn {
+  background-color: #ffffff;
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
+.apply-safe-btn:hover {
+  background-color: #fef3c7;
+}
+
+[data-theme='dark'] .apply-safe-btn {
+  background-color: #78350f;
+  border-color: #d97706;
+  color: #fde68a;
+}
+
+[data-theme='dark'] .apply-safe-btn:hover {
+  background-color: #92400e;
+}
+
 .control-group:last-child {
   margin-bottom: 0;
 }
