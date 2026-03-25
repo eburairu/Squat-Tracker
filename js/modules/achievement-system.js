@@ -222,14 +222,25 @@ export const AchievementSystem = {
     grid.innerHTML = '';
     this.badges.forEach(badge => {
       const isUnlocked = this.isUnlocked(badge.id);
-      const emoji = createElement('div', { className: 'badge-emoji', textContent: badge.emoji });
-      const name = createElement('div', { className: 'badge-name', textContent: badge.name });
+
+      let displayEmoji = badge.emoji;
+      let displayName = badge.name;
+      let displayDesc = badge.description;
+
+      if (!isUnlocked && badge.secret) {
+        displayEmoji = '❓';
+        displayName = '???';
+        displayDesc = '条件は秘密です';
+      }
+
+      const emoji = createElement('div', { className: 'badge-emoji', textContent: displayEmoji });
+      const name = createElement('div', { className: 'badge-name', textContent: displayName });
       const el = createElement('div', { className: `badge ${isUnlocked ? 'unlocked' : 'locked'}` }, emoji, name);
 
       el.addEventListener('click', () => {
         const status = isUnlocked ? '✅ 獲得済み' : '🔒 未獲得';
         const dateStr = isUnlocked ? `\n獲得日: ${new Date(this.unlocked[badge.id]).toLocaleDateString()}` : '';
-        alert(`${badge.emoji} ${badge.name}\n\n${badge.description}\n\n${status}${dateStr}`);
+        alert(`${displayEmoji} ${displayName}\n\n${displayDesc}\n\n${status}${dateStr}`);
       });
 
       grid.appendChild(el);
