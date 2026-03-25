@@ -362,5 +362,17 @@
     "rewards": {
       "titlePrefix": "p_speedy"
     }
+  },
+  {
+    "id": "secret-night-owl",
+    "name": "丑三つ時の挑戦",
+    "emoji": "👻",
+    "description": "午前2時〜3時に完了",
+    "condition": {
+      "type": "TIME_RANGE_OVERNIGHT",
+      "startHour": 2,
+      "endHour": 3
+    },
+    "secret": true
   }
 ]
