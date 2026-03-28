@@ -57,5 +57,6 @@ export const STORAGE_KEYS = {
   BOSS: 'squat-tracker-boss-v1',
   TOWER_HIGHSCORE: 'squat-tracker-tower-highscore',
   COMMENTARY: 'squat-tracker-commentary',
-  PHOENIX: 'squat-tracker-phoenix'
+  PHOENIX: 'squat-tracker-phoenix',
+  BREATHING_GUIDE: 'squat-tracker-breathing-guide'
 };

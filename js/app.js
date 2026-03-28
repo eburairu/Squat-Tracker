@@ -51,6 +51,7 @@ import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
 import { MeditationSystem } from './modules/meditation-system.js';
 import { PhoenixProtocol } from './modules/phoenix-protocol.js';
+import { BreathingGuide } from './modules/breathing-guide.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -81,6 +82,7 @@ const voiceToggle = document.getElementById('voice-toggle');
 const voiceStatus = document.getElementById('voice-status');
 const voiceCommandToggle = document.getElementById('voice-command-toggle');
 const voiceCommandStatusText = document.getElementById('voice-command-status-text');
+const breathingGuideToggle = document.getElementById('breathing-guide-toggle');
 const commentaryToggle = document.getElementById('commentary-toggle');
 const commentaryStatus = document.getElementById('commentary-status');
 
@@ -1603,6 +1605,9 @@ const setupScheduler = () => {
 // --- Quiz Logic ---
 
 const updateQuizAndTimerDisplay = (phaseKey) => {
+  // Update breathing guide
+  BreathingGuide.updatePhase(phaseKey);
+
   // Common reset for non-active phases if needed, but we handle specific phases below.
 
   if (phaseKey === Phase.DOWN) {
@@ -1883,6 +1888,8 @@ const initApp = async () => {
       if (isStorageAvailable) localStorage.setItem(STORAGE_KEYS.COMMENTARY, String(isChecked));
     });
   }
+
+  BreathingGuide.init(breathingGuideToggle);
 
   AchievementSystem.init({
     achievementsData, // Pass loaded data
