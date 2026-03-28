@@ -363,6 +363,49 @@ button.full-width {
 .timer {
   text-align: center;
   margin: 2rem 0;
+  position: relative;
+}
+
+.breathing-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: -1;
+  transition: transform 0.5s ease-in-out;
+  display: none;
+}
+
+.breathing-circle.inhale {
+  transform: translate(-50%, -50%) scale(1.5);
+  transition-duration: 2s; /* To be overridden dynamically if needed, but fits down phase */
+}
+
+.breathing-circle.hold {
+  transform: translate(-50%, -50%) scale(1.5);
+  opacity: 0.1;
+  transition-duration: 1s;
+}
+
+.breathing-circle.exhale {
+  transform: translate(-50%, -50%) scale(0.5);
+  transition-duration: 1s;
+}
+
+.breathing-guide-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--accent-color);
+  margin-top: 0.5rem;
+  min-height: 1.5em;
+  opacity: 0.8;
+  display: none;
 }
 
 .timer-value {

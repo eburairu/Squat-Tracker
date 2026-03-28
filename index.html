@@ -284,8 +284,10 @@
         </div>
 
         <div class="timer">
+          <div id="breathing-circle" class="breathing-circle"></div>
           <div id="phase-timer" class="timer-value">05</div>
           <div id="phase-hint" class="timer-hint">スタートまでカウントダウン</div>
+          <div id="breathing-guide-text" class="breathing-guide-text"></div>
           <div class="progress">
             <div id="progress-bar" class="progress-bar"></div>
           </div>
@@ -343,6 +345,14 @@
             <input id="voice-command-toggle" type="checkbox" />
             <span class="slider"></span>
             <span id="voice-command-status-text" class="switch-label">OFF</span>
+          </label>
+        </div>
+        <div class="voice-controls">
+          <span class="label">呼吸ガイド</span>
+          <label class="switch">
+            <input id="breathing-guide-toggle" type="checkbox" />
+            <span class="slider"></span>
+            <span class="switch-label">OFF</span>
           </label>
         </div>
         <div class="voice-controls">
