@@ -258,6 +258,13 @@ h2 {
   margin-bottom: 0;
 }
 
+.voice-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
 label {
   display: block;
   font-size: 0.875rem;
@@ -493,7 +500,8 @@ button.full-width {
 /* Toggle Switch */
 .switch {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   width: 48px;
   height: 24px;
 }
@@ -540,7 +548,7 @@ input:checked + .slider:before {
   margin-left: 3.5rem;
   font-size: 0.875rem;
   font-weight: 600;
-  vertical-align: super;
+  min-width: 2.5rem; /* OFF/ON の幅のブレを抑える */
 }
 
 /* Theme Toggle */
