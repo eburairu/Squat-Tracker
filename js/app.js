@@ -51,6 +51,7 @@ import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
 import { MeditationSystem } from './modules/meditation-system.js';
 import { PhoenixProtocol } from './modules/phoenix-protocol.js';
+import { ActiveRecovery } from './modules/active-recovery.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -552,6 +553,7 @@ const createHistoryEntry = () => {
     totalReps: totalSets * repsPerSet,
     durations,
     timeline: currentTimeline,
+    isRecovery: ActiveRecovery.isActive, // リカバリーモードフラグ
   };
 };
 
@@ -667,8 +669,13 @@ const finishWorkout = () => {
 
   const currentClass = ClassManager.getCurrentClass();
   if (currentClass) {
-    const expMultiplier = FortuneManager.getMultiplier('exp');
-    ClassManager.addExperience(currentClass.id, Math.floor(totalSets * repsPerSet * expMultiplier));
+    if (ActiveRecovery.isActive) {
+      // リカバリーモード時は経験値を獲得できない
+      showToast({ emoji: '🛌', title: 'リカバリーモード', message: '経験値は獲得できませんでした。' });
+    } else {
+      const expMultiplier = FortuneManager.getMultiplier('exp');
+      ClassManager.addExperience(currentClass.id, Math.floor(totalSets * repsPerSet * expMultiplier));
+    }
   }
 
   // Buddy Exp
@@ -1004,6 +1011,7 @@ const updateStartButtonAvailability = () => {
 const saveWorkoutSettings = () => {
   if (!isStorageAvailable) return;
   if (!areAllInputsValid()) return;
+  if (ActiveRecovery.isActive) return; // リカバリーモード時は一時的な設定を保存しない
 
   const settings = {
     setCount: setCountInput.value,
@@ -1091,6 +1099,8 @@ const initializePresets = () => {
       const name = presetSelect.value;
       PresetManager.updateButtons();
       if (!name) return;
+
+      ActiveRecovery.turnOff();
 
       const preset = PresetManager.getPreset(name);
       if (preset && preset.settings) {
@@ -1189,6 +1199,8 @@ const applyReducedMotionPreference = () => {
 
 const loadPlaylistSession = (index) => {
   if (!activePlaylist || !activePlaylist.items[index]) return;
+
+  ActiveRecovery.turnOff();
 
   const session = activePlaylist.items[index];
   const s = session.settings;
@@ -1492,6 +1504,8 @@ const updateSchedulerUI = () => {
 const applyScheduleSettings = () => {
   const todaySchedule = SchedulerManager.getTodaySchedule();
   if (!todaySchedule) return;
+
+  ActiveRecovery.turnOff();
 
   const s = todaySchedule.settings;
   if (s.setCount) setCountInput.value = s.setCount;
@@ -1804,6 +1818,7 @@ const initApp = async () => {
   SmartPlanner.init({
     buttonId: 'smart-plan-button',
     onApply: (settings) => {
+      ActiveRecovery.turnOff();
       if (settings.setCount) setCountInput.value = settings.setCount;
       if (settings.repCount) repCountInput.value = settings.repCount;
       // Trigger updates
@@ -1822,6 +1837,7 @@ const initApp = async () => {
   }
 
   SmartMissionRoutine.init();
+  ActiveRecovery.init();
 
   initializeHistory();
 
@@ -2255,6 +2271,7 @@ if (typeof window !== 'undefined') {
   window.TowerManager = TowerManager;
   window.MeditationSystem = MeditationSystem;
   window.PhoenixProtocol = PhoenixProtocol;
+  window.ActiveRecovery = ActiveRecovery;
   window.performAttack = performAttack; // Test helper
 
   // テスト用に内部状態を公開
