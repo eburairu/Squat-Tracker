@@ -51,6 +51,7 @@ import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
 import { MeditationSystem } from './modules/meditation-system.js';
 import { PhoenixProtocol } from './modules/phoenix-protocol.js';
+import { ConditionAssist } from './modules/condition-assist.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -476,6 +477,34 @@ const nextRepOrSet = () => {
       }
     }
 
+    // Condition Assist Evaluation
+    const sessionState = {
+      totalSets,
+      repsPerSet,
+      currentSet: currentSet - 1 // The set that just finished
+    };
+
+    let currentGhostDiff = 0;
+    const ghostState = GhostManager.getState(1.0); // Not perfect but gets diff
+    if (ghostState) {
+        currentGhostDiff = ghostState.diff;
+    }
+
+    const performanceData = {
+      cumulativePauseDuration,
+      ghostDiff: currentGhostDiff,
+      quizSessionCorrect,
+      quizSessionTotal
+    };
+
+    const shouldAssist = ConditionAssist.evaluate(sessionState, performanceData);
+
+    if (shouldAssist) {
+      pauseWorkout(); // Automatically pause timer for user to decide
+      ConditionAssist.showModal();
+      return; // Wait for callback from modal
+    }
+
     startRest();
     return;
   }
@@ -819,6 +848,8 @@ const startWorkout = () => {
   currentTimeline = [];
   workoutStartTime = Date.now();
   cumulativePauseDuration = 0;
+
+  ConditionAssist.reset();
 
   // Ghost Setup
   let ghostSource = null;
@@ -1894,6 +1925,28 @@ const initApp = async () => {
   DataManager.init();
   PhoenixProtocol.init();
 
+  ConditionAssist.init({
+    onApply: (proposal) => {
+      if (proposal.type === 'reduce_sets') {
+        totalSets = proposal.newTotalSets;
+        setCountInput.value = totalSets;
+      } else if (proposal.type === 'reduce_reps') {
+        repsPerSet = proposal.newRepsPerSet;
+        repCountInput.value = repsPerSet;
+      }
+      // Resume workout (which was paused before modal shown)
+      // Then start rest
+      pauseWorkout(); // This actually resumes because isPaused is true
+      startRest();
+      updateDisplays();
+    },
+    onSkip: () => {
+      // Just resume and start rest
+      pauseWorkout();
+      startRest();
+    }
+  });
+
   // Initialize Weapon System with data
   const weaponsMap = generateWeapons(baseWeaponsData);
   InventoryManager.init(weaponsMap); // Inject weapon definitions
@@ -2255,6 +2308,7 @@ if (typeof window !== 'undefined') {
   window.TowerManager = TowerManager;
   window.MeditationSystem = MeditationSystem;
   window.PhoenixProtocol = PhoenixProtocol;
+  window.ConditionAssist = ConditionAssist;
   window.performAttack = performAttack; // Test helper
 
   // テスト用に内部状態を公開
@@ -2277,6 +2331,11 @@ if (typeof window !== 'undefined') {
   });
   Object.defineProperty(window, 'quizSessionTotal', {
     get: () => quizSessionTotal,
+    configurable: true
+  });
+  Object.defineProperty(window, 'cumulativePauseDuration', {
+    get: () => cumulativePauseDuration,
+    set: (val) => { cumulativePauseDuration = val; },
     configurable: true
   });
   Object.defineProperty(window, 'activePlaylist', {
