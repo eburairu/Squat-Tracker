@@ -51,6 +51,7 @@ import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
 import { MeditationSystem } from './modules/meditation-system.js';
 import { PhoenixProtocol } from './modules/phoenix-protocol.js';
+import { ActiveRecovery } from './modules/active-recovery.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -644,45 +645,56 @@ const finishWorkout = () => {
     restDuration: restDurationInput.value,
     countdownDuration: countdownDurationInput.value,
   };
-  AchievementSystem.check({
-    type: 'finish',
-    settings,
-    sensorMode,
-    hasPaused,
-    historyEntries // Pass history entries for checks
-  });
 
-  StreakGuardian.update(historyEntries);
-
-  DailyMissionSystem.check({
-    type: 'finish',
-    totalReps: totalSets * repsPerSet,
-    totalSets: totalSets
-  });
-
-  BingoManager.checkProgress({
-    type: 'finish',
-    totalReps: totalSets * repsPerSet
-  });
-
-  const currentClass = ClassManager.getCurrentClass();
-  if (currentClass) {
-    const expMultiplier = FortuneManager.getMultiplier('exp');
-    ClassManager.addExperience(currentClass.id, Math.floor(totalSets * repsPerSet * expMultiplier));
-  }
-
-  // Buddy Exp
-  const buddyExpGain = totalSets * repsPerSet;
-  const buddyResult = BuddyManager.addExp(buddyExpGain);
-  if (buddyResult && buddyResult.leveledUp && !buddyResult.evolved) {
-    showToast({
-      emoji: '🆙',
-      title: 'バディ レベルアップ！',
-      message: `${buddyResult.buddy.name} が Lv.${buddyResult.buddy.level} になった！`
+  if (!ActiveRecovery || !ActiveRecovery.isActive) {
+    AchievementSystem.check({
+      type: 'finish',
+      settings,
+      sensorMode,
+      hasPaused,
+      historyEntries // Pass history entries for checks
     });
   }
 
-  launchConfetti(confettiCanvas, prefersReducedMotion);
+  StreakGuardian.update(historyEntries);
+
+  if (!ActiveRecovery || !ActiveRecovery.isActive) {
+    DailyMissionSystem.check({
+      type: 'finish',
+      totalReps: totalSets * repsPerSet,
+      totalSets: totalSets
+    });
+
+    BingoManager.checkProgress({
+      type: 'finish',
+      totalReps: totalSets * repsPerSet
+    });
+
+    const currentClass = ClassManager.getCurrentClass();
+    if (currentClass) {
+      const expMultiplier = FortuneManager.getMultiplier('exp');
+      ClassManager.addExperience(currentClass.id, Math.floor(totalSets * repsPerSet * expMultiplier));
+    }
+
+    // Buddy Exp
+    const buddyExpGain = totalSets * repsPerSet;
+    const buddyResult = BuddyManager.addExp(buddyExpGain);
+    if (buddyResult && buddyResult.leveledUp && !buddyResult.evolved) {
+      showToast({
+        emoji: '🆙',
+        title: 'バディ レベルアップ！',
+        message: `${buddyResult.buddy.name} が Lv.${buddyResult.buddy.level} になった！`
+      });
+    }
+
+    launchConfetti(confettiCanvas, prefersReducedMotion);
+  } else {
+    showToast({
+      emoji: '🛌',
+      title: '休息日完了',
+      message: 'ストリークを維持しました！明日はまた頑張りましょう！'
+    });
+  }
   updateActionButtonStates();
 
   // Show Commitment Modal after a short delay
@@ -1004,6 +1016,8 @@ const updateStartButtonAvailability = () => {
 const saveWorkoutSettings = () => {
   if (!isStorageAvailable) return;
   if (!areAllInputsValid()) return;
+
+  if (typeof ActiveRecovery !== 'undefined' && ActiveRecovery.isActive) return;
 
   const settings = {
     setCount: setCountInput.value,
@@ -1893,6 +1907,7 @@ const initApp = async () => {
 
   DataManager.init();
   PhoenixProtocol.init();
+  ActiveRecovery.init();
 
   // Initialize Weapon System with data
   const weaponsMap = generateWeapons(baseWeaponsData);
@@ -2255,6 +2270,7 @@ if (typeof window !== 'undefined') {
   window.TowerManager = TowerManager;
   window.MeditationSystem = MeditationSystem;
   window.PhoenixProtocol = PhoenixProtocol;
+  window.ActiveRecovery = ActiveRecovery;
   window.performAttack = performAttack; // Test helper
 
   // テスト用に内部状態を公開
