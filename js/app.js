@@ -51,6 +51,7 @@ import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
 import { MeditationSystem } from './modules/meditation-system.js';
 import { PhoenixProtocol } from './modules/phoenix-protocol.js';
+import { FormAnalyzer } from './modules/form-analyzer.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -419,10 +420,20 @@ const performAttack = () => {
 };
 
 const setPhase = (phaseKey, durationSeconds, hint) => {
+  // Record the end of the previous phase if it was a rep phase
+  if (currentPhase && workoutStarted && !isPaused && currentPhase !== Phase.FINISHED) {
+      FormAnalyzer.recordPhaseEnd();
+  }
+
   currentPhase = phaseKey;
   phaseDuration = durationSeconds * 1000;
   phaseStart = Date.now();
   phaseHint.textContent = hint;
+
+  // Record start of the new phase
+  if (workoutStarted && [Phase.DOWN, Phase.HOLD, Phase.UP].includes(phaseKey)) {
+      FormAnalyzer.recordPhaseStart(phaseKey);
+  }
 
   updateQuizAndTimerDisplay(phaseKey);
 
@@ -582,6 +593,10 @@ const recordWorkout = () => {
 };
 
 const finishWorkout = () => {
+  if (currentPhase && workoutStarted && !isPaused && currentPhase !== Phase.FINISHED) {
+      FormAnalyzer.recordPhaseEnd();
+  }
+
   if (TowerManager.state.isActive) {
     TowerManager.endTower(true);
   }
@@ -684,6 +699,23 @@ const finishWorkout = () => {
 
   launchConfetti(confettiCanvas, prefersReducedMotion);
   updateActionButtonStates();
+
+  // フォーム分析結果の表示
+  const formAnalysis = FormAnalyzer.calculateScore();
+  if (formAnalysis.score > 0) {
+      showToast({
+          emoji: '🎯',
+          title: `テンポ精度: ${formAnalysis.score}% (Rank ${formAnalysis.rank})`,
+          message: formAnalysis.message
+      });
+
+      const formAnalyzerResult = document.getElementById('form-analyzer-result');
+      if (formAnalyzerResult) {
+          formAnalyzerResult.style.display = 'flex';
+          document.getElementById('form-analyzer-score').textContent = `${formAnalysis.score}%`;
+          document.getElementById('form-analyzer-rank').textContent = `Rank ${formAnalysis.rank}`;
+      }
+  }
 
   // Show Commitment Modal after a short delay
   setTimeout(() => {
@@ -819,6 +851,13 @@ const startWorkout = () => {
   currentTimeline = [];
   workoutStartTime = Date.now();
   cumulativePauseDuration = 0;
+
+  // FormAnalyzer Setup
+  FormAnalyzer.init(
+      parseInt(downDurationInput.value, 10),
+      parseInt(holdDurationInput.value, 10),
+      parseInt(upDurationInput.value, 10)
+  );
 
   // Ghost Setup
   let ghostSource = null;
@@ -2255,6 +2294,7 @@ if (typeof window !== 'undefined') {
   window.TowerManager = TowerManager;
   window.MeditationSystem = MeditationSystem;
   window.PhoenixProtocol = PhoenixProtocol;
+  window.FormAnalyzer = FormAnalyzer;
   window.performAttack = performAttack; // Test helper
 
   // テスト用に内部状態を公開
