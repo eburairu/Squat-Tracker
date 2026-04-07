@@ -51,6 +51,7 @@ import { SoundManager } from './modules/sound-manager.js';
 import { TowerManager } from './modules/tower-manager.js';
 import { MeditationSystem } from './modules/meditation-system.js';
 import { PhoenixProtocol } from './modules/phoenix-protocol.js';
+import { PerformanceAnalyzer } from './modules/performance-analyzer.js';
 
 // --- Global DOM Elements ---
 const phaseDisplay = document.getElementById('phase-display');
@@ -612,6 +613,52 @@ const finishWorkout = () => {
     showToast({ emoji, title: 'Race Result', message: msg });
   }
 
+  // パフォーマンス・アナリティクスの評価
+  const completedReps = getCompletedReps();
+  const targetTotalReps = totalSets * repsPerSet;
+  const dSec = parseInt(downDurationInput.value, 10);
+  const hSec = parseInt(holdDurationInput.value, 10);
+  const uSec = parseInt(upDurationInput.value, 10);
+  const targetPace = dSec + hSec + uSec;
+
+  let averagePace = 0;
+  if (completedReps > 0 && currentTimeline.length > 0) {
+    // 最初のレップの開始時間がわからないため、全体の経過時間から休憩を引いて概算するか、
+    // timelineの差分から平均を計算する。簡易的に:
+    const totalWorkingTimeMs = currentTimeline[currentTimeline.length - 1]; // 最後のレップ完了までの時間
+    const estimatedWorkingTimeSec = (totalWorkingTimeMs / 1000) - ((currentSet - 1) * parseInt(restDurationInput.value, 10));
+    averagePace = Math.max(estimatedWorkingTimeSec / completedReps, 0);
+  }
+
+  const evalResult = PerformanceAnalyzer.evaluate({
+    targetTotalReps,
+    completedReps,
+    targetPace,
+    averagePace
+  });
+
+  // 評価結果をUIに表示
+  const perfContainer = document.getElementById('performance-result-container');
+  if (perfContainer) {
+    perfContainer.style.display = 'block';
+
+    // カラー設定
+    let rankColor = 'var(--text-secondary)';
+    if (evalResult.rank === 'S') rankColor = 'var(--gold)';
+    else if (evalResult.rank === 'A') rankColor = 'var(--accent-color)';
+    else if (evalResult.rank === 'B') rankColor = 'var(--success-color)';
+    else if (evalResult.rank === 'C') rankColor = 'var(--danger-color)';
+
+    perfContainer.innerHTML = `
+      <h4 style="margin: 0 0 5px 0; font-size: 0.9em; color: var(--text-secondary);">パフォーマンス評価</h4>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+        <div class="performance-rank" style="font-size: 2em; font-weight: bold; color: ${rankColor}; line-height: 1;">${evalResult.rank}</div>
+        <div class="performance-score" style="font-size: 1.1em; font-weight: bold;">Score: ${evalResult.score}</div>
+      </div>
+      <p class="performance-feedback" style="margin: 0; font-size: 0.85em; opacity: 0.9;">${evalResult.feedback}</p>
+    `;
+  }
+
   // Show Share Button
   const existingShareBtn = document.getElementById('share-result-button');
   if (existingShareBtn) existingShareBtn.remove();
@@ -967,6 +1014,8 @@ const resetWorkout = () => {
   stopConfetti(confettiCanvas);
   GhostManager.reset();
   if (sessionProgressWrapper) sessionProgressWrapper.style.display = 'none';
+  const perfContainer = document.getElementById('performance-result-container');
+  if (perfContainer) perfContainer.style.display = 'none';
 };
 
 // --- Inputs & Settings Logic ---
@@ -2255,6 +2304,7 @@ if (typeof window !== 'undefined') {
   window.TowerManager = TowerManager;
   window.MeditationSystem = MeditationSystem;
   window.PhoenixProtocol = PhoenixProtocol;
+  window.PerformanceAnalyzer = PerformanceAnalyzer;
   window.performAttack = performAttack; // Test helper
 
   // テスト用に内部状態を公開
