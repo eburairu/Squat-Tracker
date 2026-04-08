@@ -38,6 +38,23 @@
         <p class="subtitle">スクワットでボスを討伐。毎日のトレーニングをRPGに。</p>
       </div>
       <div class="hero-panel card reveal delay-1">
+        <div id="daily-director-container" class="daily-director-container" style="display: none; margin-bottom: 1rem; padding: 1rem; background: var(--bg-card); border: 2px solid var(--accent-color); border-radius: var(--radius-md); text-align: center; position: relative; overflow: hidden;">
+          <div class="director-bg-effect" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), transparent); z-index: 0; pointer-events: none;"></div>
+          <div style="position: relative; z-index: 1;">
+            <p class="eyebrow" style="color: var(--accent-color); margin-bottom: 0.25rem;">AI Director's Suggestion</p>
+            <h2 id="director-title" style="margin-bottom: 0.5rem; font-size: 1.25rem;">本日の最適メニュー</h2>
+            <div id="director-menu-display" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; color: var(--text-primary);">
+               <span id="director-sets">3</span> セット × <span id="director-reps">10</span> 回
+            </div>
+            <p id="director-message" style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+               ミッション達成とボス撃破に最適化されています。
+            </p>
+            <button id="director-start-btn" class="primary full-width" style="font-size: 1.1rem; padding: 0.75rem;">
+               ⚡️ 最強装備で即開始
+            </button>
+          </div>
+        </div>
+
         <div class="stat-grid">
           <div class="stat-card">
             <span class="stat-label">累計回数</span>
