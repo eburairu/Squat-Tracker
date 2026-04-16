@@ -38,6 +38,7 @@ import { FortuneManager } from './modules/fortune-manager.js';
 import { PlaylistManager } from './modules/playlist-manager.js';
 import { SmartPlanner } from './modules/smart-planner.js';
 import { SmartMissionRoutine } from './modules/smart-mission-routine.js';
+import { SmartCoach } from './modules/smart-coach.js';
 import { GhostManager } from './modules/ghost-manager.js';
 import { AnalyticsManager } from './modules/analytics-manager.js';
 import { ChartRenderer } from './modules/chart-renderer.js';
@@ -1800,6 +1801,8 @@ const initApp = async () => {
   initializeWorkoutSettings();
   initializePresets();
   setupPlaylistManagerUI();
+
+  SmartCoach.init();
 
   SmartPlanner.init({
     buttonId: 'smart-plan-button',
