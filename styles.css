@@ -2346,3 +2346,71 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   margin-top: 0.25rem;
 }
+
+/* Smart Coach Banner */
+.smart-coach-banner {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  border: 1px solid #a5b4fc;
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.smart-coach-banner.active {
+  display: block;
+  opacity: 1;
+}
+
+[data-theme='dark'] .smart-coach-banner {
+  background: linear-gradient(135deg, #3730a3 0%, #312e81 100%);
+  border-color: #4338ca;
+}
+
+.smart-coach-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.smart-coach-icon {
+  font-size: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.smart-coach-header strong {
+  flex-grow: 1;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.smart-coach-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.smart-coach-close:hover {
+  color: var(--danger-color);
+}
+
+.smart-coach-body {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.smart-coach-body p {
+  margin: 0 0 0.75rem 0;
+  line-height: 1.4;
+}
+
+.smart-coach-apply {
+  width: 100%;
+}
