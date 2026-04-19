@@ -1,5 +1,6 @@
 export const Phase = {
   IDLE: '待機中',
+  WARMUP: '準備運動',
   COUNTDOWN: 'スタート前',
   DOWN: 'しゃがむ',
   HOLD: 'キープ',
@@ -34,6 +35,7 @@ export const STORAGE_KEYS = {
   HISTORY: 'squat-tracker-history-v1',
   THEME: 'squat-tracker-theme',
   THEME_STYLE: 'squat-tracker-theme-style',
+  SMART_WARMUP: 'squat-tracker-smart-warmup',
   VOICE_COACH: 'squat-tracker-voice',
   VOICE_COMMAND: 'squat-tracker-voice-command',
   VOICE_PERSONA: 'squat-tracker-voice-persona',
