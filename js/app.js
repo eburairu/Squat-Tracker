@@ -80,6 +80,7 @@ const themeStatus = document.getElementById('theme-status');
 const voiceToggle = document.getElementById('voice-toggle');
 const voiceStatus = document.getElementById('voice-status');
 const voiceCommandToggle = document.getElementById('voice-command-toggle');
+const smartWarmupToggle = document.getElementById('smart-warmup-toggle');
 const voiceCommandStatusText = document.getElementById('voice-command-status-text');
 const commentaryToggle = document.getElementById('commentary-toggle');
 const commentaryStatus = document.getElementById('commentary-status');
@@ -430,7 +431,7 @@ const setPhase = (phaseKey, durationSeconds, hint) => {
   updateTimerUI();
   lastCountdownSecond = null;
 
-  const isCountdownPhase = (p) => p === Phase.COUNTDOWN || p === Phase.REST_COUNTDOWN;
+  const isCountdownPhase = (p) => p === Phase.COUNTDOWN || p === Phase.REST_COUNTDOWN || p === Phase.WARMUP;
 
   if (!isCountdownPhase(phaseKey)) {
     const phaseFrequency = phaseBeepFrequencies[phaseKey];
@@ -718,7 +719,7 @@ const tick = () => {
     return;
   }
   updateTimerUI();
-  const isCountdownPhase = (p) => p === Phase.COUNTDOWN || p === Phase.REST_COUNTDOWN;
+  const isCountdownPhase = (p) => p === Phase.COUNTDOWN || p === Phase.REST_COUNTDOWN || p === Phase.WARMUP;
 
   if (isCountdownPhase(currentPhase)) {
     const elapsed = Math.min(Date.now() - phaseStart, phaseDuration);
@@ -756,7 +757,7 @@ const tick = () => {
     } else if (currentPhase === Phase.UP) {
       repProgress = (d + h + phaseElapsed) / totalRepTime;
     }
-    // During REST/COUNTDOWN, repProgress stays 0 (start of next rep)
+    // During WARMUP/REST/COUNTDOWN, repProgress stays 0 (start of next rep)
 
     const userPercent = Math.min(((completedReps + repProgress) / totalRepsTarget) * 100, 100);
     if (userMarker) userMarker.style.left = `${userPercent}%`;
@@ -902,9 +903,20 @@ const startWorkout = () => {
   updateSessionStats();
   VoiceCoach.play('start', '準備して。スタートします');
   CommentaryManager.notify('start');
-  startCountdown('スタートまでカウントダウン', () => {
-    startPhaseCycle();
-  });
+  const isWarmupEnabled = isStorageAvailable && localStorage.getItem(STORAGE_KEYS.SMART_WARMUP) === 'true';
+  if (isWarmupEnabled) {
+    VoiceCoach.play('rest', '準備運動です。軽くストレッチしましょう');
+    setPhase(Phase.WARMUP, 10, '準備運動: 軽くストレッチをしましょう');
+    schedulePhase(() => {
+      startCountdown('スタートまでカウントダウン', () => {
+        startPhaseCycle();
+      });
+    }, 10);
+  } else {
+    startCountdown('スタートまでカウントダウン', () => {
+      startPhaseCycle();
+    });
+  }
 };
 
 const pauseWorkout = () => {
